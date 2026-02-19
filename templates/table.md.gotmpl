@@ -1,0 +1,64 @@
+# {{ .Title }}
+
+{{ if ne .SourceSchema "(stdin)" -}}
+{{ .ListMarker }} Source schema: `{{ .SourceSchema }}`
+{{ end -}}
+{{ .ListMarker }} Schema ID: `{{ .SchemaID }}`
+{{ .ListMarker }} Schema draft: `{{ .SchemaDraft }}`
+{{ .ListMarker }} Draft support: `{{ .SchemaDraftSupport }}`
+{{ .ListMarker }} Root ref: `{{ .RootRef }}`
+
+## Contents
+
+{{ range .Definitions -}}
+{{ $.ListMarker }} [{{ .Name }}](#{{ headingAnchor .Name }})
+{{ end }}
+
+{{ range .Definitions -}}
+## {{ .Name }}
+
+{{ if .Description -}}
+{{ .Description }}
+
+{{ end -}}
+{{ if .Attributes -}}
+| Attribute | Value |
+| --- | --- |
+{{ range .Attributes -}}
+| {{ .Name }} | {{ .Value }} |
+{{ end }}
+
+{{ end -}}
+{{ if .HasProperties -}}
+{{ range .Properties -}}
+### {{ .Heading }}
+
+Key: `{{ .Name }}`
+
+{{ if .Paths -}}
+{{ if eq (len .Paths) 1 -}}
+Path: `{{ index .Paths 0 }}`
+{{ else -}}
+Paths:
+{{ range .Paths -}}
+{{ $.ListMarker }} `{{ . }}`
+{{ end -}}
+{{ end }}
+{{ end }}
+
+{{ if .Description -}}
+{{ .Description }}
+
+{{ end -}}
+| Attribute | Value |
+| --- | --- |
+{{ range .Attributes -}}
+| {{ .Name }} | {{ .Value }} |
+{{ end }}
+
+{{ end -}}
+{{ else -}}
+No properties.
+
+{{ end -}}
+{{ end -}}

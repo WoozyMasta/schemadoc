@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fixture:schema",
+  "$ref": "#/$defs/Config",
+  "$defs": {
+    "Config": {
+      "type": "object",
+      "description": "Root configuration object.",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Project name.",
+          "minLength": 1
+        },
+        "settings": {
+          "$ref": "#/$defs/Settings",
+          "description": "Configuration settings."
+        }
+      }
+    },
+    "Settings": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "default": "safe",
+          "enum": [
+            "safe",
+            "fast"
+          ],
+          "examples": [
+            "safe"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "$id": "https://example.com/movie.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$ref": "#/definitions/Movie",
+  "definitions": {
+    "Movie": {
+      "type": "object",
+      "description": "A representation of a movie.",
+      "required": [
+        "title",
+        "director",
+        "releaseDate"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "director": {
+          "type": "string"
+        },
+        "releaseDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "genre": {
+          "type": "string",
+          "enum": [
+            "Action",
+            "Comedy",
+            "Drama"
+          ]
+        },
+        "cast": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "additionalItems": false
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "$id": "https://example.com/address.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/Address",
+  "$defs": {
+    "Address": {
+      "type": "object",
+      "description": "An address similar to h-card.",
+      "properties": {
+        "postOfficeBox": {
+          "type": "string"
+        },
+        "streetAddress": {
+          "type": "string"
+        },
+        "locality": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "countryName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "locality",
+        "region",
+        "countryName"
+      ],
+      "dependentRequired": {
+        "postOfficeBox": [
+          "streetAddress"
+        ]
+      }
+    }
+  }
+}

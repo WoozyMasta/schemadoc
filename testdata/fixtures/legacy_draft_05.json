@@ -1,0 +1,23 @@
+{
+  "id": "https://example.com/legacy.schema.json",
+  "$schema": "http://json-schema.org/draft-05/schema",
+  "$ref": "#/definitions/Legacy",
+  "definitions": {
+    "Legacy": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "meta": {
+          "type": "object",
+          "dependencies": {
+            "name": [
+              "id"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

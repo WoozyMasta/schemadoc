@@ -1,0 +1,48 @@
+{
+  "$id": "https://example.com/calendar.schema.json",
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$ref": "#/$defs/Event",
+  "$defs": {
+    "Event": {
+      "type": "object",
+      "required": [
+        "startDate",
+        "summary"
+      ],
+      "properties": {
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "geo": {
+          "$ref": "#/$defs/Geo"
+        }
+      }
+    },
+    "Geo": {
+      "type": "object",
+      "required": [
+        "latitude",
+        "longitude"
+      ],
+      "properties": {
+        "latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        }
+      }
+    }
+  }
+}
