@@ -41,6 +41,7 @@ Key: `{{ .Name }}`
 Path: `{{ index .Paths 0 }}`
 {{ else -}}
 Paths:
+
 {{ range .Paths -}}
 {{ $.ListMarker }} `{{ . }}`
 {{ end -}}
