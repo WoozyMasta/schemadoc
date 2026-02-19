@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	// helperModuleName is module name used for temporary schema generator workspace.
-	helperModuleName = "schemadoc_mod2schema_helper"
+	// helperModuleSuffix is appended to target module path for temporary helper module.
+	helperModuleSuffix = "/schemadoc_mod2schema_helper"
 	// jsonschemaDependency pins dependency used by temporary schema generator.
 	jsonschemaDependency = "github.com/invopop/jsonschema@v0.13.0"
 )
@@ -491,7 +491,7 @@ func generateModuleSchema(options moduleSchemaOptions) ([]byte, string, error) {
 	}
 
 	helperSource := buildSchemaGeneratorProgram(normalizedOptions)
-	helperPath, helperDir, err := writeSchemaGeneratorProgram(helperSource)
+	helperDir, err := writeSchemaGeneratorProgram(helperSource)
 	if err != nil {
 		return nil, "", err
 	}
@@ -507,7 +507,7 @@ func generateModuleSchema(options moduleSchemaOptions) ([]byte, string, error) {
 		return nil, "", err
 	}
 
-	schemaBytes, err := runSchemaGeneratorProgram(helperDir, helperPath)
+	schemaBytes, err := runSchemaGeneratorProgram(helperDir)
 	if err != nil {
 		return nil, "", err
 	}
@@ -603,23 +603,24 @@ func main() {
 }
 
 // writeSchemaGeneratorProgram stores temporary source code in system temp directory.
-func writeSchemaGeneratorProgram(source string) (string, string, error) {
+func writeSchemaGeneratorProgram(source string) (string, error) {
 	helperDir, err := os.MkdirTemp("", "schemadoc-mod2schema-")
 	if err != nil {
-		return "", "", fmt.Errorf("create temporary schema generator dir: %w", err)
+		return "", fmt.Errorf("create temporary schema generator dir: %w", err)
 	}
 
 	helperPath := filepath.Join(helperDir, "main.go")
 	if err := os.WriteFile(helperPath, []byte(source), 0o600); err != nil {
-		return "", "", fmt.Errorf("write temporary schema generator: %w", err)
+		return "", fmt.Errorf("write temporary schema generator: %w", err)
 	}
 
-	return helperPath, helperDir, nil
+	return helperDir, nil
 }
 
 // initSchemaGeneratorWorkspace initializes temporary go module for schema generation.
 func initSchemaGeneratorWorkspace(helperDir string, options moduleSchemaOptions) error {
-	if err := runGoCommand(helperDir, "mod", "init", helperModuleName); err != nil {
+	helperModulePath := buildSchemaGeneratorModulePath(options.ModulePath)
+	if err := runGoCommand(helperDir, "mod", "init", helperModulePath); err != nil {
 		return fmt.Errorf("init temporary module: %w", err)
 	}
 
@@ -642,12 +643,16 @@ func installSchemaGeneratorDependencies(helperDir string) error {
 		return fmt.Errorf("install helper dependency %q: %w", jsonschemaDependency, err)
 	}
 
+	if err := runGoCommand(helperDir, "mod", "tidy"); err != nil {
+		return fmt.Errorf("tidy helper module: %w", err)
+	}
+
 	return nil
 }
 
 // runSchemaGeneratorProgram executes temporary schema generator and returns reflected schema bytes.
-func runSchemaGeneratorProgram(helperDir, helperPath string) ([]byte, error) {
-	command := exec.Command("go", "run", helperPath)
+func runSchemaGeneratorProgram(helperDir string) ([]byte, error) {
+	command := exec.Command("go", "run", ".")
 	command.Dir = helperDir
 
 	var stdout bytes.Buffer
@@ -665,6 +670,11 @@ func runSchemaGeneratorProgram(helperDir, helperPath string) ([]byte, error) {
 	}
 
 	return stdout.Bytes(), nil
+}
+
+// buildSchemaGeneratorModulePath returns temporary helper module path for target module imports.
+func buildSchemaGeneratorModulePath(modulePath string) string {
+	return strings.TrimSuffix(strings.TrimSpace(modulePath), "/") + helperModuleSuffix
 }
 
 // ensureGoToolchain validates Go availability for mod2schema/mod2md flows.
