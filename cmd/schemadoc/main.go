@@ -553,7 +553,8 @@ func normalizeCommentKeys(r *jsonschema.Reflector, base, root string) {
 	}
 
 	base = strings.TrimSuffix(strings.TrimSpace(base), "/")
-	root = strings.TrimSuffix(strings.TrimSpace(root), "/")
+	root = strings.ReplaceAll(strings.TrimSpace(root), "\\", "/")
+	root = strings.TrimSuffix(root, "/")
 	if base == "" || root == "" {
 		return
 	}
@@ -561,9 +562,9 @@ func normalizeCommentKeys(r *jsonschema.Reflector, base, root string) {
 	prefix := base + "/" + strings.TrimPrefix(root, "/")
 	normalized := make(map[string]string, len(r.CommentMap))
 	for key, value := range r.CommentMap {
-		normalizedKey := key
-		if strings.HasPrefix(key, prefix) {
-			normalizedKey = base + strings.TrimPrefix(key, prefix)
+		normalizedKey := strings.ReplaceAll(key, "\\", "/")
+		if strings.HasPrefix(normalizedKey, prefix) {
+			normalizedKey = base + strings.TrimPrefix(normalizedKey, prefix)
 		}
 
 		normalized[normalizedKey] = value
