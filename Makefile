@@ -20,6 +20,8 @@ BINARY      ?= schemadoc
 PKG         ?= ./cmd/schemadoc
 OUTPUT_DIR  ?= build
 
+RELEASE_MATRIX ?= linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
+
 NATIVE_GOOS      := $(shell go env GOOS)
 NATIVE_GOARCH    := $(shell go env GOARCH)
 NATIVE_EXTENSION := $(if $(filter $(NATIVE_GOOS),windows),.exe,)
