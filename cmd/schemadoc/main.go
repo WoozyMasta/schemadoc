@@ -143,9 +143,9 @@ type schemaToMarkdownCommand struct {
 		Output string `positional-arg-name:"output" description:"Output markdown file path (optional; stdout when omitted)"`
 	} `positional-args:"yes"`
 
-	ExampleFlags markdownExampleFlags `group:"Embedded Example"`
-	TemplateFlags templateSelectFlags `group:"Template Select"`
-	RenderFlags markdownRenderFlags `group:"Markdown Render"`
+	ExampleFlags  markdownExampleFlags `group:"Embedded Example"`
+	TemplateFlags templateSelectFlags  `group:"Template Select"`
+	RenderFlags   markdownRenderFlags  `group:"Markdown Render"`
 }
 
 // Execute runs schemadoc subcommand.
