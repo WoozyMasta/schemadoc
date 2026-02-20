@@ -41,6 +41,8 @@ var (
 type cliOptions struct {
 	Version          versionCommand          `command:"version" description:"Print version information"`
 	ModuleToSchema   moduleToSchemaCommand   `command:"mod2schema" description:"Generate JSON Schema from Go module type"`
+	SchemaToJSON     schemaToJSONCommand     `command:"schema2json" description:"Generate example JSON payload from schema"`
+	SchemaToYAML     schemaToYAMLCommand     `command:"schema2yaml" description:"Generate example YAML payload from schema"`
 	Template         templateCommand         `command:"template" description:"Print built-in markdown template"`
 	ModuleToMarkdown moduleToMarkdownCommand `command:"mod2md" description:"Generate markdown from Go module type"`
 	SchemaToMarkdown schemaToMarkdownCommand `command:"schema2md" description:"Convert JSON Schema to markdown"`
@@ -66,6 +68,17 @@ type templateSelectFlags struct {
 	TemplateName string `short:"t" long:"template" description:"Built-in template style" choice:"list" choice:"table" default:"list"`
 }
 
+// exampleModeFlags groups example mode flags.
+type exampleModeFlags struct {
+	Mode string `short:"m" long:"mode" description:"Example generation mode" choice:"all" choice:"required" default:"all"`
+}
+
+// markdownExampleFlags groups embedded example mode and format flags.
+type markdownExampleFlags struct {
+	Mode   string `short:"m" long:"mode" description:"Embedded example mode for markdown output" choice:"all" choice:"required" default:"all"`
+	Format string `short:"F" long:"format" description:"Embedded example format for markdown output (empty disables embedding)" choice:"json" choice:"yaml"`
+}
+
 // moduleToMarkdownCommand wraps module-to-schema and schema-to-markdown flows.
 type moduleToMarkdownCommand struct {
 	runner *cliRunner
@@ -76,8 +89,9 @@ type moduleToMarkdownCommand struct {
 		Output string `positional-arg-name:"output" description:"Output markdown file path (optional; stdout when omitted)"`
 	} `positional-args:"yes"`
 
-	TemplateFlags templateSelectFlags `group:"Template Select"`
-	RenderFlags   markdownRenderFlags `group:"Markdown Render"`
+	ExampleFlags  markdownExampleFlags `group:"Embedded Example"`
+	TemplateFlags templateSelectFlags  `group:"Template Select"`
+	RenderFlags   markdownRenderFlags  `group:"Markdown Render"`
 }
 
 // Execute runs mod2md subcommand.
@@ -94,6 +108,8 @@ func (command *moduleToMarkdownCommand) Execute(_ []string) error {
 		command.RenderFlags.TemplatePath,
 		command.RenderFlags.WrapWidth,
 		command.RenderFlags.ListMarker,
+		command.ExampleFlags.Mode,
+		command.ExampleFlags.Format,
 		command.Args.Output,
 	)
 }
@@ -127,8 +143,8 @@ type schemaToMarkdownCommand struct {
 		Output string `positional-arg-name:"output" description:"Output markdown file path (optional; stdout when omitted)"`
 	} `positional-args:"yes"`
 
+	ExampleFlags markdownExampleFlags `group:"Embedded Example"`
 	TemplateFlags templateSelectFlags `group:"Template Select"`
-
 	RenderFlags markdownRenderFlags `group:"Markdown Render"`
 }
 
@@ -140,6 +156,50 @@ func (command *schemaToMarkdownCommand) Execute(_ []string) error {
 		command.RenderFlags.TemplatePath,
 		command.RenderFlags.WrapWidth,
 		command.RenderFlags.ListMarker,
+		command.ExampleFlags.Mode,
+		command.ExampleFlags.Format,
+		command.Args.Input,
+		command.Args.Output,
+	)
+}
+
+// schemaToJSONCommand generates example JSON payload from schema.
+type schemaToJSONCommand struct {
+	runner *cliRunner
+	Args   struct {
+		Input  string `positional-arg-name:"input" description:"Input schema file path (optional; stdin when omitted)"`
+		Output string `positional-arg-name:"output" description:"Output json file path (optional; stdout when omitted)"`
+	} `positional-args:"yes"`
+
+	ExampleFlags exampleModeFlags `group:"Example Generate"`
+}
+
+// Execute runs schema2json subcommand.
+func (command *schemaToJSONCommand) Execute(_ []string) error {
+	return command.runner.runSchemaToExample(
+		command.ExampleFlags.Mode,
+		string(schemadoc.ExampleFormatJSON),
+		command.Args.Input,
+		command.Args.Output,
+	)
+}
+
+// schemaToYAMLCommand generates example YAML payload from schema.
+type schemaToYAMLCommand struct {
+	runner *cliRunner
+	Args   struct {
+		Input  string `positional-arg-name:"input" description:"Input schema file path (optional; stdin when omitted)"`
+		Output string `positional-arg-name:"output" description:"Output yaml file path (optional; stdout when omitted)"`
+	} `positional-args:"yes"`
+
+	ExampleFlags exampleModeFlags `group:"Example Generate"`
+}
+
+// Execute runs schema2yaml subcommand.
+func (command *schemaToYAMLCommand) Execute(_ []string) error {
+	return command.runner.runSchemaToExample(
+		command.ExampleFlags.Mode,
+		string(schemadoc.ExampleFormatYAML),
 		command.Args.Input,
 		command.Args.Output,
 	)
@@ -248,13 +308,13 @@ func (runner *cliRunner) run(args []string) int {
 }
 
 // runModuleToMarkdown executes module-to-markdown flow without temporary schema files.
-func (runner *cliRunner) runModuleToMarkdown(moduleOptions moduleSchemaOptions, templateName, title, templatePath string, wrapWidth int, listMarker, outputPath string) error {
+func (runner *cliRunner) runModuleToMarkdown(moduleOptions moduleSchemaOptions, templateName, title, templatePath string, wrapWidth int, listMarker, exampleMode, exampleFormat, outputPath string) error {
 	schemaBytes, sourcePath, err := generateModuleSchema(moduleOptions)
 	if err != nil {
 		return fmt.Errorf("generate schema: %w", err)
 	}
 
-	return runner.runSchemaToMarkdownBytes(templateName, title, templatePath, wrapWidth, listMarker, schemaBytes, sourcePath, outputPath)
+	return runner.runSchemaToMarkdownBytes(templateName, title, templatePath, wrapWidth, listMarker, exampleMode, exampleFormat, schemaBytes, sourcePath, outputPath)
 }
 
 // runModuleToSchema executes module-to-schema flow and writes result to stdout or file.
@@ -280,17 +340,55 @@ func (runner *cliRunner) runModuleToSchema(moduleOptions moduleSchemaOptions, ou
 }
 
 // runSchemaToMarkdown executes schema-to-markdown flow and writes result to stdout or file.
-func (runner *cliRunner) runSchemaToMarkdown(templateName, title, templatePath string, wrapWidth int, listMarker, inputPath, outputPath string) error {
+func (runner *cliRunner) runSchemaToMarkdown(templateName, title, templatePath string, wrapWidth int, listMarker, exampleMode, exampleFormat, inputPath, outputPath string) error {
 	schemaBytes, sourcePath, err := runner.readSchemaInput(inputPath)
 	if err != nil {
 		return fmt.Errorf("read schema input: %w", err)
 	}
 
-	return runner.runSchemaToMarkdownBytes(templateName, title, templatePath, wrapWidth, listMarker, schemaBytes, sourcePath, outputPath)
+	return runner.runSchemaToMarkdownBytes(templateName, title, templatePath, wrapWidth, listMarker, exampleMode, exampleFormat, schemaBytes, sourcePath, outputPath)
+}
+
+// runSchemaToExample generates example payload for selected mode and format.
+func (runner *cliRunner) runSchemaToExample(mode, format, inputPath, outputPath string) error {
+	schemaBytes, _, err := runner.readSchemaInput(inputPath)
+	if err != nil {
+		return fmt.Errorf("read schema input: %w", err)
+	}
+
+	selectedMode, err := resolveExampleMode(mode)
+	if err != nil {
+		return err
+	}
+
+	selectedFormat, err := resolveExampleFormat(format)
+	if err != nil {
+		return err
+	}
+
+	content, err := schemadoc.GenerateExample(schemaBytes, selectedMode, selectedFormat)
+	if err != nil {
+		return fmt.Errorf("generate %s %s example: %w", selectedMode, selectedFormat, err)
+	}
+
+	outputPath = strings.TrimSpace(outputPath)
+	if outputPath == "" {
+		if _, err := runner.stdout.Write(content); err != nil {
+			return fmt.Errorf("write example to stdout: %w", err)
+		}
+
+		return nil
+	}
+
+	if err := os.WriteFile(outputPath, content, 0o600); err != nil {
+		return fmt.Errorf("write example file %q: %w", outputPath, err)
+	}
+
+	return nil
 }
 
 // runSchemaToMarkdownBytes renders markdown from schema bytes and writes result to stdout or file.
-func (runner *cliRunner) runSchemaToMarkdownBytes(templateName, title, templatePath string, wrapWidth int, listMarker string, schemaBytes []byte, sourcePath, outputPath string) error {
+func (runner *cliRunner) runSchemaToMarkdownBytes(templateName, title, templatePath string, wrapWidth int, listMarker, exampleMode, exampleFormat string, schemaBytes []byte, sourcePath, outputPath string) error {
 	draftURI := extractSchemaDraftURI(schemaBytes)
 	draft := schemadoc.DetectDraft(draftURI)
 	if strings.TrimSpace(draftURI) == "" {
@@ -299,12 +397,19 @@ func (runner *cliRunner) runSchemaToMarkdownBytes(templateName, title, templateP
 		_, _ = fmt.Fprintf(runner.stderr, "warning: unsupported $schema value %q\n", draftURI)
 	}
 
+	mode, format, err := resolveMarkdownExampleOptions(exampleMode, exampleFormat)
+	if err != nil {
+		return err
+	}
+
 	renderOptions := schemadoc.Options{
-		Title:        title,
-		SourcePath:   sourcePath,
-		TemplateName: templateName,
-		WrapWidth:    wrapWidth,
-		ListMarker:   listMarker,
+		Title:         title,
+		SourcePath:    sourcePath,
+		TemplateName:  templateName,
+		WrapWidth:     wrapWidth,
+		ListMarker:    listMarker,
+		ExampleMode:   mode,
+		ExampleFormat: format,
 	}
 
 	if templatePath != "" {
@@ -398,6 +503,8 @@ func parseCLIArgs(args []string, runner *cliRunner) error {
 	options.ModuleToMarkdown.runner = runner
 	options.ModuleToSchema.runner = runner
 	options.SchemaToMarkdown.runner = runner
+	options.SchemaToJSON.runner = runner
+	options.SchemaToYAML.runner = runner
 	options.Template.runner = runner
 
 	parser := flags.NewParser(options, flags.HelpFlag)
@@ -423,13 +530,31 @@ Examples:
 > $ %s template > list.gotmpl
 > $ %s template -t table templates/table.gotmpl
 `, programName, programName)),
-		"schemadoc": strings.TrimSpace(fmt.Sprintf(`
+		"schema2md": strings.TrimSpace(fmt.Sprintf(`
 Convert JSON Schema to markdown.
 Reads schema from file argument or stdin; writes markdown to file argument or stdout.
+Use --format json|yaml to append example payload code block at the end.
 
 Examples:
-> $ %s schemadoc schema.json > schema.md
-> $ cat schema.json | %s schemadoc -t table > schema.table.md
+> $ %s schema2md schema.json > schema.md
+> $ cat schema.json | %s schema2md -t table > schema.table.md
+> $ %s schema2md --mode required --format yaml schema.json > schema.with-example.md
+`, programName, programName, programName)),
+		"schema2json": strings.TrimSpace(fmt.Sprintf(`
+Generate example JSON payload from schema.
+Reads schema from file argument or stdin; writes JSON to file argument or stdout.
+
+Examples:
+> $ %s schema2json schema.json > example.json
+> $ %s schema2json --mode required schema.json example.required.json
+`, programName, programName)),
+		"schema2yaml": strings.TrimSpace(fmt.Sprintf(`
+Generate example YAML payload from schema.
+Reads schema from file argument or stdin; writes YAML to file argument or stdout.
+
+Examples:
+> $ %s schema2yaml schema.json > example.yaml
+> $ %s schema2yaml --mode all schema.json example.all.yaml
 `, programName, programName)),
 		"mod2schema": strings.TrimSpace(fmt.Sprintf(`
 Reflect Go type into JSON Schema.
@@ -444,11 +569,13 @@ Examples:
 Generate markdown directly from Go type.
 This is `+"`mod2schema` + `schema2md`"+` in one command.
 Use the same module/package/type selection rules as `+"`mod2schema`"+`.
+Use --format json|yaml to append example payload code block at the end.
 
 Examples:
 > $ %s mod2md --module-root . --type Config github.com/acme/project > model.md
 > $ %s mod2md -t table --module-root . --type Config github.com/acme/project docs/model.table.md
-`, programName, programName)),
+> $ %s mod2md --mode required --format json --module-root . --type Config github.com/acme/project > model.with-example.md
+`, programName, programName, programName)),
 	}
 
 	for commandName, description := range descriptions {
@@ -459,6 +586,50 @@ Examples:
 
 		command.LongDescription = description
 	}
+}
+
+// resolveExampleMode validates CLI mode flag value.
+func resolveExampleMode(mode string) (schemadoc.ExampleMode, error) {
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case "all":
+		return schemadoc.ExampleModeAll, nil
+	case "required":
+		return schemadoc.ExampleModeRequired, nil
+	default:
+		return "", fmt.Errorf("unsupported example mode %q", mode)
+	}
+}
+
+// resolveExampleFormat validates CLI format flag value.
+func resolveExampleFormat(format string) (schemadoc.ExampleFormat, error) {
+	switch strings.ToLower(strings.TrimSpace(format)) {
+	case "json":
+		return schemadoc.ExampleFormatJSON, nil
+	case "yaml":
+		return schemadoc.ExampleFormatYAML, nil
+	default:
+		return "", fmt.Errorf("unsupported example format %q", format)
+	}
+}
+
+// resolveMarkdownExampleOptions parses optional markdown embedded example options.
+func resolveMarkdownExampleOptions(modeRaw, formatRaw string) (schemadoc.ExampleMode, schemadoc.ExampleFormat, error) {
+	formatRaw = strings.TrimSpace(formatRaw)
+	if formatRaw == "" {
+		return "", "", nil
+	}
+
+	mode, err := resolveExampleMode(modeRaw)
+	if err != nil {
+		return "", "", err
+	}
+
+	format, err := resolveExampleFormat(formatRaw)
+	if err != nil {
+		return "", "", err
+	}
+
+	return mode, format, nil
 }
 
 // extractSchemaDraftURI returns raw $schema value from schema document.

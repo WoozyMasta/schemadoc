@@ -511,6 +511,69 @@ func TestRenderCustomTemplate(t *testing.T) {
 	assertContains(t, rendered, "- Settings")
 }
 
+func TestRenderEmbedsExampleDocumentJSON(t *testing.T) {
+	t.Parallel()
+
+	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
+		"$ref": "#/$defs/Config",
+		"$defs": map[string]any{
+			"Config": map[string]any{
+				"type":     "object",
+				"required": []any{"name"},
+				"properties": map[string]any{
+					"name": map[string]any{
+						"type": "string",
+					},
+				},
+			},
+		},
+	}), Options{
+		ExampleFormat: ExampleFormatJSON,
+		ExampleMode:   ExampleModeRequired,
+	})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+
+	assertContains(t, rendered, "## Example json document")
+	assertContains(t, rendered, "```json")
+	assertContains(t, rendered, `"name": "<string>"`)
+}
+
+func TestRenderEmbedsExampleDocumentYAMLRequiredMode(t *testing.T) {
+	t.Parallel()
+
+	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
+		"$ref": "#/$defs/Config",
+		"$defs": map[string]any{
+			"Config": map[string]any{
+				"type":     "object",
+				"required": []any{"name"},
+				"properties": map[string]any{
+					"name": map[string]any{
+						"type": "string",
+					},
+					"mode": map[string]any{
+						"type":     "string",
+						"examples": []any{"safe"},
+					},
+				},
+			},
+		},
+	}), Options{
+		ExampleFormat: ExampleFormatYAML,
+		ExampleMode:   ExampleModeRequired,
+	})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+
+	assertContains(t, rendered, "## Example yaml document")
+	assertContains(t, rendered, "```yaml")
+	assertContains(t, rendered, "name: <string>")
+	assertNotContains(t, rendered, "mode: safe")
+}
+
 func TestRenderFixturesFromExamples(t *testing.T) {
 	t.Parallel()
 

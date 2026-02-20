@@ -54,7 +54,7 @@ ci: download tools-ci verify vulncheck tidy-check fmt-check vet lint align test
 clean:
 	rm -rf $(OUTPUT_DIR)
 
-build: clean
+build: clean example
 	@mkdir -p $(OUTPUT_DIR)
 	@echo ">> building native: $(BINARY)$(NATIVE_EXTENSION)"
 	GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) \
@@ -212,7 +212,7 @@ example:
 	@mkdir -p "$(EXAMPLE_DIR)"
 	$(GO) run ./cmd/schemadoc mod2schema -r . -y SchemaModel \
 		"$(MODULE_PATH)" "$(EXAMPLE_DIR)/schema.json"
-	$(GO) run ./cmd/schemadoc schema2md -T 'Example Schema Reference' -t list \
+	$(GO) run ./cmd/schemadoc schema2md -T 'Example Schema Reference' -t list -F json \
 		"$(EXAMPLE_DIR)/schema.json" "$(EXAMPLE_DIR)/schema.list.md"
-	$(GO) run ./cmd/schemadoc schema2md -T 'Example Schema Reference' -t table \
+	$(GO) run ./cmd/schemadoc schema2md -T 'Example Schema Reference' -t table -F yaml \
 		"$(EXAMPLE_DIR)/schema.json" "$(EXAMPLE_DIR)/schema.table.md"

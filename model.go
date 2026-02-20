@@ -46,6 +46,22 @@ type Options struct {
 	//  - `*`
 	ListMarker string `json:"list_marker,omitempty" jsonschema:"default=*,enum=-,enum=*,example=*,example=-"`
 
+	// ExampleMode controls property coverage for optional embedded example payload in markdown templates.
+	//
+	// Supported values:
+	//  - `all`
+	//  - `required`
+	ExampleMode ExampleMode `json:"example_mode,omitempty" jsonschema:"enum=all,enum=required,example=all,example=required"`
+
+	// ExampleFormat enables optional embedded example payload in markdown templates and selects encoding.
+	//
+	// Supported values:
+	//  - `json`
+	//  - `yaml`
+	//
+	// Empty value disables example embedding.
+	ExampleFormat ExampleFormat `json:"example_format,omitempty" jsonschema:"enum=json,enum=yaml,example=json,example=yaml"`
+
 	// WrapWidth defines word-wrap width for plain description paragraphs.
 	//
 	// Markdown structures such as lists, blockquotes, and fenced code blocks are preserved.

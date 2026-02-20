@@ -55,5 +55,27 @@ Detect JSON Schema draft support:
 
 	info := schemadoc.DetectDraft("https://json-schema.org/draft/2020-12/schema")
 	fmt.Printf("draft=%s supported=%v\n", info.Canonical, info.Supported)
+
+Generate example payload from schema:
+
+	jsonExample, err := schemadoc.GenerateExampleJSON(schemaBytes, schemadoc.ExampleModeRequired)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(jsonExample))
+
+Enable embedded example block in markdown template output:
+
+	md, err := schemadoc.Render(schemaBytes, schemadoc.Options{
+		TemplateName:  "list",
+		ExampleMode:   schemadoc.ExampleModeRequired,
+		ExampleFormat: schemadoc.ExampleFormatYAML,
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(md)
 */
 package schemadoc

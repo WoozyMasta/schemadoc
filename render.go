@@ -36,6 +36,8 @@ type renderView struct {
 	SchemaDraftSupport string
 	RootRef            string
 	ListMarker         string
+	ExampleFormat      string
+	ExampleDocument    string
 	Definitions        []definitionView
 }
 
@@ -89,6 +91,10 @@ func Render(schemaBytes []byte, opt Options) (string, error) {
 		return "", err
 	}
 
+	if err := applyExampleRenderView(schemaBytes, opt, &view); err != nil {
+		return "", err
+	}
+
 	markdownTemplate, err := resolveTemplate(opt)
 	if err != nil {
 		return "", err
@@ -100,6 +106,32 @@ func Render(schemaBytes []byte, opt Options) (string, error) {
 	}
 
 	return ensureTrailingNewline(normalizeMarkdownOutput(out.String())), nil
+}
+
+// applyExampleRenderView attaches optional example payload block to markdown template view.
+func applyExampleRenderView(schemaBytes []byte, opt Options, view *renderView) error {
+	if view == nil {
+		return nil
+	}
+
+	format := strings.TrimSpace(string(opt.ExampleFormat))
+	if format == "" {
+		return nil
+	}
+
+	mode := opt.ExampleMode
+	if strings.TrimSpace(string(mode)) == "" {
+		mode = ExampleModeAll
+	}
+
+	generated, err := GenerateExample(schemaBytes, mode, opt.ExampleFormat)
+	if err != nil {
+		return fmt.Errorf("generate embedded example: %w", err)
+	}
+
+	view.ExampleFormat = strings.ToLower(strings.TrimSpace(string(opt.ExampleFormat)))
+	view.ExampleDocument = strings.TrimRight(string(generated), "\n")
+	return nil
 }
 
 // BuiltinTemplateNames returns all available built-in template names.

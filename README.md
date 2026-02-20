@@ -26,7 +26,33 @@ writes markdown to file argument or stdout.
 ```shell
 schemadoc schema2md schema.json > schema.md
 cat schema.json | schemadoc schema2md -t table > schema.table.md
+schemadoc schema2md --mode required --format yaml schema.json > schema.with-example.md
 ```
+
+### `schema2json`
+
+Generate example JSON payload from JSON Schema.
+Reads schema from file argument or stdin;
+writes JSON to file argument or stdout.
+
+```shell
+schemadoc schema2json schema.json > config.example.json
+schemadoc schema2json --mode required schema.json config.required.json
+```
+
+### `schema2yaml`
+
+Generate example YAML payload from JSON Schema.
+Reads schema from file argument or stdin;
+writes YAML to file argument or stdout.
+
+```shell
+schemadoc schema2yaml schema.json > config.example.yaml
+schemadoc schema2yaml --mode all schema.json config.all.yaml
+```
+
+When YAML is generated, comments above keys are populated from
+schema `title` and `description` when present.
 
 ### `mod2schema`
 
@@ -40,7 +66,9 @@ and `--package` when type is not in module root package.
 
 ```shell
 schemadoc mod2schema --module-root . --type Config github.com/acme/project > schema.json
-schemadoc mod2schema --module-root . --package github.com/acme/project/internal/config --type Config github.com/acme/project schema.json
+schemadoc mod2schema --module-root . \
+  --package github.com/acme/project/internal/config \
+  --type Config github.com/acme/project schema.json
 ```
 
 ### `mod2md`
@@ -90,6 +118,9 @@ Key public API:
 * `BuiltinTemplateNames() []string`
 * `BuiltinTemplate(name string) (string, error)`
 * `DetectDraft(schemaURI string) DraftInfo`
+* `GenerateExample(schemaBytes []byte, mode ExampleMode, format ExampleFormat) ([]byte, error)`
+* `GenerateExampleJSON(schemaBytes []byte, mode ExampleMode) ([]byte, error)`
+* `GenerateExampleYAML(schemaBytes []byte, mode ExampleMode) ([]byte, error)`
 
 Examples:
 

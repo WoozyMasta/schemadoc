@@ -21,4 +21,12 @@ var (
 	ErrSchemaRootType = errors.New("schema root must be object or boolean")
 	// ErrParseBuiltinTemplate is returned when built-in template parsing fails.
 	ErrParseBuiltinTemplate = errors.New("parse built-in template")
+	// ErrUnknownExampleMode is returned when example generation mode is not supported.
+	ErrUnknownExampleMode = errors.New("unknown example mode")
+	// ErrUnknownExampleFormat is returned when example generation format is not supported.
+	ErrUnknownExampleFormat = errors.New("unknown example format")
+	// ErrEncodeExampleJSON is returned when generated example JSON encoding fails.
+	ErrEncodeExampleJSON = errors.New("encode example json")
+	// ErrEncodeExampleYAML is returned when generated example YAML encoding fails.
+	ErrEncodeExampleYAML = errors.New("encode example yaml")
 )

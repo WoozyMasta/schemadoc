@@ -63,3 +63,11 @@ No properties.
 
 {{ end -}}
 {{ end -}}
+
+{{ if .ExampleDocument -}}
+## Example {{ .ExampleFormat }} document
+
+```{{ .ExampleFormat }}
+{{ .ExampleDocument }}
+```
+{{ end -}}

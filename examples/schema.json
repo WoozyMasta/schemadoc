@@ -86,6 +86,30 @@
             "-"
           ]
         },
+        "example_mode": {
+          "type": "string",
+          "enum": [
+            "all",
+            "required"
+          ],
+          "description": "ExampleMode controls property coverage for optional embedded example payload in markdown templates.\n\nSupported values:\n - `all`\n - `required`",
+          "examples": [
+            "all",
+            "required"
+          ]
+        },
+        "example_format": {
+          "type": "string",
+          "enum": [
+            "json",
+            "yaml"
+          ],
+          "description": "ExampleFormat enables optional embedded example payload in markdown templates and selects encoding.\n\nSupported values:\n - `json`\n - `yaml`\n\nEmpty value disables example embedding.",
+          "examples": [
+            "json",
+            "yaml"
+          ]
+        },
         "wrap_width": {
           "type": "integer",
           "minimum": 1,
