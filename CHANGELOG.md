@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* Added comments about automatic generation to Markdown template files:
+  `<!-- Automatically generated file, do not modify! -->`
+
 ## [0.3.0][] - 2026-03-06
 
 ### Added
