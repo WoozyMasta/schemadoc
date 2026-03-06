@@ -13,6 +13,25 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.3.0][] - 2026-03-06
+
+### Added
+
+* `mod2schema` and `mod2md` now support `--key-namer` with
+  `none|snake|kebab|lower` strategies for fields without explicit `json` tags.
+
+### Changed
+
+* `render_attributes` now expands nested schema-like keywords into readable
+  attribute rows (for example `Items type`, `Items enum`, `Items examples`)
+  instead of one dense inline line.
+* String values in inline render output are shown without JSON quotes for
+  better readability.
+* Example generation for arrays now uses all `items.examples` values when they
+  are present.
+
+[0.3.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.2.0...v0.3.0
+
 ## [0.2.0][] - 2026-02-20
 
 ### Added
@@ -27,7 +46,7 @@ and this project adheres to [Semantic Versioning][].
 * `schema2md` and `mod2md` can now embed generated embedded example payload
   at the end of markdown.
 
-[0.2.0]: https://github.com/WoozyMasta/paa/compare/v0.1.0...v0.2.0
+[0.2.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.1.0...v0.2.0
 
 ## [0.1.0][] - 2026-02-19
 
