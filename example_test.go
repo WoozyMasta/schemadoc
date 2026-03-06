@@ -127,6 +127,43 @@ func TestGenerateExampleJSONSupportsLocalDefinitionRefs(t *testing.T) {
 	}
 }
 
+func TestGenerateExampleJSONArrayUsesItemsExamples(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"$ref": "#/$defs/Config",
+		"$defs": map[string]any{
+			"Config": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"languages": map[string]any{
+						"type": "array",
+						"items": map[string]any{
+							"type":     "string",
+							"examples": []any{"czech", "russian"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	gotBytes, err := GenerateExampleJSON(schema, ExampleModeAll)
+	if err != nil {
+		t.Fatalf("GenerateExampleJSON: %v", err)
+	}
+
+	var got map[string]any
+	if err := json.Unmarshal(gotBytes, &got); err != nil {
+		t.Fatalf("unmarshal generated json: %v", err)
+	}
+
+	want := []any{"czech", "russian"}
+	if !reflect.DeepEqual(got["languages"], want) {
+		t.Fatalf("languages example mismatch\ngot:  %#v\nwant: %#v", got["languages"], want)
+	}
+}
+
 // buildExampleSchemaFixture returns schema used across example generation tests.
 func buildExampleSchemaFixture(t *testing.T) []byte {
 	t.Helper()

@@ -60,6 +60,6 @@ Attributes:
 
 * Type: `string`
 * Required: no
-* Default: `"safe"`
-* Enum: `"safe"`, `"fast"`
-* Examples: `"safe"`
+* Default: `safe`
+* Enum: `safe`, `fast`
+* Examples: `safe`

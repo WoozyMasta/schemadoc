@@ -283,6 +283,17 @@ func (builder *exampleBuilder) buildArrayFromObject(object map[string]any) []any
 
 	item, ok := toSchemaValue(object["items"])
 	if ok {
+		if item.Object != nil {
+			if values := asSlice(item.Object["examples"]); len(values) > 0 {
+				out := make([]any, 0, len(values))
+				for _, value := range values {
+					out = append(out, cloneJSONValue(value))
+				}
+
+				return out
+			}
+		}
+
 		return []any{builder.buildNode(item)}
 	}
 

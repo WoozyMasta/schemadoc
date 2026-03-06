@@ -318,12 +318,120 @@ func TestRenderIncludesKeywordCoverageSummaries(t *testing.T) {
 
 	assertContains(t, rendered, "Composition: oneOf=1; anyOf=1; allOf=1")
 	assertContains(t, rendered, "Conditional: if, then, else")
-	assertContains(t, rendered, "Not: inline schema")
+	assertContains(t, rendered, "Not const: `3`")
 	assertContains(t, rendered, "Read only: yes")
 	assertContains(t, rendered, "Write only: no")
 	assertContains(t, rendered, "Deprecated: yes")
 	assertContains(t, rendered, "Content encoding: `base64`")
-	assertContains(t, rendered, "Other keywords: x-unknown-keyword=\"value\"")
+	assertContains(t, rendered, "Other keywords: x-unknown-keyword=value")
+}
+
+func TestRenderIncludesItemsEnumAndExamplesInSummary(t *testing.T) {
+	t.Parallel()
+
+	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
+		"$ref": "#/$defs/Config",
+		"$defs": map[string]any{
+			"Config": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"languages": map[string]any{
+						"type": "array",
+						"items": map[string]any{
+							"type":     "string",
+							"enum":     []any{"english", "czech"},
+							"examples": []any{"czech", "russian"},
+						},
+					},
+				},
+			},
+		},
+	}), Options{})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+
+	assertContains(t, rendered, "Items type: `string`")
+	assertContains(t, rendered, "Items enum: `english`, `czech`")
+	assertContains(t, rendered, "Items examples: `czech`, `russian`")
+}
+
+func TestRenderSummarizesNestedSchemaAttributes(t *testing.T) {
+	t.Parallel()
+
+	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
+		"$ref": "#/$defs/Config",
+		"$defs": map[string]any{
+			"Config": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"values": map[string]any{
+						"type": "array",
+						"items": map[string]any{
+							"type":      "string",
+							"default":   "seed",
+							"format":    "uuid",
+							"minLength": 1,
+						},
+					},
+				},
+			},
+		},
+	}), Options{})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+
+	assertContains(t, rendered, "Items type: `string`")
+	assertContains(t, rendered, "Items default: `seed`")
+	assertContains(t, rendered, "Items format: `uuid`")
+	assertContains(t, rendered, "Items constraints: minLength=1")
+}
+
+func TestRenderSummarizesSchemaTupleList(t *testing.T) {
+	t.Parallel()
+
+	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
+		"$ref": "#/$defs/Config",
+		"$defs": map[string]any{
+			"Config": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"tuple": map[string]any{
+						"type": "array",
+						"prefixItems": []any{
+							map[string]any{
+								"type":    "integer",
+								"minimum": 1,
+							},
+							map[string]any{
+								"type": "string",
+								"enum": []any{"a", "b"},
+							},
+							map[string]any{
+								"$ref": "#/$defs/Shared",
+							},
+							map[string]any{
+								"type": "boolean",
+							},
+						},
+					},
+				},
+			},
+			"Shared": map[string]any{
+				"type": "number",
+			},
+		},
+	}), Options{})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+
+	assertContains(t, rendered, "Prefix items: schema list (4):")
+	assertContains(t, rendered, "#1 schema type `integer`; constraints minimum=1")
+	assertContains(t, rendered, "#2 schema type `string`; enum `a`, `b`")
+	assertContains(t, rendered, "#3 reference `#/$defs/Shared`")
+	assertContains(t, rendered, "... +1")
 }
 
 func TestRenderPreservesMarkdownDescription(t *testing.T) {

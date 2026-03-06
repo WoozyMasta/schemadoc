@@ -142,19 +142,19 @@ func schemaAttributes(node schemaValue, required *bool) []attributeView {
 	}
 
 	if value, ok := obj["default"]; ok {
-		out = append(out, attributeView{Name: "Default", Value: fmt.Sprintf("`%s`", escapeInline(mustJSONInline(value)))})
+		out = append(out, attributeView{Name: "Default", Value: inlineCodeValue(value)})
 	}
 
 	if enum := asSlice(obj["enum"]); len(enum) > 0 {
-		out = append(out, attributeView{Name: "Enum", Value: jsonList(enum)})
+		out = append(out, attributeView{Name: "Enum", Value: inlineValueList(enum)})
 	}
 
 	if value, ok := obj["const"]; ok {
-		out = append(out, attributeView{Name: "Const", Value: fmt.Sprintf("`%s`", escapeInline(mustJSONInline(value)))})
+		out = append(out, attributeView{Name: "Const", Value: inlineCodeValue(value)})
 	}
 
 	if examples := asSlice(obj["examples"]); len(examples) > 0 {
-		out = append(out, attributeView{Name: "Examples", Value: jsonList(examples)})
+		out = append(out, attributeView{Name: "Examples", Value: inlineValueList(examples)})
 	}
 
 	if value := asString(obj["format"]); value != "" {
@@ -182,27 +182,27 @@ func schemaAttributes(node schemaValue, required *bool) []attributeView {
 	}
 
 	if value, ok := obj["contentSchema"]; ok {
-		out = append(out, attributeView{Name: "Content schema", Value: summarizeSchemaLike(value)})
+		out = appendSchemaLikeAttributes(out, "Content schema", value)
 	}
 
 	if value, ok := obj["items"]; ok {
-		out = append(out, attributeView{Name: "Items", Value: summarizeSchemaLike(value)})
+		out = appendSchemaLikeAttributes(out, "Items", value)
 	}
 
 	if value, ok := obj["prefixItems"]; ok {
-		out = append(out, attributeView{Name: "Prefix items", Value: summarizeSchemaLike(value)})
+		out = appendSchemaLikeAttributes(out, "Prefix items", value)
 	}
 
 	if value, ok := obj["additionalItems"]; ok {
-		out = append(out, attributeView{Name: "Additional items", Value: summarizeSchemaLike(value)})
+		out = appendSchemaLikeAttributes(out, "Additional items", value)
 	}
 
 	if value, ok := obj["contains"]; ok {
-		out = append(out, attributeView{Name: "Contains", Value: summarizeSchemaLike(value)})
+		out = appendSchemaLikeAttributes(out, "Contains", value)
 	}
 
 	if value, ok := obj["unevaluatedItems"]; ok {
-		out = append(out, attributeView{Name: "Unevaluated items", Value: summarizeSchemaLike(value)})
+		out = appendSchemaLikeAttributes(out, "Unevaluated items", value)
 	}
 
 	if properties := mapSchemaValues(obj["properties"]); len(properties) > 0 {
@@ -214,19 +214,19 @@ func schemaAttributes(node schemaValue, required *bool) []attributeView {
 	}
 
 	if value, ok := obj["additionalProperties"]; ok {
-		out = append(out, attributeView{Name: "Additional properties", Value: summarizeSchemaLike(value)})
+		out = appendSchemaLikeAttributes(out, "Additional properties", value)
 	}
 
 	if value, ok := obj["unevaluatedProperties"]; ok {
-		out = append(out, attributeView{Name: "Unevaluated properties", Value: summarizeSchemaLike(value)})
+		out = appendSchemaLikeAttributes(out, "Unevaluated properties", value)
 	}
 
 	if value, ok := obj["propertyNames"]; ok {
-		out = append(out, attributeView{Name: "Property names", Value: summarizeSchemaLike(value)})
+		out = appendSchemaLikeAttributes(out, "Property names", value)
 	}
 
 	if value, ok := obj["dependentRequired"]; ok {
-		out = append(out, attributeView{Name: "Dependent required", Value: fmt.Sprintf("`%s`", escapeInline(mustJSONInline(value)))})
+		out = append(out, attributeView{Name: "Dependent required", Value: inlineCodeValue(value)})
 	}
 
 	if values := mapSchemaValues(obj["dependentSchemas"]); len(values) > 0 {
@@ -234,7 +234,7 @@ func schemaAttributes(node schemaValue, required *bool) []attributeView {
 	}
 
 	if value, ok := obj["dependencies"]; ok {
-		out = append(out, attributeView{Name: "Dependencies", Value: fmt.Sprintf("`%s`", escapeInline(mustJSONInline(value)))})
+		out = append(out, attributeView{Name: "Dependencies", Value: inlineCodeValue(value)})
 	}
 
 	if composition := compositionSummary(obj); composition != "" {
@@ -246,7 +246,7 @@ func schemaAttributes(node schemaValue, required *bool) []attributeView {
 	}
 
 	if _, ok := obj["not"]; ok {
-		out = append(out, attributeView{Name: "Not", Value: summarizeSchemaLike(obj["not"])})
+		out = appendSchemaLikeAttributes(out, "Not", obj["not"])
 	}
 
 	if constraints := constraintList(obj); len(constraints) > 0 {
@@ -264,34 +264,185 @@ func schemaAttributes(node schemaValue, required *bool) []attributeView {
 	return out
 }
 
+// appendSchemaLikeAttributes expands schema-like keywords into readable rows.
+func appendSchemaLikeAttributes(out []attributeView, name string, value any) []attributeView {
+	appendNamed := func(suffix string, value string) {
+		key := name
+		if suffix != "" {
+			key += " " + suffix
+		}
+
+		out = append(out, attributeView{Name: key, Value: value})
+	}
+
+	switch typed := value.(type) {
+	case bool:
+		appendNamed("", "boolean schema="+strconv.FormatBool(typed))
+		return out
+	case map[string]any:
+		appended := false
+
+		if ref := asString(typed["$ref"]); ref != "" {
+			appendNamed("reference", fmt.Sprintf("`%s`", escapeInline(ref)))
+			appended = true
+		}
+
+		if ref := asString(typed["$dynamicRef"]); ref != "" {
+			appendNamed("dynamic reference", fmt.Sprintf("`%s`", escapeInline(ref)))
+			appended = true
+		}
+
+		if ref := asString(typed["$recursiveRef"]); ref != "" {
+			appendNamed("recursive reference", fmt.Sprintf("`%s`", escapeInline(ref)))
+			appended = true
+		}
+
+		if typedType := typeString(typed["type"]); typedType != "" {
+			appendNamed("type", fmt.Sprintf("`%s`", escapeInline(typedType)))
+			appended = true
+		}
+
+		if value, ok := typed["default"]; ok {
+			appendNamed("default", inlineCodeValue(value))
+			appended = true
+		}
+
+		if value, ok := typed["const"]; ok {
+			appendNamed("const", inlineCodeValue(value))
+			appended = true
+		}
+
+		if enum := asSlice(typed["enum"]); len(enum) > 0 {
+			appendNamed("enum", inlineValueList(enum))
+			appended = true
+		}
+
+		if examples := asSlice(typed["examples"]); len(examples) > 0 {
+			appendNamed("examples", inlineValueList(examples))
+			appended = true
+		}
+
+		if format := asString(typed["format"]); format != "" {
+			appendNamed("format", fmt.Sprintf("`%s`", escapeInline(format)))
+			appended = true
+		}
+
+		if constraints := constraintList(typed); len(constraints) > 0 {
+			appendNamed("constraints", strings.Join(constraints, "; "))
+			appended = true
+		}
+
+		if composition := compositionSummary(typed); composition != "" {
+			appendNamed("composition", composition)
+			appended = true
+		}
+
+		if conditional := conditionalSummary(typed); conditional != "" {
+			appendNamed("conditional", conditional)
+			appended = true
+		}
+
+		if !appended {
+			appendNamed("", "inline schema")
+		}
+
+		return out
+	case []any:
+		appendNamed("", summarizeSchemaList(typed))
+		return out
+	default:
+		appendNamed("", inlineCodeValue(typed))
+		return out
+	}
+}
+
 // summarizeSchemaLike provides compact markdown text for schema-like value.
 func summarizeSchemaLike(value any) string {
 	switch typed := value.(type) {
 	case bool:
 		return "boolean schema=" + strconv.FormatBool(typed)
 	case map[string]any:
+		parts := make([]string, 0, 5)
+
 		if ref := asString(typed["$ref"]); ref != "" {
-			return "reference `" + escapeInline(ref) + "`"
+			parts = append(parts, "reference `"+escapeInline(ref)+"`")
 		}
 
 		if ref := asString(typed["$dynamicRef"]); ref != "" {
-			return "dynamicRef `" + escapeInline(ref) + "`"
+			parts = append(parts, "dynamicRef `"+escapeInline(ref)+"`")
 		}
 
 		if ref := asString(typed["$recursiveRef"]); ref != "" {
-			return "recursiveRef `" + escapeInline(ref) + "`"
+			parts = append(parts, "recursiveRef `"+escapeInline(ref)+"`")
 		}
 
 		if typedType := typeString(typed["type"]); typedType != "" {
-			return "schema type `" + escapeInline(typedType) + "`"
+			parts = append(parts, "schema type `"+escapeInline(typedType)+"`")
 		}
 
-		return "inline schema"
+		if value, ok := typed["default"]; ok {
+			parts = append(parts, "default "+inlineCodeValue(value))
+		}
+
+		if value, ok := typed["const"]; ok {
+			parts = append(parts, "const "+inlineCodeValue(value))
+		}
+
+		if enum := asSlice(typed["enum"]); len(enum) > 0 {
+			parts = append(parts, "enum "+inlineValueList(enum))
+		}
+
+		if examples := asSlice(typed["examples"]); len(examples) > 0 {
+			parts = append(parts, "examples "+inlineValueList(examples))
+		}
+
+		if format := asString(typed["format"]); format != "" {
+			parts = append(parts, "format `"+escapeInline(format)+"`")
+		}
+
+		if constraints := constraintList(typed); len(constraints) > 0 {
+			parts = append(parts, "constraints "+strings.Join(constraints, ", "))
+		}
+
+		if composition := compositionSummary(typed); composition != "" {
+			parts = append(parts, "composition "+composition)
+		}
+
+		if conditional := conditionalSummary(typed); conditional != "" {
+			parts = append(parts, "conditional "+conditional)
+		}
+
+		if len(parts) == 0 {
+			return "inline schema"
+		}
+
+		return strings.Join(parts, "; ")
 	case []any:
-		return "schema list (" + strconv.Itoa(len(typed)) + ")"
+		return summarizeSchemaList(typed)
 	default:
-		return fmt.Sprintf("`%s`", escapeInline(mustJSONInline(typed)))
+		return inlineCodeValue(typed)
 	}
+}
+
+// summarizeSchemaList provides compact markdown text for schema tuple lists.
+func summarizeSchemaList(items []any) string {
+	if len(items) == 0 {
+		return "schema list (0)"
+	}
+
+	const previewLimit = 3
+	preview := min(len(items), previewLimit)
+
+	parts := make([]string, 0, preview+1)
+	for index := range preview {
+		parts = append(parts, "#"+strconv.Itoa(index+1)+" "+summarizeSchemaLike(items[index]))
+	}
+
+	if len(items) > preview {
+		parts = append(parts, "... +"+strconv.Itoa(len(items)-preview))
+	}
+
+	return "schema list (" + strconv.Itoa(len(items)) + "): " + strings.Join(parts, "; ")
 }
 
 // compositionSummary renders one-line summary for allOf/anyOf/oneOf combinations.
@@ -358,11 +509,11 @@ func constraintList(node map[string]any) []string {
 		}
 
 		if key == "pattern" {
-			out = append(out, key+"="+mustJSONInline(value))
+			out = append(out, key+"="+inlineValueText(value))
 			continue
 		}
 
-		out = append(out, key+"="+mustJSONInline(value))
+		out = append(out, key+"="+inlineValueText(value))
 	}
 
 	return out
@@ -380,7 +531,7 @@ func otherKeywordList(node map[string]any) []string {
 			continue
 		}
 
-		out = append(out, key+"="+mustJSONInline(node[key]))
+		out = append(out, key+"="+inlineValueText(node[key]))
 	}
 
 	return out
@@ -409,12 +560,27 @@ func yesNo(value bool) string {
 	return "no"
 }
 
-// jsonList renders JSON values list into comma-separated inline code tokens.
-func jsonList(values []any) string {
+// inlineValueList renders mixed values as inline code tokens.
+// String values are rendered without JSON quotes for readability.
+func inlineValueList(values []any) string {
 	parts := make([]string, 0, len(values))
 	for _, item := range values {
-		parts = append(parts, fmt.Sprintf("`%s`", escapeInline(mustJSONInline(item))))
+		parts = append(parts, inlineCodeValue(item))
 	}
 
 	return strings.Join(parts, ", ")
+}
+
+// inlineCodeValue renders value as inline code token.
+func inlineCodeValue(value any) string {
+	return fmt.Sprintf("`%s`", escapeInline(inlineValueText(value)))
+}
+
+// inlineValueText renders value text without JSON quotes for strings.
+func inlineValueText(value any) string {
+	if text, ok := value.(string); ok {
+		return text
+	}
+
+	return mustJSONInline(value)
 }
