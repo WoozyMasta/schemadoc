@@ -1,3 +1,5 @@
+<!-- Automatically generated file, do not modify! -->
+
 # Example Schema Reference
 
 * Source schema: `examples/schema.json`
@@ -314,3 +316,4 @@ options:
   # Markdown structures such as lists, blockquotes, and fenced code blocks are preserved.
   wrap_width: 80
 ```
+<!-- Automatically generated file, do not modify! -->

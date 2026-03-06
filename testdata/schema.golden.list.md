@@ -1,3 +1,5 @@
+<!-- Automatically generated file, do not modify! -->
+
 # schema reference
 
 * Source schema: `testdata/schema.fixture.json`
@@ -63,3 +65,5 @@ Attributes:
 * Default: `safe`
 * Enum: `safe`, `fast`
 * Examples: `safe`
+
+<!-- Automatically generated file, do not modify! -->

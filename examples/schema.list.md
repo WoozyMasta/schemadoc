@@ -1,3 +1,5 @@
+<!-- Automatically generated file, do not modify! -->
+
 # Example Schema Reference
 
 * Source schema: `examples/schema.json`
@@ -285,3 +287,4 @@ Attributes:
   }
 }
 ```
+<!-- Automatically generated file, do not modify! -->
