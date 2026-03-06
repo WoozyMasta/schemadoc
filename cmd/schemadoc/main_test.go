@@ -386,6 +386,34 @@ func TestRunMod2SchemaWritesSchemaToOutputFile(t *testing.T) {
 	}
 }
 
+func TestBuildSchemaGeneratorProgramIncludesKeyNamer(t *testing.T) {
+	t.Parallel()
+
+	source := buildSchemaGeneratorProgram(moduleSchemaOptions{
+		ModulePath:     testModulePath,
+		TypeName:       "SchemaModel",
+		PackagePath:    testModulePath,
+		ModuleRootPath: "/tmp/module",
+		KeyNamer:       "snake",
+	})
+
+	assertContains(t, source, `applyKeyNamer(reflector, "snake")`)
+	assertContains(t, source, `case "snake":`)
+}
+
+func TestNormalizeModuleSchemaOptionsDefaultKeyNamer(t *testing.T) {
+	t.Parallel()
+
+	options := normalizeModuleSchemaOptions(moduleSchemaOptions{
+		ModulePath: "github.com/acme/project",
+		TypeName:   "Config",
+	})
+
+	if options.KeyNamer != "none" {
+		t.Fatalf("KeyNamer=%q, want %q", options.KeyNamer, "none")
+	}
+}
+
 func TestRunMod2MarkdownWritesToStdout(t *testing.T) {
 	t.Parallel()
 

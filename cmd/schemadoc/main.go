@@ -7,6 +7,7 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/jessevdk/go-flags"
@@ -37,6 +39,13 @@ var (
 	_buildTime string
 )
 
+//go:embed templates/mod2schema_helper.go.tmpl
+var mod2schemaHelperTemplate string
+
+var schemaGeneratorProgramTemplate = template.Must(
+	template.New("mod2schema_helper").Parse(mod2schemaHelperTemplate),
+)
+
 // cliOptions describes schemadoc CLI flags and subcommands.
 type cliOptions struct {
 	Version          versionCommand          `command:"version" description:"Print version information"`
@@ -53,6 +62,7 @@ type moduleReflectFlags struct {
 	ModuleRootPath string `short:"r" long:"module-root" description:"Filesystem path to module root (where go.mod is); used as working dir" default:"."`
 	PackagePath    string `short:"p" long:"package" description:"Go package import path where the type is declared (optional; defaults to module argument)"`
 	TypeName       string `short:"y" long:"type" description:"Go type name to reflect into schema (for example: Config)" required:"yes"`
+	KeyNamer       string `long:"key-namer" description:"Optional reflected key naming strategy for fields without json tags" choice:"none" choice:"snake" choice:"kebab" choice:"lower" default:"none"`
 }
 
 // markdownRenderFlags groups markdown rendering flags.
@@ -102,6 +112,7 @@ func (command *moduleToMarkdownCommand) Execute(_ []string) error {
 			TypeName:       command.ModuleFlags.TypeName,
 			PackagePath:    command.ModuleFlags.PackagePath,
 			ModuleRootPath: command.ModuleFlags.ModuleRootPath,
+			KeyNamer:       command.ModuleFlags.KeyNamer,
 		},
 		command.TemplateFlags.TemplateName,
 		command.RenderFlags.Title,
@@ -132,6 +143,7 @@ func (command *moduleToSchemaCommand) Execute(_ []string) error {
 		TypeName:       command.ModuleFlags.TypeName,
 		PackagePath:    command.ModuleFlags.PackagePath,
 		ModuleRootPath: command.ModuleFlags.ModuleRootPath,
+		KeyNamer:       command.ModuleFlags.KeyNamer,
 	}, command.Args.Output)
 }
 
@@ -248,6 +260,22 @@ type moduleSchemaOptions struct {
 	PackagePath string
 	// ModuleRootPath is local working directory for go run and AddGoComments.
 	ModuleRootPath string
+	// KeyNamer is optional reflected key naming strategy.
+	KeyNamer string
+}
+
+// schemaGeneratorTemplateData provides values for helper source template.
+type schemaGeneratorTemplateData struct {
+	// PackagePath is import path for reflected target package.
+	PackagePath string
+	// KeyNamer controls reflected key naming strategy.
+	KeyNamer string
+	// ModulePath is base module import path for AddGoComments.
+	ModulePath string
+	// ModuleRootPath is local module root path for comments normalization.
+	ModuleRootPath string
+	// TypeName is reflected root type.
+	TypeName string
 }
 
 func init() {
@@ -564,7 +592,8 @@ Use --module-root for local module directory and --package when type is not in m
 Examples:
 > $ %s mod2schema --module-root . --type Config github.com/acme/project > schema.json
 > $ %s mod2schema --module-root . --package github.com/acme/project/internal/config --type Config github.com/acme/project schema.json
-`, programName, programName)),
+> $ %s mod2schema --module-root . --type Config --key-namer snake github.com/acme/project > schema.snake.json
+`, programName, programName, programName)),
 		"mod2md": strings.TrimSpace(fmt.Sprintf(`
 Generate markdown directly from Go type.
 This is `+"`mod2schema` + `schema2md`"+` in one command.
@@ -575,7 +604,8 @@ Examples:
 > $ %s mod2md --module-root . --type Config github.com/acme/project > model.md
 > $ %s mod2md -t table --module-root . --type Config github.com/acme/project docs/model.table.md
 > $ %s mod2md --mode required --format json --module-root . --type Config github.com/acme/project > model.with-example.md
-`, programName, programName, programName)),
+> $ %s mod2md --module-root . --type Config --key-namer snake github.com/acme/project > model.snake.md
+`, programName, programName, programName, programName)),
 	}
 
 	for commandName, description := range descriptions {
@@ -701,77 +731,30 @@ func normalizeModuleSchemaOptions(options moduleSchemaOptions) moduleSchemaOptio
 		options.ModuleRootPath = "."
 	}
 
+	options.KeyNamer = strings.ToLower(strings.TrimSpace(options.KeyNamer))
+	if options.KeyNamer == "" {
+		options.KeyNamer = "none"
+	}
+
 	return options
 }
 
 // buildSchemaGeneratorProgram renders temporary Go source used to reflect target module type.
 func buildSchemaGeneratorProgram(options moduleSchemaOptions) string {
-	return fmt.Sprintf(`package main
-
-import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"strings"
-
-	"github.com/invopop/jsonschema"
-	target %q
-)
-
-func normalizeCommentKeys(r *jsonschema.Reflector, base, root string) {
-	if r == nil || r.CommentMap == nil {
-		return
+	var out bytes.Buffer
+	data := schemaGeneratorTemplateData{
+		PackagePath:    options.PackagePath,
+		KeyNamer:       options.KeyNamer,
+		ModulePath:     options.ModulePath,
+		ModuleRootPath: options.ModuleRootPath,
+		TypeName:       options.TypeName,
 	}
 
-	base = strings.TrimSuffix(strings.TrimSpace(base), "/")
-	root = strings.ReplaceAll(strings.TrimSpace(root), "\\", "/")
-	root = strings.TrimSuffix(root, "/")
-	if base == "" || root == "" {
-		return
+	if err := schemaGeneratorProgramTemplate.Execute(&out, data); err != nil {
+		panic(fmt.Sprintf("render mod2schema helper template: %v", err))
 	}
 
-	prefix := base + "/" + strings.TrimPrefix(root, "/")
-	normalized := make(map[string]string, len(r.CommentMap))
-	for key, value := range r.CommentMap {
-		normalizedKey := strings.ReplaceAll(key, "\\", "/")
-		if strings.HasPrefix(normalizedKey, prefix) {
-			normalizedKey = base + strings.TrimPrefix(normalizedKey, prefix)
-		}
-
-		normalized[normalizedKey] = value
-	}
-
-	r.CommentMap = normalized
-}
-
-func main() {
-	reflector := new(jsonschema.Reflector)
-
-	if err := reflector.AddGoComments(%q, %q); err != nil {
-		fmt.Fprintf(os.Stderr, "add go comments: %%v\\n", err)
-		os.Exit(1)
-	}
-	normalizeCommentKeys(reflector, %q, %q)
-
-	schema := reflector.Reflect(&target.%s{})
-	if schema == nil {
-		fmt.Fprintln(os.Stderr, "reflect schema: empty result")
-		os.Exit(1)
-	}
-
-	data, err := json.MarshalIndent(schema, "", "  ")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "marshal schema: %%v\\n", err)
-		os.Exit(1)
-	}
-
-	data = append(data, '\n')
-	if _, err := os.Stdout.Write(data); err != nil {
-		fmt.Fprintf(os.Stderr, "write schema to stdout: %%v\\n", err)
-		os.Exit(1)
-	}
-}
-`, options.PackagePath, options.ModulePath, options.ModuleRootPath, options.ModulePath, options.ModuleRootPath, options.TypeName)
+	return out.String()
 }
 
 // writeSchemaGeneratorProgram stores temporary source code in system temp directory.

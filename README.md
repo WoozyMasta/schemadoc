@@ -69,6 +69,8 @@ schemadoc mod2schema --module-root . --type Config github.com/acme/project > sch
 schemadoc mod2schema --module-root . \
   --package github.com/acme/project/internal/config \
   --type Config github.com/acme/project schema.json
+schemadoc mod2schema --module-root . --type Config --key-namer snake \
+  github.com/acme/project > schema.snake.json
 ```
 
 ### `mod2md`
@@ -83,7 +85,13 @@ Same module/package/type selection rules as `mod2schema`.
 ```shell
 schemadoc mod2md --module-root . --type Config github.com/acme/project > model.md
 schemadoc mod2md -t table --module-root . --type Config github.com/acme/project docs/model.table.md
+schemadoc mod2md --module-root . --type Config --key-namer snake \
+  github.com/acme/project > model.snake.md
 ```
+
+When `--key-namer` is set, field names without explicit `json:"..."` tags are
+transformed during reflection. Supported values are `none` (default), `snake`,
+`kebab`, and `lower`.
 
 ### `template`
 

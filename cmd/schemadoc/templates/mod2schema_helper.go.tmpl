@@ -1,0 +1,115 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+	"unicode"
+
+	"github.com/invopop/jsonschema"
+	target {{ printf "%q" .PackagePath }}
+)
+
+func normalizeCommentKeys(r *jsonschema.Reflector, base, root string) {
+	if r == nil || r.CommentMap == nil {
+		return
+	}
+
+	base = strings.TrimSuffix(strings.TrimSpace(base), "/")
+	root = strings.ReplaceAll(strings.TrimSpace(root), "\\", "/")
+	root = strings.TrimSuffix(root, "/")
+	if base == "" || root == "" {
+		return
+	}
+
+	prefix := base + "/" + strings.TrimPrefix(root, "/")
+	normalized := make(map[string]string, len(r.CommentMap))
+	for key, value := range r.CommentMap {
+		normalizedKey := strings.ReplaceAll(key, "\\", "/")
+		if strings.HasPrefix(normalizedKey, prefix) {
+			normalizedKey = base + strings.TrimPrefix(normalizedKey, prefix)
+		}
+
+		normalized[normalizedKey] = value
+	}
+
+	r.CommentMap = normalized
+}
+
+func toSeparatedLower(name string, separator rune) string {
+	var out []rune
+	for index, r := range name {
+		if unicode.IsUpper(r) {
+			if index > 0 && len(out) > 0 && out[len(out)-1] != separator {
+				out = append(out, separator)
+			}
+
+			out = append(out, unicode.ToLower(r))
+			continue
+		}
+
+		out = append(out, unicode.ToLower(r))
+	}
+
+	return string(out)
+}
+
+func applyKeyNamer(r *jsonschema.Reflector, mode string) error {
+	if r == nil {
+		return nil
+	}
+
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case "", "none":
+		return nil
+	case "snake":
+		r.KeyNamer = func(name string) string {
+			return toSeparatedLower(name, '_')
+		}
+	case "kebab":
+		r.KeyNamer = func(name string) string {
+			return toSeparatedLower(name, '-')
+		}
+	case "lower":
+		r.KeyNamer = func(name string) string {
+			return strings.ToLower(strings.TrimSpace(name))
+		}
+	default:
+		return fmt.Errorf("unsupported key namer %q", mode)
+	}
+
+	return nil
+}
+
+func main() {
+	reflector := new(jsonschema.Reflector)
+	if err := applyKeyNamer(reflector, {{ printf "%q" .KeyNamer }}); err != nil {
+		fmt.Fprintf(os.Stderr, "apply key namer: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := reflector.AddGoComments({{ printf "%q" .ModulePath }}, {{ printf "%q" .ModuleRootPath }}); err != nil {
+		fmt.Fprintf(os.Stderr, "add go comments: %v\n", err)
+		os.Exit(1)
+	}
+	normalizeCommentKeys(reflector, {{ printf "%q" .ModulePath }}, {{ printf "%q" .ModuleRootPath }})
+
+	schema := reflector.Reflect(&target.{{ .TypeName }}{})
+	if schema == nil {
+		fmt.Fprintln(os.Stderr, "reflect schema: empty result")
+		os.Exit(1)
+	}
+
+	data, err := json.MarshalIndent(schema, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "marshal schema: %v\n", err)
+		os.Exit(1)
+	}
+
+	data = append(data, '\n')
+	if _, err := os.Stdout.Write(data); err != nil {
+		fmt.Fprintf(os.Stderr, "write schema to stdout: %v\n", err)
+		os.Exit(1)
+	}
+}
