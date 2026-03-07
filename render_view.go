@@ -57,8 +57,11 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 		SchemaDraftSupport: draftSupportText(doc.Draft),
 		RootRef:            escapeInline(orNone(doc.Ref)),
 		ListMarker:         listMarker,
+		Contents:           buildContents(definitions, rootDefinition, defOrder),
 		Definitions:        make([]definitionView, 0, len(defOrder)),
 	}
+	pathAnchors := make(map[string]string)
+	ambiguousPathAnchors := make(map[string]struct{})
 
 	for _, defName := range defOrder {
 		node := definitions[defName]
@@ -83,17 +86,19 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 		for _, propName := range order {
 			prop := properties[propName]
 			propRequired := isRequired(required, propName)
-
-			paths := buildPropertyPaths(basePaths, propName, isRootDefinition)
-			escapedPaths := make([]string, 0, len(paths))
-			for _, path := range paths {
-				escapedPaths = append(escapedPaths, escapeInline(path))
-			}
+			headingText := defName + "." + propertyHeadingName(propName, prop)
+			headingAnchor := markdownHeadingAnchor(headingText)
+			allPaths := buildPropertyPaths(basePaths, propName, false)
+			paths := filterPropertyPaths(allPaths, propertyPathFilterOptions{
+				HideRootPath: isRootDefinition,
+				RootPath:     strings.TrimSpace(propName),
+			})
+			indexPathAnchors(pathAnchors, ambiguousPathAnchors, allPaths, headingAnchor)
 
 			definition.Properties = append(definition.Properties, propertyView{
-				Heading:     escapeInline(defName + "." + propertyHeadingName(propName, prop)),
+				Heading:     escapeInline(headingText),
 				Name:        escapeInline(propName),
-				Paths:       escapedPaths,
+				Paths:       paths,
 				Description: formatDescriptionMarkdown(nodeDescription(prop), wrapWidth, listMarker),
 				Attributes:  schemaAttributes(prop, &propRequired),
 			})
@@ -105,8 +110,77 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 	if len(view.Definitions) == 0 {
 		return renderView{}, errors.New("schema has no renderable definitions")
 	}
+	applyPathLinks(&view, pathAnchors)
 
 	return view, nil
+}
+
+// buildContents builds a deterministic nested TOC from reference graph.
+func buildContents(definitions map[string]schemaValue, rootDefinition string, definitionOrder []string) []tocEntry {
+	if len(definitionOrder) == 0 {
+		return nil
+	}
+
+	adjacency := make(map[string][]string, len(definitions))
+	for _, name := range definitionOrder {
+		node := definitions[name]
+		edges := definitionEdges(node)
+
+		seenTargets := make(map[string]struct{}, len(edges))
+		targets := make([]string, 0, len(edges))
+		for _, edge := range edges {
+			target := strings.TrimSpace(edge.Target)
+			if target == "" || target == name {
+				continue
+			}
+			if _, ok := definitions[target]; !ok {
+				continue
+			}
+			if _, ok := seenTargets[target]; ok {
+				continue
+			}
+
+			seenTargets[target] = struct{}{}
+			targets = append(targets, target)
+		}
+
+		sort.Strings(targets)
+		adjacency[name] = targets
+	}
+
+	entries := make([]tocEntry, 0, len(definitionOrder))
+	visited := make(map[string]struct{}, len(definitionOrder))
+	var walk func(name string, depth int)
+	walk = func(name string, depth int) {
+		if _, ok := visited[name]; ok {
+			return
+		}
+		if _, ok := definitions[name]; !ok {
+			return
+		}
+
+		visited[name] = struct{}{}
+		indentDepth := depth
+		if indentDepth < 0 {
+			indentDepth = 0
+		}
+		entries = append(entries, tocEntry{
+			Name:   escapeInline(name),
+			Anchor: markdownHeadingAnchor(name),
+			Indent: strings.Repeat("  ", indentDepth),
+		})
+
+		for _, target := range adjacency[name] {
+			walk(target, depth+1)
+		}
+	}
+
+	walk(rootDefinition, 0)
+	for _, name := range definitionOrder {
+		walk(name, 0)
+	}
+
+	return entries
 }
 
 // propertyHeadingName selects property heading suffix based on referenced definition name.
@@ -121,6 +195,134 @@ func propertyHeadingName(key string, prop schemaValue) string {
 	}
 
 	return key
+}
+
+// propertyPathFilterOptions defines path filtering options for rendered properties.
+type propertyPathFilterOptions struct {
+	HideRootPath bool
+	RootPath     string
+}
+
+// filterPropertyPaths removes root-level property path when requested.
+func filterPropertyPaths(paths []string, opts propertyPathFilterOptions) []string {
+	if len(paths) == 0 {
+		return nil
+	}
+	if !opts.HideRootPath {
+		return paths
+	}
+
+	rootPath := strings.TrimSpace(opts.RootPath)
+	if rootPath == "" {
+		return paths
+	}
+
+	out := make([]string, 0, len(paths))
+	for _, path := range paths {
+		if strings.TrimSpace(path) == rootPath {
+			continue
+		}
+
+		out = append(out, path)
+	}
+
+	return out
+}
+
+// indexPathAnchors stores deterministic path prefix anchors and skips ambiguous mappings.
+func indexPathAnchors(pathAnchors map[string]string, ambiguous map[string]struct{}, paths []string, anchor string) {
+	anchor = strings.TrimSpace(anchor)
+	if anchor == "" || len(paths) == 0 {
+		return
+	}
+
+	for _, path := range paths {
+		path = strings.TrimSpace(path)
+		if path == "" {
+			continue
+		}
+
+		if _, blocked := ambiguous[path]; blocked {
+			continue
+		}
+		if existing, ok := pathAnchors[path]; ok && existing != anchor {
+			delete(pathAnchors, path)
+			ambiguous[path] = struct{}{}
+			continue
+		}
+
+		pathAnchors[path] = anchor
+	}
+}
+
+// applyPathLinks converts property paths to per-segment markdown links where possible.
+func applyPathLinks(view *renderView, pathAnchors map[string]string) {
+	if view == nil || len(view.Definitions) == 0 || len(pathAnchors) == 0 {
+		return
+	}
+
+	for i := range view.Definitions {
+		definition := &view.Definitions[i]
+		for j := range definition.Properties {
+			property := &definition.Properties[j]
+			if len(property.Paths) == 0 {
+				continue
+			}
+
+			linkedPaths := make([]string, 0, len(property.Paths))
+			for _, path := range property.Paths {
+				linkedPaths = append(linkedPaths, buildLinkedPath(path, pathAnchors))
+			}
+
+			property.Paths = linkedPaths
+		}
+	}
+}
+
+// buildLinkedPath renders one dotted path with links on intermediate segments.
+func buildLinkedPath(path string, pathAnchors map[string]string) string {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return ""
+	}
+
+	parts := strings.Split(path, ".")
+	if len(parts) == 0 {
+		return "`" + escapeInline(path) + "`"
+	}
+
+	var builder strings.Builder
+	prefix := make([]string, 0, len(parts))
+	last := len(parts) - 1
+
+	for index, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		if builder.Len() > 0 {
+			builder.WriteString(".")
+		}
+
+		prefix = append(prefix, part)
+		segment := "`" + escapeInline(part) + "`"
+
+		if index < last {
+			anchor, ok := pathAnchors[strings.Join(prefix, ".")]
+			if ok && strings.TrimSpace(anchor) != "" {
+				builder.WriteString("[")
+				builder.WriteString(segment)
+				builder.WriteString("](#")
+				builder.WriteString(anchor)
+				builder.WriteString(")")
+				continue
+			}
+		}
+
+		builder.WriteString(segment)
+	}
+
+	return builder.String()
 }
 
 // buildDefinitionPaths finds all reachable JSON paths for every definition from root definition.

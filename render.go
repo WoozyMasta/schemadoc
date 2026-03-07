@@ -38,7 +38,15 @@ type renderView struct {
 	ListMarker         string
 	ExampleFormat      string
 	ExampleDocument    string
+	Contents           []tocEntry
 	Definitions        []definitionView
+}
+
+// tocEntry represents one contents line with precomputed nesting indentation.
+type tocEntry struct {
+	Name   string
+	Anchor string
+	Indent string
 }
 
 // definitionView represents one top-level definition section in markdown output.

@@ -114,7 +114,7 @@ func schemaAttributes(node schemaValue, required *bool) []attributeView {
 	}
 
 	if value := asString(obj["$ref"]); value != "" {
-		out = append(out, attributeView{Name: "Reference", Value: fmt.Sprintf("`%s`", escapeInline(value))})
+		out = append(out, attributeView{Name: "Reference", Value: formatReferenceValue(value)})
 	}
 
 	if value := asString(obj["$dynamicRef"]); value != "" {
@@ -283,7 +283,7 @@ func appendSchemaLikeAttributes(out []attributeView, name string, value any) []a
 		appended := false
 
 		if ref := asString(typed["$ref"]); ref != "" {
-			appendNamed("reference", fmt.Sprintf("`%s`", escapeInline(ref)))
+			appendNamed("reference", formatReferenceValue(ref))
 			appended = true
 		}
 
@@ -354,6 +354,26 @@ func appendSchemaLikeAttributes(out []attributeView, name string, value any) []a
 		appendNamed("", inlineCodeValue(typed))
 		return out
 	}
+}
+
+// formatReferenceValue renders local definition reference in explicit readable form.
+func formatReferenceValue(ref string) string {
+	normalized := strings.TrimSpace(ref)
+	if normalized == "" {
+		return "``"
+	}
+
+	defName := rootDefinitionName(normalized)
+	if defName == "" {
+		return fmt.Sprintf("`%s`", escapeInline(normalized))
+	}
+
+	return fmt.Sprintf(
+		"[`%s`](#%s) (`%s`)",
+		escapeInline(defName),
+		markdownHeadingAnchor(defName),
+		escapeInline(normalized),
+	)
 }
 
 // summarizeSchemaLike provides compact markdown text for schema-like value.

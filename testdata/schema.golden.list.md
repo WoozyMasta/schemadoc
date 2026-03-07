@@ -11,7 +11,7 @@
 ## Contents
 
 * [Config](#config)
-* [Settings](#settings)
+  * [Settings](#settings)
 
 ## Config
 
@@ -43,7 +43,7 @@ Configuration settings.
 Attributes:
 
 * Required: no
-* Reference: `#/$defs/Settings`
+* Reference: [`Settings`](#settings) (`#/$defs/Settings`)
 
 ## Settings
 
@@ -56,7 +56,7 @@ Attributes:
 
 Key: `mode`
 
-Path: `settings.mode`
+Path: [`settings`](#configsettings).`mode`
 
 Attributes:
 

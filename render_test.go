@@ -148,7 +148,7 @@ func TestRenderIncludesBooleanAndReferences(t *testing.T) {
 	}
 
 	assertContains(t, rendered, "Boolean schema: true")
-	assertContains(t, rendered, "Reference: `#/$defs/Target`")
+	assertContains(t, rendered, "Reference: [`Target`](#target) (`#/$defs/Target`)")
 	assertContains(t, rendered, "Dynamic reference: `#/$defs/Dyn`")
 	assertContains(t, rendered, "Recursive reference: `#/$defs/Rec`")
 }
@@ -245,8 +245,16 @@ func TestRenderShowsResolvedPathsForReusedDefinitions(t *testing.T) {
 
 	assertContains(t, rendered, "### SignOptions.enabled")
 	assertContains(t, rendered, "Paths:")
-	assertContains(t, rendered, "* `spec.settings.sign.enabled`")
-	assertContains(t, rendered, "* `spec.projects.[].settings.sign.enabled`")
+	assertContains(
+		t,
+		rendered,
+		"* [`spec`](#configbuildspec).[`settings`](#buildspecbuildsettings).[`sign`](#buildsettingssignoptions).`enabled`",
+	)
+	assertContains(
+		t,
+		rendered,
+		"* [`spec`](#configbuildspec).[`projects`](#buildspecprojects).`[]`.[`settings`](#projectconfigbuildsettings).[`sign`](#buildsettingssignoptions).`enabled`",
+	)
 }
 
 func TestRenderIncludesKeywordCoverageSummaries(t *testing.T) {
@@ -603,6 +611,18 @@ func TestRenderIncludesDefinitionContents(t *testing.T) {
 	assertContains(t, rendered, "## Contents")
 	assertContains(t, rendered, "* [Config](#config)")
 	assertContains(t, rendered, "* [Settings](#settings)")
+}
+
+func TestRenderContentsUsesNestedDefinitionHierarchy(t *testing.T) {
+	t.Parallel()
+
+	rendered, err := RenderFile(filepath.Join("testdata", "schema.fixture.json"), Options{})
+	if err != nil {
+		t.Fatalf("RenderFile: %v", err)
+	}
+
+	assertContains(t, rendered, "* [Config](#config)")
+	assertContains(t, rendered, "  * [Settings](#settings)")
 }
 
 func TestRenderCustomTemplate(t *testing.T) {

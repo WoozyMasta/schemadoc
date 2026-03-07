@@ -12,8 +12,8 @@
 
 ## Contents
 
-{{ range .Definitions -}}
-{{ $.ListMarker }} [{{ .Name }}](#{{ headingAnchor .Name }})
+{{ range .Contents -}}
+{{ .Indent }}{{ $.ListMarker }} [{{ .Name }}](#{{ .Anchor }})
 {{ end }}
 
 {{ range .Definitions -}}
@@ -40,12 +40,12 @@ Key: `{{ .Name }}`
 
 {{ if .Paths -}}
 {{ if eq (len .Paths) 1 -}}
-Path: `{{ index .Paths 0 }}`
+Path: {{ index .Paths 0 }}
 {{ else -}}
 Paths:
 
 {{ range .Paths -}}
-{{ $.ListMarker }} `{{ . }}`
+{{ $.ListMarker }} {{ . }}
 {{ end -}}
 {{ end }}
 {{ end }}

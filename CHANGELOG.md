@@ -17,8 +17,19 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
-* Added comments about automatic generation to Markdown template files:
+* Comments about automatic generation to Markdown template files:
   `<!-- Automatically generated file, do not modify! -->`
+* Nested TOC entries rendering in markdown docs based on
+  definition reference graph.
+* Per-segment path links in `Path` and `Paths` output when target
+  anchors can be resolved.
+* `mod2schema` helper `TypeNamer` to avoid `$defs` name collisions
+  for same-named types from different packages.
+
+### Changed
+
+* `$ref` attributes are now rendered as readable markdown links to local
+  definition sections when possible, while preserving raw pointer value.
 
 ## [0.3.0][] - 2026-03-06
 
