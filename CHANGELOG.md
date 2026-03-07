@@ -25,12 +25,18 @@ and this project adheres to [Semantic Versioning][].
   anchors can be resolved.
 * `mod2schema` helper `TypeNamer` to avoid `$defs` name collisions
   for same-named types from different packages.
+* Markdown header now includes GitHub source links:
+  `Source file` (browser URL) and `Source URL` (`Raw schema URL`) when schema
+  ID and source path allow URL resolution.
+* Embedded YAML example now includes
+  `# yaml-language-server: $schema=...` when raw schema URL is available.
 
 ### Changed
 
 * `$ref` attributes are now rendered as readable markdown links to local
   definition sections when possible, while preserving raw pointer value.
 * Table cells are now normalized to single line.
+* Header metadata labels are now more user-friendly.
 
 [0.3.1]: https://github.com/WoozyMasta/schemadoc/compare/v0.3.0...v0.3.1
 
