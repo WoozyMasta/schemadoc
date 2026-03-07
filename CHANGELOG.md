@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.3.1][] - 2026-03-07
 
 ### Added
 
@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning][].
 
 * `$ref` attributes are now rendered as readable markdown links to local
   definition sections when possible, while preserving raw pointer value.
+* Table cells are now normalized to single line.
+
+[0.3.1]: https://github.com/WoozyMasta/schemadoc/compare/v0.3.0...v0.3.1
 
 ## [0.3.0][] - 2026-03-06
 
