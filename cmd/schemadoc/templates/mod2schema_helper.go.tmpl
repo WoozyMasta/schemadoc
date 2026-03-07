@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
+	"reflect"
 	"strings"
 	"unicode"
 
@@ -82,8 +84,58 @@ func applyKeyNamer(r *jsonschema.Reflector, mode string) error {
 	return nil
 }
 
+func sanitizeTypeNamePart(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+
+	var out []rune
+	for _, r := range value {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			out = append(out, unicode.ToLower(r))
+			continue
+		}
+
+		if len(out) > 0 && out[len(out)-1] != '_' {
+			out = append(out, '_')
+		}
+	}
+
+	return strings.Trim(string(out), "_")
+}
+
+func applyTypeNamer(r *jsonschema.Reflector, targetPackagePath string) {
+	if r == nil {
+		return
+	}
+
+	targetPackagePath = strings.TrimSpace(targetPackagePath)
+	r.Namer = func(t reflect.Type) string {
+		for t.Kind() == reflect.Pointer {
+			t = t.Elem()
+		}
+
+		typeName := strings.TrimSpace(t.Name())
+		if typeName == "" {
+			return ""
+		}
+		if strings.TrimSpace(t.PkgPath()) == targetPackagePath {
+			return typeName
+		}
+
+		packageName := sanitizeTypeNamePart(path.Base(strings.TrimSpace(t.PkgPath())))
+		if packageName == "" {
+			return typeName
+		}
+
+		return packageName + "_" + typeName
+	}
+}
+
 func main() {
 	reflector := new(jsonschema.Reflector)
+	applyTypeNamer(reflector, {{ printf "%q" .PackagePath }})
 	if err := applyKeyNamer(reflector, {{ printf "%q" .KeyNamer }}); err != nil {
 		fmt.Fprintf(os.Stderr, "apply key namer: %v\n", err)
 		os.Exit(1)
