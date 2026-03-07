@@ -2,11 +2,11 @@
 
 # schema reference
 
-* Source schema: `testdata/schema.fixture.json`
-* Schema ID: `urn:fixture:schema`
-* Schema draft: `https://json-schema.org/draft/2020-12/schema`
-* Draft support: `supported (2020-12)`
-* Root ref: `#/$defs/Config`
+* Source file: [`testdata/schema.fixture.json`](testdata/schema.fixture.json)
+* Schema identifier: `urn:fixture:schema`
+* JSON Schema version: `https://json-schema.org/draft/2020-12/schema`
+* Version support: `supported (2020-12)`
+* Root reference: `#/$defs/Config`
 
 ## Contents
 

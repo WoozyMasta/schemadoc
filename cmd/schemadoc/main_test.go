@@ -198,11 +198,11 @@ func TestRunSchemaToMarkdownListMarkerAffectsTemplateLists(t *testing.T) {
 		t.Fatalf("run exit code = %d, stderr: %s", code, stderr.String())
 	}
 
-	if !strings.Contains(stdout.String(), "- Schema ID:") {
+	if !strings.Contains(stdout.String(), "- Schema identifier:") {
 		t.Fatalf("expected template metadata list marker '-', got: %s", stdout.String())
 	}
 
-	if strings.Contains(stdout.String(), "* Schema ID:") {
+	if strings.Contains(stdout.String(), "* Schema identifier:") {
 		t.Fatalf("expected template metadata marker to be '-', got: %s", stdout.String())
 	}
 }

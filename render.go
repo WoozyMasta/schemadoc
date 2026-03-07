@@ -31,6 +31,9 @@ const (
 type renderView struct {
 	Title              string
 	SourceSchema       string
+	SourceFileURL      string
+	SchemaSourceURL    string
+	SchemaBrowserURL   string
 	SchemaID           string
 	SchemaDraft        string
 	SchemaDraftSupport string

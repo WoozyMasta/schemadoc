@@ -6,6 +6,7 @@ package schemadoc
 
 import (
 	"errors"
+	"path"
 	"slices"
 	"sort"
 	"strings"
@@ -52,6 +53,9 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 	view := renderView{
 		Title:              sanitizeText(title),
 		SourceSchema:       escapeInline(sourcePath),
+		SourceFileURL:      buildSourceFileURL(sourcePath, doc.ID),
+		SchemaSourceURL:    buildSchemaSourceURL(doc.ID, sourcePath),
+		SchemaBrowserURL:   buildSchemaBrowserURL(doc.ID, sourcePath),
 		SchemaID:           escapeInline(orNone(doc.ID)),
 		SchemaDraft:        escapeInline(orNone(doc.Schema)),
 		SchemaDraftSupport: draftSupportText(doc.Draft),
@@ -113,6 +117,122 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 	applyPathLinks(&view, pathAnchors)
 
 	return view, nil
+}
+
+// buildSourceFileURL returns best clickable URL for source file.
+func buildSourceFileURL(sourcePath, schemaID string) string {
+	sourcePath = strings.TrimSpace(sourcePath)
+	if sourcePath == "" || sourcePath == "(stdin)" || sourcePath == "(memory)" {
+		return ""
+	}
+
+	if browser := buildSchemaBrowserURL(schemaID, sourcePath); browser != "" {
+		return browser
+	}
+
+	if strings.Contains(sourcePath, ":\\") || strings.HasPrefix(sourcePath, "/") {
+		return ""
+	}
+
+	return strings.ReplaceAll(sourcePath, "\\", "/")
+}
+
+// buildSchemaSourceURL builds raw GitHub URL for source schema file when possible.
+func buildSchemaSourceURL(schemaID, sourcePath string) string {
+	return buildGitHubFileURL(schemaID, sourcePath, true)
+}
+
+// buildSchemaBrowserURL builds browser-friendly GitHub file URL when possible.
+func buildSchemaBrowserURL(schemaID, sourcePath string) string {
+	return buildGitHubFileURL(schemaID, sourcePath, false)
+}
+
+// buildGitHubFileURL builds GitHub file URL using HEAD for default branch.
+func buildGitHubFileURL(schemaID, sourcePath string, raw bool) string {
+	sourcePath = strings.TrimSpace(sourcePath)
+	if sourcePath == "" || sourcePath == "(memory)" {
+		return ""
+	}
+	if strings.Contains(sourcePath, ":\\") || strings.HasPrefix(sourcePath, "/") {
+		return ""
+	}
+
+	schemaID = strings.TrimSpace(schemaID)
+	if schemaID == "" {
+		return ""
+	}
+
+	owner, repo, ok := parseGitHubOwnerRepo(schemaID)
+	if !ok {
+		return ""
+	}
+
+	sourcePath = strings.ReplaceAll(sourcePath, "\\", "/")
+	sourcePath = strings.TrimPrefix(path.Clean("/"+sourcePath), "/")
+	if sourcePath == "" || sourcePath == "." {
+		return ""
+	}
+
+	if raw {
+		return "https://raw.githubusercontent.com/" + owner + "/" + repo + "/HEAD/" + sourcePath
+	}
+
+	return "https://github.com/" + owner + "/" + repo + "/blob/HEAD/" + sourcePath
+}
+
+// parseGitHubOwnerRepo extracts owner/repo from common GitHub URL forms.
+func parseGitHubOwnerRepo(schemaID string) (string, string, bool) {
+	schemaID = strings.TrimSpace(schemaID)
+	if schemaID == "" {
+		return "", "", false
+	}
+
+	var rest string
+	var ok bool
+	for _, prefix := range []string{
+		"https://github.com/",
+		"http://github.com/",
+		"github.com/",
+	} {
+		rest, ok = cutPrefixFold(schemaID, prefix)
+		if ok {
+			break
+		}
+	}
+	if !ok {
+		return "", "", false
+	}
+
+	rest = strings.Trim(rest, "/")
+	if rest == "" {
+		return "", "", false
+	}
+
+	parts := strings.Split(rest, "/")
+	if len(parts) < 2 {
+		return "", "", false
+	}
+
+	owner := strings.TrimSpace(parts[0])
+	repo := strings.TrimSpace(parts[1])
+	if owner == "" || repo == "" {
+		return "", "", false
+	}
+
+	return owner, repo, true
+}
+
+// cutPrefixFold removes prefix when it matches case-insensitively.
+func cutPrefixFold(value, prefix string) (string, bool) {
+	if len(value) < len(prefix) {
+		return "", false
+	}
+
+	if !strings.EqualFold(value[:len(prefix)], prefix) {
+		return "", false
+	}
+
+	return value[len(prefix):], true
 }
 
 // buildContents builds a deterministic nested TOC from reference graph.

@@ -2,11 +2,12 @@
 
 # Example Schema Reference
 
-* Source schema: `examples/schema.json`
-* Schema ID: `https://github.com/woozymasta/schemadoc/schema-model`
-* Schema draft: `https://json-schema.org/draft/2020-12/schema`
-* Draft support: `supported (2020-12)`
-* Root ref: `#/$defs/SchemaModel`
+* Source file: [`examples/schema.json`](https://github.com/woozymasta/schemadoc/blob/HEAD/examples/schema.json)
+* Source URL: [Raw schema URL](https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/examples/schema.json)
+* Schema identifier: `https://github.com/woozymasta/schemadoc/schema-model`
+* JSON Schema version: `https://json-schema.org/draft/2020-12/schema`
+* Version support: `supported (2020-12)`
+* Root reference: `#/$defs/SchemaModel`
 
 ## Contents
 
@@ -268,6 +269,8 @@ preserved.
 ## Example yaml document
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/examples/schema.json
+
 # DraftInfo is the normalized output of draft detection.
 draft_info:
   # Canonical is normalized draft alias (for example `2020-12`).

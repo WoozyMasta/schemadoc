@@ -125,6 +125,7 @@ func TestRenderIncludesBooleanAndReferences(t *testing.T) {
 	t.Parallel()
 
 	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
+		"$id":  "https://github.com/woozymasta/schemadoc/schema-model",
 		"$ref": "#/$defs/Config",
 		"$defs": map[string]any{
 			"Config": map[string]any{
@@ -189,6 +190,7 @@ func TestRenderShowsResolvedPathsForReusedDefinitions(t *testing.T) {
 	t.Parallel()
 
 	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
+		"$id":  "https://github.com/woozymasta/schemadoc/schema-model",
 		"$ref": "#/$defs/Config",
 		"$defs": map[string]any{
 			"Config": map[string]any{
@@ -673,6 +675,7 @@ func TestRenderEmbedsExampleDocumentYAMLRequiredMode(t *testing.T) {
 	t.Parallel()
 
 	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
+		"$id":  "https://github.com/woozymasta/schemadoc/schema-model",
 		"$ref": "#/$defs/Config",
 		"$defs": map[string]any{
 			"Config": map[string]any{
@@ -692,6 +695,7 @@ func TestRenderEmbedsExampleDocumentYAMLRequiredMode(t *testing.T) {
 	}), Options{
 		ExampleFormat: ExampleFormatYAML,
 		ExampleMode:   ExampleModeRequired,
+		SourcePath:    "examples/schema.json",
 	})
 	if err != nil {
 		t.Fatalf("Render: %v", err)
@@ -699,7 +703,22 @@ func TestRenderEmbedsExampleDocumentYAMLRequiredMode(t *testing.T) {
 
 	assertContains(t, rendered, "## Example yaml document")
 	assertContains(t, rendered, "* [Example yaml document](#example-yaml-document)")
+	assertContains(
+		t,
+		rendered,
+		"* Source file: [`examples/schema.json`](https://github.com/woozymasta/schemadoc/blob/HEAD/examples/schema.json)",
+	)
+	assertContains(
+		t,
+		rendered,
+		"* Source URL: [Raw schema URL](https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/examples/schema.json)",
+	)
 	assertContains(t, rendered, "```yaml")
+	assertContains(
+		t,
+		rendered,
+		"# yaml-language-server: $schema=https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/examples/schema.json",
+	)
 	assertContains(t, rendered, "name: <string>")
 	assertNotContains(t, rendered, "mode: safe")
 }

@@ -3,12 +3,19 @@
 # {{ .Title }}
 
 {{ if ne .SourceSchema "(stdin)" -}}
-{{ .ListMarker }} Source schema: `{{ .SourceSchema }}`
+{{ if .SourceFileURL -}}
+{{ .ListMarker }} Source file: [`{{ .SourceSchema }}`]({{ .SourceFileURL }})
+{{ else -}}
+{{ .ListMarker }} Source file: `{{ .SourceSchema }}`
 {{ end -}}
-{{ .ListMarker }} Schema ID: `{{ .SchemaID }}`
-{{ .ListMarker }} Schema draft: `{{ .SchemaDraft }}`
-{{ .ListMarker }} Draft support: `{{ .SchemaDraftSupport }}`
-{{ .ListMarker }} Root ref: `{{ .RootRef }}`
+{{ end -}}
+{{ if .SchemaSourceURL -}}
+{{ .ListMarker }} Source URL: [Raw schema URL]({{ .SchemaSourceURL }})
+{{ end -}}
+{{ .ListMarker }} Schema identifier: `{{ .SchemaID }}`
+{{ .ListMarker }} JSON Schema version: `{{ .SchemaDraft }}`
+{{ .ListMarker }} Version support: `{{ .SchemaDraftSupport }}`
+{{ .ListMarker }} Root reference: `{{ .RootRef }}`
 
 ## Contents
 
@@ -74,6 +81,10 @@ No properties.
 ## Example {{ .ExampleFormat }} document
 
 ```{{ .ExampleFormat }}
+{{ if and (eq .ExampleFormat "yaml") .SchemaSourceURL -}}
+# yaml-language-server: $schema={{ .SchemaSourceURL }}
+
+{{ end -}}
 {{ .ExampleDocument }}
 ```
 {{ end -}}
