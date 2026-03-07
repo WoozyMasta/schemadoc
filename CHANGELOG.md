@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.3.2][] - 2026-03-07
+
+### Fixed
+
+* Fixed broken example markdown file links in `schema2md` output.
+
+[0.3.2]: https://github.com/WoozyMasta/schemadoc/compare/v0.3.1...v0.3.2
+
 ## [0.3.1][] - 2026-03-07
 
 ### Added

@@ -101,10 +101,10 @@ func markdownHeadingAnchor(value string) string {
 	lastDash := false
 	for _, r := range trimmed {
 		switch {
-		case unicode.IsLetter(r), unicode.IsDigit(r):
+		case unicode.IsLetter(r), unicode.IsDigit(r), r == '_':
 			out.WriteRune(r)
 			lastDash = false
-		case unicode.IsSpace(r), r == '-', r == '_':
+		case unicode.IsSpace(r), r == '-':
 			if lastDash || out.Len() == 0 {
 				continue
 			}
