@@ -664,6 +664,7 @@ func TestRenderEmbedsExampleDocumentJSON(t *testing.T) {
 	}
 
 	assertContains(t, rendered, "## Example json document")
+	assertContains(t, rendered, "* [Example json document](#example-json-document)")
 	assertContains(t, rendered, "```json")
 	assertContains(t, rendered, `"name": "<string>"`)
 }
@@ -697,6 +698,7 @@ func TestRenderEmbedsExampleDocumentYAMLRequiredMode(t *testing.T) {
 	}
 
 	assertContains(t, rendered, "## Example yaml document")
+	assertContains(t, rendered, "* [Example yaml document](#example-yaml-document)")
 	assertContains(t, rendered, "```yaml")
 	assertContains(t, rendered, "name: <string>")
 	assertNotContains(t, rendered, "mode: safe")

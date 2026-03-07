@@ -15,6 +15,10 @@
 {{ range .Contents -}}
 {{ .Indent }}{{ $.ListMarker }} [{{ .Name }}](#{{ .Anchor }})
 {{ end }}
+{{- if .ExampleDocument -}}
+{{ $exampleHeading := printf "Example %s document" .ExampleFormat -}}
+{{ .ListMarker }} [{{ $exampleHeading }}](#{{ headingAnchor $exampleHeading }})
+{{ end }}
 
 {{ range .Definitions -}}
 ## {{ .Name }}
