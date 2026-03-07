@@ -31,7 +31,7 @@
 | Attribute | Value |
 | --- | --- |
 {{ range .Attributes -}}
-| {{ .Name }} | {{ .Value }} |
+| {{ tableCell .Name }} | {{ tableCell .Value }} |
 {{ end }}
 
 {{ end -}}
@@ -60,7 +60,7 @@ Paths:
 | Attribute | Value |
 | --- | --- |
 {{ range .Attributes -}}
-| {{ .Name }} | {{ .Value }} |
+| {{ tableCell .Name }} | {{ tableCell .Value }} |
 {{ end }}
 
 {{ end -}}

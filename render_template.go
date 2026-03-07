@@ -60,7 +60,32 @@ func templateFuncs() template.FuncMap {
 			return escapeInline(mustJSONInline(value))
 		},
 		"headingAnchor": markdownHeadingAnchor,
+		"tableCell":     normalizeTableCell,
 	}
+}
+
+// normalizeTableCell converts multiline markdown text into a safe table cell value.
+func normalizeTableCell(value string) string {
+	value = normalizeLineEndings(value)
+	if strings.TrimSpace(value) == "" {
+		return ""
+	}
+
+	parts := strings.Split(value, "\n")
+	normalizedParts := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+
+		normalizedParts = append(normalizedParts, part)
+	}
+
+	normalized := strings.Join(normalizedParts, " ")
+	normalized = strings.Join(strings.Fields(normalized), " ")
+	normalized = strings.ReplaceAll(normalized, "|", "\\|")
+	return normalized
 }
 
 // markdownHeadingAnchor converts heading text into a markdown anchor slug.
