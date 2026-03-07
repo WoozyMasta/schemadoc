@@ -160,10 +160,7 @@ func buildContents(definitions map[string]schemaValue, rootDefinition string, de
 		}
 
 		visited[name] = struct{}{}
-		indentDepth := depth
-		if indentDepth < 0 {
-			indentDepth = 0
-		}
+		indentDepth := max(depth, 0)
 		entries = append(entries, tocEntry{
 			Name:   escapeInline(name),
 			Anchor: markdownHeadingAnchor(name),
@@ -199,8 +196,8 @@ func propertyHeadingName(key string, prop schemaValue) string {
 
 // propertyPathFilterOptions defines path filtering options for rendered properties.
 type propertyPathFilterOptions struct {
-	HideRootPath bool
 	RootPath     string
+	HideRootPath bool
 }
 
 // filterPropertyPaths removes root-level property path when requested.
