@@ -32,58 +32,55 @@
 {{ .ListMarker }} [{{ $exampleHeading }}](#{{ headingAnchor $exampleHeading }})
 {{ end }}
 
-{{ range .Definitions -}}
+{{ range .Definitions }}
 ## {{ .Name }}
 
-{{ if .Description -}}
+{{ if .Description }}
 {{ .Description }}
 
-{{ end -}}
-{{ if .Attributes -}}
+{{ end }}
+{{ if .Attributes }}
 Attributes:
 
-{{ range .Attributes -}}
-{{ $.ListMarker }} {{ .Name }}: {{ .Value }}
+{{ renderAttrList .Attributes $.ListMarker }}
+
 {{ end }}
 
-{{ end -}}
+{{ if .HasProperties }}
+{{ range .Properties }}
 
-{{ if .HasProperties -}}
-{{ range .Properties -}}
 ### {{ .Heading }}
 
 Key: `{{ .Name }}`
 
-{{ if .Paths -}}
-{{ if eq (len .Paths) 1 -}}
+{{ if .Paths }}
+{{ if eq (len .Paths) 1 }}
 Path: {{ index .Paths 0 }}
-{{ else -}}
+{{ else }}
 Paths:
 
-{{ range .Paths -}}
+{{ range .Paths }}
 {{ $.ListMarker }} {{ . }}
-{{ end -}}
+{{ end }}
 {{ end }}
 {{ end }}
 
-{{ if .Description -}}
+{{ if .Description }}
 {{ .Description }}
 
-{{ end -}}
-{{ if .Attributes -}}
+{{ end }}
+{{ if .Attributes }}
 Attributes:
 
-{{ range .Attributes -}}
-{{ $.ListMarker }} {{ .Name }}: {{ .Value }}
-{{ end }}
+{{ renderAttrList .Attributes $.ListMarker }}
 
-{{ end -}}
-{{ end -}}
-{{ else -}}
+{{ end }}
+{{ end }}
+{{ else }}
 {{ $.ListMarker }} No properties.
 
-{{ end -}}
-{{ end -}}
+{{ end }}
+{{ end }}
 
 {{ if .ExampleDocument -}}
 ## Example {{ .ExampleFormat }} document
