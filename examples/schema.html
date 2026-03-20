@@ -1,0 +1,703 @@
+<!-- Automatically generated file, do not modify! -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Example Schema Reference</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --fg: #24292f;
+      --muted: #57606a;
+      --border: #c6cdd5;
+      --panel: #edf1f5;
+      --code-bg: #edf1f5;
+      --accent: #0969da;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.5;
+    }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+    h1, h2, h3 {
+      line-height: 1.25;
+      margin: 1.3rem 0 0.7rem;
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 1.9rem;
+    }
+    h2 {
+      font-size: 1.35rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 {
+      font-size: 1.08rem;
+      margin-top: 1.05rem;
+    }
+    p {
+      margin: 0 0 0.8rem;
+      overflow-wrap: anywhere;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    .muted { color: var(--muted); }
+    .panel {
+      margin: 0.9rem 0 1rem;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 10px;
+      padding: 0.85rem 0.95rem;
+    }
+    .toc ul, .attr-list, .paths {
+      margin: 0.35rem 0 0;
+      padding-left: 1.2rem;
+    }
+    .card {
+      margin: 0.8rem 0 1rem;
+      border: 1px solid var(--border);
+      background: #fbfcfd;
+      border-radius: 10px;
+      padding: 0.85rem 0.95rem;
+    }
+    details.definition {
+      margin: 0.9rem 0 1rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+    details.definition > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 0.7rem 0.9rem;
+      user-select: none;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+    details.definition > summary::-webkit-details-marker {
+      display: none;
+    }
+    details.definition > summary::before {
+      content: "▾";
+      margin-right: 0.45rem;
+      color: var(--muted);
+    }
+    details.definition:not([open]) > summary::before {
+      content: "▸";
+    }
+    .def-body {
+      padding: 0.85rem 0.95rem 0.6rem;
+      background: var(--bg);
+    }
+    .meta {
+      margin: 0;
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 0.32rem 0.7rem;
+      font-size: 0.94rem;
+    }
+    .meta dt {
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .meta dd { margin: 0; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.08rem 0.35rem;
+      font-size: 0.88em;
+    }
+    pre {
+      margin: 0.7rem 0 0;
+      background: #eef2f6;
+      color: #1f2328;
+      border-radius: 8px;
+      border: 1px solid #c6cdd5;
+      padding: 0.8rem 0.95rem;
+      overflow: auto;
+      font-size: 0.9rem;
+    }
+    pre code {
+      background: transparent;
+      border: 0;
+      color: inherit;
+      padding: 0;
+    }
+.tok-key { color: #0b5fff; }
+    .tok-string { color: #0a6e31; }
+    .tok-number { color: #b35c00; }
+    .tok-bool,
+    .tok-null { color: #8a2be2; font-weight: 600; }
+    .tok-punc { color: var(--muted); }
+    .tok-comment { color: #6a737d; font-style: italic; }
+.attr-list pre {
+      margin: 0.35rem 0 0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --fg: #e6edf3;
+        --muted: #9da7b3;
+        --border: #30363d;
+        --panel: #161b22;
+        --code-bg: #161b22;
+        --accent: #58a6ff;
+      }
+      .card { background: #11161d; }
+      pre {
+        background: #0b0f14;
+        color: #c9d1d9;
+        border-color: #30363d;
+      }
+.tok-key { color: #79c0ff; }
+      .tok-string { color: #7ee787; }
+      .tok-number { color: #ffa657; }
+      .tok-bool,
+      .tok-null { color: #d2a8ff; }
+      .tok-punc { color: #8b949e; }
+      .tok-comment { color: #8b949e; }
+}
+    footer {
+      margin-top: 2rem;
+      padding: 0.9rem 1rem;
+      border-top: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Example Schema Reference</h1>
+<section class="panel">
+      <dl class="meta">
+<dt>Source file</dt>
+<dd><a href="https://github.com/woozymasta/schemadoc/blob/HEAD/examples/schema.json"><code>examples/schema.json</code></a></dd>
+<dt>Source URL</dt>
+        <dd><a href="https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/examples/schema.json">Raw schema URL</a></dd>
+<dt>Schema identifier</dt>
+        <dd><code>https://github.com/woozymasta/schemadoc/schema-model</code></dd>
+        <dt>JSON Schema version</dt>
+        <dd><code>https://json-schema.org/draft/2020-12/schema</code></dd>
+        <dt>Version support</dt>
+        <dd><code>supported (2020-12)</code></dd>
+        <dt>Root reference</dt>
+        <dd><code>#/$defs/SchemaModel</code></dd>
+      </dl>
+    </section>
+
+    <section class="panel toc">
+      <h2>Contents</h2>
+      <ul>
+<li style="margin-left: ;">
+          <a href="#schemamodel">SchemaModel</a>
+        </li>
+<li style="margin-left:   ;">
+          <a href="#draftinfo">DraftInfo</a>
+        </li>
+<li style="margin-left:   ;">
+          <a href="#options">Options</a>
+        </li>
+<li><a href="#example-yaml-document">Example yaml document</a></li>
+</ul>
+    </section>
+
+<section>
+      <details class="definition" open>
+        <summary>SchemaModel</summary>
+        <div class="def-body" id="schemamodel">
+<p>SchemaModel is the schema root for public package models.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="schemamodeloptions">SchemaModel.Options</h3>
+        <p><strong>Key:</strong> <code>options</code></p>
+<p>Options configures markdown generation.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#options"><code>Options</code></a> (<code>#/$defs/Options</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schemamodeldraftinfo">SchemaModel.DraftInfo</h3>
+        <p><strong>Key:</strong> <code>draft_info</code></p>
+<p>DraftInfo is the normalized output of draft detection.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#draftinfo"><code>DraftInfo</code></a> (<code>#/$defs/DraftInfo</code>)</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>DraftInfo</summary>
+        <div class="def-body" id="draftinfo">
+<p>DraftInfo describes detected JSON Schema draft support status.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 3</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="draftinfosupported">DraftInfo.supported</h3>
+        <p><strong>Key:</strong> <code>supported</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeldraftinfo"><code>draft_info</code></a>.<code>supported</code></p>
+<p>Supported reports whether draft is recognized by the renderer.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Default:</strong> <code>false</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="draftinfocanonical">DraftInfo.canonical</h3>
+        <p><strong>Key:</strong> <code>canonical</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeldraftinfo"><code>draft_info</code></a>.<code>canonical</code></p>
+<p>Canonical is normalized draft alias (for example <code>2020-12</code>).</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>2020-12</code>, <code>draft-07</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="draftinforaw">DraftInfo.raw</h3>
+        <p><strong>Key:</strong> <code>raw</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeldraftinfo"><code>draft_info</code></a>.<code>raw</code></p>
+<p>Raw is the original <code>$schema</code> value from input.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>https://json-schema.org/draft/2020-12/schema</code></li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Options</summary>
+        <div class="def-body" id="options">
+<p>Options configures markdown rendering behavior.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 13</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="optionsdescription">Options.description</h3>
+        <p><strong>Key:</strong> <code>description</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>description</code></p>
+<p>Description is optional top-level document description under title.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>Generated reference for runtime configuration schema.</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionsexample_format">Options.example_format</h3>
+        <p><strong>Key:</strong> <code>example_format</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>example_format</code></p>
+<p>ExampleFormat enables optional embedded example payload in markdown templates and selects encoding.</p>
+<p>Supported values:</p>
+<ul><li><code>json</code></li><li><code>yaml</code></li></ul>
+<p>Empty value disables example embedding.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Enum:</strong> <code>json</code>, <code>yaml</code></li>
+<li><strong>Examples:</strong> <code>json</code>, <code>yaml</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionsexample_mode">Options.example_mode</h3>
+        <p><strong>Key:</strong> <code>example_mode</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>example_mode</code></p>
+<p>ExampleMode controls property coverage for optional embedded example payload in markdown templates.</p>
+<p>Supported values:</p>
+<ul><li><code>all</code></li><li><code>required</code></li></ul>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Enum:</strong> <code>all</code>, <code>required</code></li>
+<li><strong>Examples:</strong> <code>all</code>, <code>required</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionsfooter_commit">Options.footer_commit</h3>
+        <p><strong>Key:</strong> <code>footer_commit</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>footer_commit</code></p>
+<p>FooterCommit is optional footer build commit.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>abcdef1</code>, <code>unknown</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionsfooter_tool_name">Options.footer_tool_name</h3>
+        <p><strong>Key:</strong> <code>footer_tool_name</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>footer_tool_name</code></p>
+<p>FooterToolName is optional footer tool label for rendered documents.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>schemadoc</code>, <code>lintkit</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionsfooter_tool_url">Options.footer_tool_url</h3>
+        <p><strong>Key:</strong> <code>footer_tool_url</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>footer_tool_url</code></p>
+<p>FooterToolURL is optional footer tool project URL.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>https://github.com/woozymasta/schemadoc</code></li>
+<li><strong>Format:</strong> <code>uri</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionsfooter_version">Options.footer_version</h3>
+        <p><strong>Key:</strong> <code>footer_version</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>footer_version</code></p>
+<p>FooterVersion is optional footer build version.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>v0.2.0</code>, <code>dev</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionslist_marker">Options.list_marker</h3>
+        <p><strong>Key:</strong> <code>list_marker</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>list_marker</code></p>
+<p>ListMarker defines unordered markdown list marker used during description normalization.</p>
+<p>Supported values:</p>
+<ul><li><code>-</code></li><li><code>*</code></li></ul>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>*</code></li>
+<li><strong>Enum:</strong> <code>-</code>, <code>*</code></li>
+<li><strong>Examples:</strong> <code>*</code>, <code>-</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionssource_path">Options.source_path</h3>
+        <p><strong>Key:</strong> <code>source_path</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>source_path</code></p>
+<p>SourcePath is metadata shown in the document header.</p>
+<p>It does not affect schema parsing, only rendered output.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>internal/config/schema.json</code>, <code>schemas/project.schema.json</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionstemplate_name">Options.template_name</h3>
+        <p><strong>Key:</strong> <code>template_name</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>template_name</code></p>
+<p>TemplateName selects one built-in template.</p>
+<p>Supported values:</p>
+<ul><li><code>list</code></li><li><code>table</code></li><li><code>html</code></li></ul>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>list</code></li>
+<li><strong>Enum:</strong> <code>list</code>, <code>table</code>, <code>html</code></li>
+<li><strong>Examples:</strong> <code>list</code>, <code>table</code>, <code>html</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionstemplate_text">Options.template_text</h3>
+        <p><strong>Key:</strong> <code>template_text</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>template_text</code></p>
+<p>TemplateText overrides built-in templates with custom template text.</p>
+<p>Use this for project-specific markdown layouts.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <pre><code># {{ .Title }}
+
+Generated by custom template.</code></pre></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionstitle">Options.title</h3>
+        <p><strong>Key:</strong> <code>title</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>title</code></p>
+<p>Title is the top-level markdown heading.</p>
+<p>This value is rendered as <code># &lt;title&gt;</code>.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>schema reference</code></li>
+<li><strong>Examples:</strong> <code>schema reference</code>, <code>My Project Config Reference</code></li>
+<li><strong>Constraints:</strong> minLength=1</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="optionswrap_width">Options.wrap_width</h3>
+        <p><strong>Key:</strong> <code>wrap_width</code></p>
+<p><strong>Path:</strong> <a href="#schemamodeloptions"><code>options</code></a>.<code>wrap_width</code></p>
+<p>WrapWidth defines word-wrap width for plain description paragraphs.</p>
+<p>Markdown structures such as lists, blockquotes, and fenced code blocks are preserved.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>80</code></li>
+<li><strong>Examples:</strong> <code>80</code>, <code>100</code></li>
+<li><strong>Constraints:</strong> minimum=1</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <h2 id="example-yaml-document">Example yaml document</h2>
+      <pre><code id="example-code" class="lang-yaml"># DraftInfo is the normalized output of draft detection.
+draft_info:
+  # Canonical is normalized draft alias (for example `2020-12`).
+  canonical: 2020-12
+  # Raw is the original `$schema` value from input.
+  raw: https://json-schema.org/draft/2020-12/schema
+  # Supported reports whether draft is recognized by the renderer.
+  supported: false
+# Options configures markdown generation.
+options:
+  # Description is optional top-level document description under title.
+  description: Generated reference for runtime configuration schema.
+  # ExampleFormat enables optional embedded example payload in markdown templates and selects encoding.
+  # Supported values:
+  #  - `json`
+  #  - `yaml`
+  # Empty value disables example embedding.
+  example_format: json
+  # ExampleMode controls property coverage for optional embedded example payload in markdown templates.
+  # Supported values:
+  #  - `all`
+  #  - `required`
+  example_mode: all
+  # FooterCommit is optional footer build commit.
+  footer_commit: abcdef1
+  # FooterToolName is optional footer tool label for rendered documents.
+  footer_tool_name: schemadoc
+  # FooterToolURL is optional footer tool project URL.
+  footer_tool_url: https://github.com/woozymasta/schemadoc
+  # FooterVersion is optional footer build version.
+  footer_version: v0.2.0
+  # ListMarker defines unordered markdown list marker used during description normalization.
+  # Supported values:
+  #  - `-`
+  #  - `*`
+  list_marker: &#39;*&#39;
+  # SourcePath is metadata shown in the document header.
+  # It does not affect schema parsing, only rendered output.
+  source_path: internal/config/schema.json
+  # TemplateName selects one built-in template.
+  # Supported values:
+  #  - `list`
+  #  - `table`
+  #  - `html`
+  template_name: list
+  # TemplateText overrides built-in templates with custom template text.
+  # Use this for project-specific markdown layouts.
+  template_text: |-
+    # {{ .Title }}
+
+    Generated by custom template.
+  # Title is the top-level markdown heading.
+  # This value is rendered as `# &lt;title&gt;`.
+  title: schema reference
+  # WrapWidth defines word-wrap width for plain description paragraphs.
+  # Markdown structures such as lists, blockquotes, and fenced code blocks are preserved.
+  wrap_width: 80</code></pre>
+    </section>
+<footer>
+      Generated with
+      <a href="https://github.com/woozymasta/schemadoc">schemadoc</a>
+      version <code>dev</code>
+      commit <code>unknown</code>
+    </footer>
+<script>
+    (function () {
+      const code = document.getElementById("example-code");
+      if (!code) {
+        return;
+      }
+
+      const format = (code.className || "").replace("lang-", "").trim().toLowerCase();
+      const text = code.textContent || "";
+      if (text.trim() === "") {
+        return;
+      }
+
+      function escapeHTML(value) {
+        return value
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function appendToken(parts, kind, value) {
+        if (value === "") {
+          return;
+        }
+        if (!kind) {
+          parts.push(escapeHTML(value));
+          return;
+        }
+        parts.push('<span class="' + kind + '">' + escapeHTML(value) + '</span>');
+      }
+
+      function highlightJSON(input) {
+        const re = /"(?:\\.|[^"\\])*"(?=\s*:)|"(?:\\.|[^"\\])*"|true|false|null|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|[{}\[\]:,]/g;
+        let result = [];
+        let index = 0;
+        let match;
+        while ((match = re.exec(input)) !== null) {
+          appendToken(result, "", input.slice(index, match.index));
+          const token = match[0];
+          let kind = "tok-punc";
+          if (token[0] === '"') {
+            kind = token.endsWith(":") ? "tok-key" : "tok-string";
+          } else if (token === "true" || token === "false") {
+            kind = "tok-bool";
+          } else if (token === "null") {
+            kind = "tok-null";
+          } else if (token[0] === "-" || (token[0] >= "0" && token[0] <= "9")) {
+            kind = "tok-number";
+          }
+          appendToken(result, kind, token);
+          index = re.lastIndex;
+        }
+        appendToken(result, "", input.slice(index));
+        return result.join("");
+      }
+
+      function highlightYAML(input) {
+        const lines = input.split("\n");
+        let out = [];
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const commentIndex = line.indexOf("#");
+          let base = line;
+          let comment = "";
+          if (commentIndex >= 0) {
+            base = line.slice(0, commentIndex);
+            comment = line.slice(commentIndex);
+          }
+
+          const keyMatch = base.match(/^(\s*-\s+|\s*)([A-Za-z0-9_.-]+)(\s*:\s*)(.*)$/);
+          if (keyMatch) {
+            out.push(
+              escapeHTML(keyMatch[1]) +
+              '<span class="tok-key">' + escapeHTML(keyMatch[2]) + '</span>' +
+              '<span class="tok-punc">' + escapeHTML(keyMatch[3]) + '</span>' +
+              highlightYAMLValue(keyMatch[4])
+            );
+          } else {
+            out.push(highlightYAMLValue(base));
+          }
+
+          if (comment !== "") {
+            out[out.length - 1] += '<span class="tok-comment">' + escapeHTML(comment) + '</span>';
+          }
+        }
+        return out.join("\n");
+      }
+
+      function highlightYAMLValue(value) {
+        const trimmed = value.trim();
+        if (trimmed === "") {
+          return escapeHTML(value);
+        }
+
+        if (/^(true|false)$/i.test(trimmed)) {
+          return value.replace(trimmed, '<span class="tok-bool">' + escapeHTML(trimmed) + '</span>');
+        }
+        if (/^null$/i.test(trimmed)) {
+          return value.replace(trimmed, '<span class="tok-null">' + escapeHTML(trimmed) + '</span>');
+        }
+        if (/^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(trimmed)) {
+          return value.replace(trimmed, '<span class="tok-number">' + escapeHTML(trimmed) + '</span>');
+        }
+        if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+          return value.replace(trimmed, '<span class="tok-string">' + escapeHTML(trimmed) + '</span>');
+        }
+
+        const listScalarMatch = value.match(/^(\s*-\s+)(.+)$/);
+        if (listScalarMatch) {
+          return (
+            escapeHTML(listScalarMatch[1]) +
+            '<span class="tok-string">' + escapeHTML(listScalarMatch[2]) + '</span>'
+          );
+        }
+
+        const plainScalarMatch = value.match(/^(\s*)([^{}\[\],].*)$/);
+        if (plainScalarMatch) {
+          return (
+            escapeHTML(plainScalarMatch[1]) +
+            '<span class="tok-string">' + escapeHTML(plainScalarMatch[2]) + '</span>'
+          );
+        }
+
+        return escapeHTML(value);
+      }
+
+      if (format === "json") {
+        code.innerHTML = highlightJSON(text);
+        return;
+      }
+      if (format === "yaml") {
+        code.innerHTML = highlightYAML(text);
+      }
+    })();
+  </script>
+</main>
+</body>
+</html>
+<!-- Automatically generated file, do not modify! -->

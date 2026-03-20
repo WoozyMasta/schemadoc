@@ -107,8 +107,22 @@ Options configures markdown rendering behavior.
 | Attribute | Value |
 | --- | --- |
 | Type | `object` |
-| Properties | 8 |
+| Properties | 13 |
 | Additional properties | boolean schema=false |
+
+### Options.description
+
+Key: `description`
+
+Path: [`options`](#schemamodeloptions).`description`
+
+Description is optional top-level document description under title.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `Generated reference for runtime configuration schema.` |
 
 ### Options.example_format
 
@@ -153,6 +167,63 @@ Supported values:
 | Required | no |
 | Enum | `all`, `required` |
 | Examples | `all`, `required` |
+
+### Options.footer_commit
+
+Key: `footer_commit`
+
+Path: [`options`](#schemamodeloptions).`footer_commit`
+
+FooterCommit is optional footer build commit.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `abcdef1`, `unknown` |
+
+### Options.footer_tool_name
+
+Key: `footer_tool_name`
+
+Path: [`options`](#schemamodeloptions).`footer_tool_name`
+
+FooterToolName is optional footer tool label for rendered documents.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `schemadoc`, `lintkit` |
+
+### Options.footer_tool_url
+
+Key: `footer_tool_url`
+
+Path: [`options`](#schemamodeloptions).`footer_tool_url`
+
+FooterToolURL is optional footer tool project URL.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `https://github.com/woozymasta/schemadoc` |
+| Format | `uri` |
+
+### Options.footer_version
+
+Key: `footer_version`
+
+Path: [`options`](#schemamodeloptions).`footer_version`
+
+FooterVersion is optional footer build version.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `v0.2.0`, `dev` |
 
 ### Options.list_marker
 
@@ -204,14 +275,15 @@ Supported values:
 
 * `list`
 * `table`
+* `html`
 
 | Attribute | Value |
 | --- | --- |
 | Type | `string` |
 | Required | no |
 | Default | `list` |
-| Enum | `list`, `table` |
-| Examples | `list`, `table` |
+| Enum | `list`, `table`, `html` |
+| Examples | `list`, `table`, `html` |
 
 ### Options.template_text
 
@@ -281,6 +353,8 @@ draft_info:
   supported: false
 # Options configures markdown generation.
 options:
+  # Description is optional top-level document description under title.
+  description: Generated reference for runtime configuration schema.
   # ExampleFormat enables optional embedded example payload in markdown templates and selects encoding.
   # Supported values:
   #  - `json`
@@ -292,6 +366,14 @@ options:
   #  - `all`
   #  - `required`
   example_mode: all
+  # FooterCommit is optional footer build commit.
+  footer_commit: abcdef1
+  # FooterToolName is optional footer tool label for rendered documents.
+  footer_tool_name: schemadoc
+  # FooterToolURL is optional footer tool project URL.
+  footer_tool_url: https://github.com/woozymasta/schemadoc
+  # FooterVersion is optional footer build version.
+  footer_version: v0.2.0
   # ListMarker defines unordered markdown list marker used during description normalization.
   # Supported values:
   #  - `-`
@@ -304,6 +386,7 @@ options:
   # Supported values:
   #  - `list`
   #  - `table`
+  #  - `html`
   template_name: list
   # TemplateText overrides built-in templates with custom template text.
   # Use this for project-specific markdown layouts.
@@ -318,4 +401,12 @@ options:
   # Markdown structures such as lists, blockquotes, and fenced code blocks are preserved.
   wrap_width: 80
 ```
+
+---
+
+> Generated with
+> [schemadoc](https://github.com/woozymasta/schemadoc)
+> version `dev`
+> commit `unknown`
+
 <!-- Automatically generated file, do not modify! -->
