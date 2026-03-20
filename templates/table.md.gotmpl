@@ -2,6 +2,11 @@
 
 # {{ .Title }}
 
+{{ if .Description -}}
+{{ .Description }}
+
+{{ end -}}
+
 {{ if ne .SourceSchema "(stdin)" -}}
 {{ if .SourceFileURL -}}
 {{ .ListMarker }} Source file: [`{{ .SourceSchema }}`]({{ .SourceFileURL }})
@@ -87,6 +92,17 @@ No properties.
 {{ end -}}
 {{ .ExampleDocument }}
 ```
+{{ end -}}
+
+{{ if and .FooterToolName .FooterToolURL }}
+
+---
+
+> Generated with
+> [{{ .FooterToolName }}]({{ .FooterToolURL }})
+> version `{{ .FooterVersion }}`
+> commit `{{ .FooterCommit }}`
+
 {{ end -}}
 
 <!-- Automatically generated file, do not modify! -->
