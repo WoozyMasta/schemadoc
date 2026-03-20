@@ -13,6 +13,28 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.4.0][] - 2026-03-21
+
+### Added
+
+* `schema2md` and `mod2md` now support rendering HTML output with
+  `--template html`.
+* `schema2md` and `mod2md` now support adding custom top-level description
+  to rendered output with `--description`.
+
+### Changed
+
+* Markdown built-in templates (`list` and `table`) now render optional
+  top-level description and optional generation footer.
+
+### Fixed
+
+* `mod2schema` and `mod2md` now correctly resolve local module replacement
+  chains from `go.mod replace` and module graph (`go list -m -json all`),
+  including local workspace (`go.work`) scenarios.
+
+[0.4.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.3.2...v0.4.0
+
 ## [0.3.2][] - 2026-03-07
 
 ### Fixed
