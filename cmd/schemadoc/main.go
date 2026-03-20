@@ -6,14 +6,10 @@
 package main
 
 import (
-	"bytes"
 	_ "embed"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -29,14 +25,6 @@ const (
 	helperModuleSuffix = "/schemadoc_mod2schema_helper"
 	// jsonschemaDependency pins dependency used by temporary schema generator.
 	jsonschemaDependency = "github.com/invopop/jsonschema@v0.13.0"
-)
-
-var (
-	Version    = "dev"
-	Commit     = "unknown"
-	BuildTime  = time.Unix(0, 0)
-	URL        = "https://github.com/woozymasta/schemadoc"
-	_buildTime string
 )
 
 //go:embed templates/mod2schema_helper.go.tmpl
@@ -69,13 +57,14 @@ type moduleReflectFlags struct {
 type markdownRenderFlags struct {
 	TemplatePath string `short:"f" long:"template-file" description:"Path to custom markdown template (.gotmpl)"`
 	Title        string `short:"T" long:"title" description:"Markdown document title" default:"schema reference"`
+	Description  string `short:"d" long:"description" description:"Optional top-level document description under title"`
 	ListMarker   string `short:"l" long:"list-marker" description:"Unordered list marker for normalized descriptions" choice:"-" choice:"*" default:"*"`
 	WrapWidth    int    `short:"w" long:"wrap" description:"Wrap width for plain text descriptions" default:"80"`
 }
 
 // templateSelectFlags groups built-in template selection flags.
 type templateSelectFlags struct {
-	TemplateName string `short:"t" long:"template" description:"Built-in template style" choice:"list" choice:"table" default:"list"`
+	TemplateName string `short:"t" long:"template" description:"Built-in template style" choice:"list" choice:"table" choice:"html" default:"list"`
 }
 
 // exampleModeFlags groups example mode flags.
@@ -114,14 +103,17 @@ func (command *moduleToMarkdownCommand) Execute(_ []string) error {
 			ModuleRootPath: command.ModuleFlags.ModuleRootPath,
 			KeyNamer:       command.ModuleFlags.KeyNamer,
 		},
-		command.TemplateFlags.TemplateName,
-		command.RenderFlags.Title,
-		command.RenderFlags.TemplatePath,
-		command.RenderFlags.WrapWidth,
-		command.RenderFlags.ListMarker,
-		command.ExampleFlags.Mode,
-		command.ExampleFlags.Format,
-		command.Args.Output,
+		markdownRenderRequest{
+			TemplateName: command.TemplateFlags.TemplateName,
+			Title:        command.RenderFlags.Title,
+			Description:  command.RenderFlags.Description,
+			TemplatePath: command.RenderFlags.TemplatePath,
+			WrapWidth:    command.RenderFlags.WrapWidth,
+			ListMarker:   command.RenderFlags.ListMarker,
+			ExampleMode:  command.ExampleFlags.Mode,
+			ExampleFmt:   command.ExampleFlags.Format,
+			OutputPath:   command.Args.Output,
+		},
 	)
 }
 
@@ -162,17 +154,20 @@ type schemaToMarkdownCommand struct {
 
 // Execute runs schemadoc subcommand.
 func (command *schemaToMarkdownCommand) Execute(_ []string) error {
-	return command.runner.runSchemaToMarkdown(
-		command.TemplateFlags.TemplateName,
-		command.RenderFlags.Title,
-		command.RenderFlags.TemplatePath,
-		command.RenderFlags.WrapWidth,
-		command.RenderFlags.ListMarker,
-		command.ExampleFlags.Mode,
-		command.ExampleFlags.Format,
-		command.Args.Input,
-		command.Args.Output,
-	)
+	return command.runner.runSchemaToMarkdown(schemaMarkdownRequest{
+		InputPath: command.Args.Input,
+		Render: markdownRenderRequest{
+			TemplateName: command.TemplateFlags.TemplateName,
+			Title:        command.RenderFlags.Title,
+			Description:  command.RenderFlags.Description,
+			TemplatePath: command.RenderFlags.TemplatePath,
+			WrapWidth:    command.RenderFlags.WrapWidth,
+			ListMarker:   command.RenderFlags.ListMarker,
+			ExampleMode:  command.ExampleFlags.Mode,
+			ExampleFmt:   command.ExampleFlags.Format,
+			OutputPath:   command.Args.Output,
+		},
+	})
 }
 
 // schemaToJSONCommand generates example JSON payload from schema.
@@ -188,12 +183,12 @@ type schemaToJSONCommand struct {
 
 // Execute runs schema2json subcommand.
 func (command *schemaToJSONCommand) Execute(_ []string) error {
-	return command.runner.runSchemaToExample(
-		command.ExampleFlags.Mode,
-		string(schemadoc.ExampleFormatJSON),
-		command.Args.Input,
-		command.Args.Output,
-	)
+	return command.runner.runSchemaToExample(schemaExampleRequest{
+		Mode:       command.ExampleFlags.Mode,
+		Format:     string(schemadoc.ExampleFormatJSON),
+		InputPath:  command.Args.Input,
+		OutputPath: command.Args.Output,
+	})
 }
 
 // schemaToYAMLCommand generates example YAML payload from schema.
@@ -209,12 +204,12 @@ type schemaToYAMLCommand struct {
 
 // Execute runs schema2yaml subcommand.
 func (command *schemaToYAMLCommand) Execute(_ []string) error {
-	return command.runner.runSchemaToExample(
-		command.ExampleFlags.Mode,
-		string(schemadoc.ExampleFormatYAML),
-		command.Args.Input,
-		command.Args.Output,
-	)
+	return command.runner.runSchemaToExample(schemaExampleRequest{
+		Mode:       command.ExampleFlags.Mode,
+		Format:     string(schemadoc.ExampleFormatYAML),
+		InputPath:  command.Args.Input,
+		OutputPath: command.Args.Output,
+	})
 }
 
 // templateCommand exports built-in markdown template.
@@ -335,196 +330,6 @@ func (runner *cliRunner) run(args []string) int {
 	return 1
 }
 
-// runModuleToMarkdown executes module-to-markdown flow without temporary schema files.
-func (runner *cliRunner) runModuleToMarkdown(moduleOptions moduleSchemaOptions, templateName, title, templatePath string, wrapWidth int, listMarker, exampleMode, exampleFormat, outputPath string) error {
-	schemaBytes, sourcePath, err := generateModuleSchema(moduleOptions)
-	if err != nil {
-		return fmt.Errorf("generate schema: %w", err)
-	}
-
-	return runner.runSchemaToMarkdownBytes(templateName, title, templatePath, wrapWidth, listMarker, exampleMode, exampleFormat, schemaBytes, sourcePath, outputPath)
-}
-
-// runModuleToSchema executes module-to-schema flow and writes result to stdout or file.
-func (runner *cliRunner) runModuleToSchema(moduleOptions moduleSchemaOptions, outputPath string) error {
-	schemaBytes, _, err := generateModuleSchema(moduleOptions)
-	if err != nil {
-		return fmt.Errorf("generate schema: %w", err)
-	}
-
-	if strings.TrimSpace(outputPath) == "" {
-		if _, err := runner.stdout.Write(schemaBytes); err != nil {
-			return fmt.Errorf("write schema to stdout: %w", err)
-		}
-
-		return nil
-	}
-
-	if err := os.WriteFile(outputPath, schemaBytes, 0o600); err != nil {
-		return fmt.Errorf("write schema file %q: %w", outputPath, err)
-	}
-
-	return nil
-}
-
-// runSchemaToMarkdown executes schema-to-markdown flow and writes result to stdout or file.
-func (runner *cliRunner) runSchemaToMarkdown(templateName, title, templatePath string, wrapWidth int, listMarker, exampleMode, exampleFormat, inputPath, outputPath string) error {
-	schemaBytes, sourcePath, err := runner.readSchemaInput(inputPath)
-	if err != nil {
-		return fmt.Errorf("read schema input: %w", err)
-	}
-
-	return runner.runSchemaToMarkdownBytes(templateName, title, templatePath, wrapWidth, listMarker, exampleMode, exampleFormat, schemaBytes, sourcePath, outputPath)
-}
-
-// runSchemaToExample generates example payload for selected mode and format.
-func (runner *cliRunner) runSchemaToExample(mode, format, inputPath, outputPath string) error {
-	schemaBytes, _, err := runner.readSchemaInput(inputPath)
-	if err != nil {
-		return fmt.Errorf("read schema input: %w", err)
-	}
-
-	selectedMode, err := resolveExampleMode(mode)
-	if err != nil {
-		return err
-	}
-
-	selectedFormat, err := resolveExampleFormat(format)
-	if err != nil {
-		return err
-	}
-
-	content, err := schemadoc.GenerateExample(schemaBytes, selectedMode, selectedFormat)
-	if err != nil {
-		return fmt.Errorf("generate %s %s example: %w", selectedMode, selectedFormat, err)
-	}
-
-	outputPath = strings.TrimSpace(outputPath)
-	if outputPath == "" {
-		if _, err := runner.stdout.Write(content); err != nil {
-			return fmt.Errorf("write example to stdout: %w", err)
-		}
-
-		return nil
-	}
-
-	if err := os.WriteFile(outputPath, content, 0o600); err != nil {
-		return fmt.Errorf("write example file %q: %w", outputPath, err)
-	}
-
-	return nil
-}
-
-// runSchemaToMarkdownBytes renders markdown from schema bytes and writes result to stdout or file.
-func (runner *cliRunner) runSchemaToMarkdownBytes(templateName, title, templatePath string, wrapWidth int, listMarker, exampleMode, exampleFormat string, schemaBytes []byte, sourcePath, outputPath string) error {
-	draftURI := extractSchemaDraftURI(schemaBytes)
-	draft := schemadoc.DetectDraft(draftURI)
-	if strings.TrimSpace(draftURI) == "" {
-		_, _ = fmt.Fprintln(runner.stderr, "warning: schema has no $schema value; draft support is unknown")
-	} else if !draft.Supported {
-		_, _ = fmt.Fprintf(runner.stderr, "warning: unsupported $schema value %q\n", draftURI)
-	}
-
-	mode, format, err := resolveMarkdownExampleOptions(exampleMode, exampleFormat)
-	if err != nil {
-		return err
-	}
-
-	renderOptions := schemadoc.Options{
-		Title:         title,
-		SourcePath:    sourcePath,
-		TemplateName:  templateName,
-		WrapWidth:     wrapWidth,
-		ListMarker:    listMarker,
-		ExampleMode:   mode,
-		ExampleFormat: format,
-	}
-
-	if templatePath != "" {
-		customTemplate, err := os.ReadFile(templatePath)
-		if err != nil {
-			return fmt.Errorf("read template file %q: %w", templatePath, err)
-		}
-
-		renderOptions.TemplateText = string(customTemplate)
-	}
-
-	rendered, err := schemadoc.Render(schemaBytes, renderOptions)
-	if err != nil {
-		return fmt.Errorf("render markdown: %w", err)
-	}
-
-	if strings.TrimSpace(outputPath) == "" {
-		if _, err := io.WriteString(runner.stdout, rendered); err != nil {
-			return fmt.Errorf("write markdown to stdout: %w", err)
-		}
-
-		return nil
-	}
-
-	if err := os.WriteFile(outputPath, []byte(rendered), 0o600); err != nil {
-		return fmt.Errorf("write markdown file %q: %w", outputPath, err)
-	}
-
-	return nil
-}
-
-// runTemplate writes selected built-in template to stdout or file.
-func (runner *cliRunner) runTemplate(templateName, outputPath string) error {
-	tpl, err := schemadoc.BuiltinTemplate(templateName)
-	if err != nil {
-		return fmt.Errorf("load built-in template %q: %w", templateName, err)
-	}
-
-	if strings.TrimSpace(outputPath) == "" {
-		if _, err := io.WriteString(runner.stdout, tpl); err != nil {
-			return fmt.Errorf("write template to stdout: %w", err)
-		}
-
-		return nil
-	}
-
-	if err := os.WriteFile(outputPath, []byte(tpl), 0o600); err != nil {
-		return fmt.Errorf("write template file %q: %w", outputPath, err)
-	}
-
-	return nil
-}
-
-// readSchemaInput reads schema from file path or stdin and returns source marker.
-func (runner *cliRunner) readSchemaInput(path string) ([]byte, string, error) {
-	path = strings.TrimSpace(path)
-	if path != "" {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return nil, "", fmt.Errorf("read schema file %q: %w", path, err)
-		}
-
-		return data, path, nil
-	}
-
-	data, err := io.ReadAll(runner.stdin)
-	if err != nil {
-		return nil, "", fmt.Errorf("read schema from stdin: %w", err)
-	}
-
-	if len(strings.TrimSpace(string(data))) == 0 {
-		return nil, "", errors.New("read schema from stdin: empty input")
-	}
-
-	return data, "(stdin)", nil
-}
-
-// writeCLIError writes a plain-text CLI error line to the selected stream.
-func writeCLIError(output io.Writer, err error) {
-	if err == nil {
-		return
-	}
-
-	//nolint:gosec // CLI writes plain-text diagnostics to terminal streams, not HTTP responses.
-	_, _ = fmt.Fprintln(output, err.Error())
-}
-
 // parseCLIArgs parses CLI arguments and triggers selected subcommand execution.
 func parseCLIArgs(args []string, runner *cliRunner) error {
 	options := &cliOptions{}
@@ -545,328 +350,4 @@ func parseCLIArgs(args []string, runner *cliRunner) error {
 	}
 
 	return nil
-}
-
-// applyCommandLongDescriptions configures detailed command help text with examples.
-func applyCommandLongDescriptions(parser *flags.Parser, programName string) {
-	descriptions := map[string]string{
-		"template": strings.TrimSpace(fmt.Sprintf(`
-Print built-in markdown template text (`+"`list` or `table`"+`).
-Use it as a starting point for a custom template file.
-
-Examples:
-> $ %s template > list.gotmpl
-> $ %s template -t table templates/table.gotmpl
-`, programName, programName)),
-		"schema2md": strings.TrimSpace(fmt.Sprintf(`
-Convert JSON Schema to markdown.
-Reads schema from file argument or stdin; writes markdown to file argument or stdout.
-Use --format json|yaml to append example payload code block at the end.
-
-Examples:
-> $ %s schema2md schema.json > schema.md
-> $ cat schema.json | %s schema2md -t table > schema.table.md
-> $ %s schema2md --mode required --format yaml schema.json > schema.with-example.md
-`, programName, programName, programName)),
-		"schema2json": strings.TrimSpace(fmt.Sprintf(`
-Generate example JSON payload from schema.
-Reads schema from file argument or stdin; writes JSON to file argument or stdout.
-
-Examples:
-> $ %s schema2json schema.json > example.json
-> $ %s schema2json --mode required schema.json example.required.json
-`, programName, programName)),
-		"schema2yaml": strings.TrimSpace(fmt.Sprintf(`
-Generate example YAML payload from schema.
-Reads schema from file argument or stdin; writes YAML to file argument or stdout.
-
-Examples:
-> $ %s schema2yaml schema.json > example.yaml
-> $ %s schema2yaml --mode all schema.json example.all.yaml
-`, programName, programName)),
-		"mod2schema": strings.TrimSpace(fmt.Sprintf(`
-Reflect Go type into JSON Schema.
-Use module import path as positional argument.
-Use --module-root for local module directory and --package when type is not in module root package.
-
-Examples:
-> $ %s mod2schema --module-root . --type Config github.com/acme/project > schema.json
-> $ %s mod2schema --module-root . --package github.com/acme/project/internal/config --type Config github.com/acme/project schema.json
-> $ %s mod2schema --module-root . --type Config --key-namer snake github.com/acme/project > schema.snake.json
-`, programName, programName, programName)),
-		"mod2md": strings.TrimSpace(fmt.Sprintf(`
-Generate markdown directly from Go type.
-This is `+"`mod2schema` + `schema2md`"+` in one command.
-Use the same module/package/type selection rules as `+"`mod2schema`"+`.
-Use --format json|yaml to append example payload code block at the end.
-
-Examples:
-> $ %s mod2md --module-root . --type Config github.com/acme/project > model.md
-> $ %s mod2md -t table --module-root . --type Config github.com/acme/project docs/model.table.md
-> $ %s mod2md --mode required --format json --module-root . --type Config github.com/acme/project > model.with-example.md
-> $ %s mod2md --module-root . --type Config --key-namer snake github.com/acme/project > model.snake.md
-`, programName, programName, programName, programName)),
-	}
-
-	for commandName, description := range descriptions {
-		command := parser.Find(commandName)
-		if command == nil {
-			continue
-		}
-
-		command.LongDescription = description
-	}
-}
-
-// resolveExampleMode validates CLI mode flag value.
-func resolveExampleMode(mode string) (schemadoc.ExampleMode, error) {
-	switch strings.ToLower(strings.TrimSpace(mode)) {
-	case "all":
-		return schemadoc.ExampleModeAll, nil
-	case "required":
-		return schemadoc.ExampleModeRequired, nil
-	default:
-		return "", fmt.Errorf("unsupported example mode %q", mode)
-	}
-}
-
-// resolveExampleFormat validates CLI format flag value.
-func resolveExampleFormat(format string) (schemadoc.ExampleFormat, error) {
-	switch strings.ToLower(strings.TrimSpace(format)) {
-	case "json":
-		return schemadoc.ExampleFormatJSON, nil
-	case "yaml":
-		return schemadoc.ExampleFormatYAML, nil
-	default:
-		return "", fmt.Errorf("unsupported example format %q", format)
-	}
-}
-
-// resolveMarkdownExampleOptions parses optional markdown embedded example options.
-func resolveMarkdownExampleOptions(modeRaw, formatRaw string) (schemadoc.ExampleMode, schemadoc.ExampleFormat, error) {
-	formatRaw = strings.TrimSpace(formatRaw)
-	if formatRaw == "" {
-		return "", "", nil
-	}
-
-	mode, err := resolveExampleMode(modeRaw)
-	if err != nil {
-		return "", "", err
-	}
-
-	format, err := resolveExampleFormat(formatRaw)
-	if err != nil {
-		return "", "", err
-	}
-
-	return mode, format, nil
-}
-
-// extractSchemaDraftURI returns raw $schema value from schema document.
-func extractSchemaDraftURI(schemaBytes []byte) string {
-	var root map[string]any
-	if err := json.Unmarshal(schemaBytes, &root); err != nil {
-		return ""
-	}
-
-	value, ok := root["$schema"].(string)
-	if !ok {
-		return ""
-	}
-
-	return strings.TrimSpace(value)
-}
-
-// generateModuleSchema reflects JSON Schema for the selected module/package/type triple.
-func generateModuleSchema(options moduleSchemaOptions) ([]byte, string, error) {
-	normalizedOptions := normalizeModuleSchemaOptions(options)
-	moduleRootPath, err := filepath.Abs(normalizedOptions.ModuleRootPath)
-	if err != nil {
-		return nil, "", fmt.Errorf("resolve module root path %q: %w", normalizedOptions.ModuleRootPath, err)
-	}
-
-	normalizedOptions.ModuleRootPath = filepath.ToSlash(moduleRootPath)
-
-	if err := ensureGoToolchain(); err != nil {
-		return nil, "", err
-	}
-
-	helperSource := buildSchemaGeneratorProgram(normalizedOptions)
-	helperDir, err := writeSchemaGeneratorProgram(helperSource)
-	if err != nil {
-		return nil, "", err
-	}
-	defer func() {
-		_ = os.RemoveAll(helperDir)
-	}()
-
-	if err := initSchemaGeneratorWorkspace(helperDir, normalizedOptions); err != nil {
-		return nil, "", err
-	}
-
-	if err := installSchemaGeneratorDependencies(helperDir); err != nil {
-		return nil, "", err
-	}
-
-	schemaBytes, err := runSchemaGeneratorProgram(helperDir)
-	if err != nil {
-		return nil, "", err
-	}
-
-	sourcePath := fmt.Sprintf("module:%s.%s", normalizedOptions.PackagePath, normalizedOptions.TypeName)
-	return schemaBytes, sourcePath, nil
-}
-
-// normalizeModuleSchemaOptions normalizes module reflection options.
-func normalizeModuleSchemaOptions(options moduleSchemaOptions) moduleSchemaOptions {
-	options.ModulePath = strings.TrimSpace(options.ModulePath)
-	options.TypeName = strings.TrimSpace(options.TypeName)
-	options.PackagePath = strings.TrimSpace(options.PackagePath)
-	if options.PackagePath == "" {
-		options.PackagePath = options.ModulePath
-	}
-
-	options.ModuleRootPath = strings.TrimSpace(options.ModuleRootPath)
-	if options.ModuleRootPath == "" {
-		options.ModuleRootPath = "."
-	}
-
-	options.KeyNamer = strings.ToLower(strings.TrimSpace(options.KeyNamer))
-	if options.KeyNamer == "" {
-		options.KeyNamer = "none"
-	}
-
-	return options
-}
-
-// buildSchemaGeneratorProgram renders temporary Go source used to reflect target module type.
-func buildSchemaGeneratorProgram(options moduleSchemaOptions) string {
-	var out bytes.Buffer
-	data := schemaGeneratorTemplateData{
-		PackagePath:    options.PackagePath,
-		KeyNamer:       options.KeyNamer,
-		ModulePath:     options.ModulePath,
-		ModuleRootPath: options.ModuleRootPath,
-		TypeName:       options.TypeName,
-	}
-
-	if err := schemaGeneratorProgramTemplate.Execute(&out, data); err != nil {
-		panic(fmt.Sprintf("render mod2schema helper template: %v", err))
-	}
-
-	return out.String()
-}
-
-// writeSchemaGeneratorProgram stores temporary source code in system temp directory.
-func writeSchemaGeneratorProgram(source string) (string, error) {
-	helperDir, err := os.MkdirTemp("", "schemadoc-mod2schema-")
-	if err != nil {
-		return "", fmt.Errorf("create temporary schema generator dir: %w", err)
-	}
-
-	helperPath := filepath.Join(helperDir, "main.go")
-	if err := os.WriteFile(helperPath, []byte(source), 0o600); err != nil {
-		return "", fmt.Errorf("write temporary schema generator: %w", err)
-	}
-
-	return helperDir, nil
-}
-
-// initSchemaGeneratorWorkspace initializes temporary go module for schema generation.
-func initSchemaGeneratorWorkspace(helperDir string, options moduleSchemaOptions) error {
-	helperModulePath := buildSchemaGeneratorModulePath(options.ModulePath)
-	if err := runGoCommand(helperDir, "mod", "init", helperModulePath); err != nil {
-		return fmt.Errorf("init temporary module: %w", err)
-	}
-
-	requireArg := "-require=" + options.ModulePath + "@v0.0.0"
-	if err := runGoCommand(helperDir, "mod", "edit", requireArg); err != nil {
-		return fmt.Errorf("require target module %q: %w", options.ModulePath, err)
-	}
-
-	replaceArg := "-replace=" + options.ModulePath + "=" + options.ModuleRootPath
-	if err := runGoCommand(helperDir, "mod", "edit", replaceArg); err != nil {
-		return fmt.Errorf("replace target module %q: %w", options.ModulePath, err)
-	}
-
-	return nil
-}
-
-// installSchemaGeneratorDependencies installs required helper module dependencies.
-func installSchemaGeneratorDependencies(helperDir string) error {
-	if err := runGoCommand(helperDir, "get", jsonschemaDependency); err != nil {
-		return fmt.Errorf("install helper dependency %q: %w", jsonschemaDependency, err)
-	}
-
-	if err := runGoCommand(helperDir, "mod", "tidy"); err != nil {
-		return fmt.Errorf("tidy helper module: %w", err)
-	}
-
-	return nil
-}
-
-// runSchemaGeneratorProgram executes temporary schema generator and returns reflected schema bytes.
-func runSchemaGeneratorProgram(helperDir string) ([]byte, error) {
-	command := exec.Command("go", "run", ".")
-	command.Dir = helperDir
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	command.Stdout = &stdout
-	command.Stderr = &stderr
-
-	if err := command.Run(); err != nil {
-		detail := strings.TrimSpace(stderr.String())
-		if detail == "" {
-			detail = err.Error()
-		}
-
-		return nil, fmt.Errorf("run module schema generator: %s", detail)
-	}
-
-	return stdout.Bytes(), nil
-}
-
-// buildSchemaGeneratorModulePath returns temporary helper module path for target module imports.
-func buildSchemaGeneratorModulePath(modulePath string) string {
-	return strings.TrimSuffix(strings.TrimSpace(modulePath), "/") + helperModuleSuffix
-}
-
-// ensureGoToolchain validates Go availability for mod2schema/mod2md flows.
-func ensureGoToolchain() error {
-	if _, err := exec.LookPath("go"); err != nil {
-		return errors.New("go toolchain not found in PATH; mod2schema and mod2md require installed Go")
-	}
-
-	return nil
-}
-
-// runGoCommand executes one Go command in selected directory and returns detailed error.
-func runGoCommand(dir string, args ...string) error {
-	command := exec.Command("go", args...)
-	command.Dir = dir
-
-	var output bytes.Buffer
-	command.Stdout = &output
-	command.Stderr = &output
-
-	if err := command.Run(); err != nil {
-		detail := strings.TrimSpace(output.String())
-		if detail == "" {
-			detail = err.Error()
-		}
-
-		return fmt.Errorf("go %s: %s", strings.Join(args, " "), detail)
-	}
-
-	return nil
-}
-
-func printVersionInfo() {
-	fmt.Printf(`url:      %s
-file:     %s
-version:  %s
-commit:   %s
-built:    %s
-`, URL, os.Args[0], Version, Commit, BuildTime)
 }

@@ -36,6 +36,10 @@ linters:
       - third_party$
       - builtin$
       - examples$
+    rules:
+      - linters:
+          - tagliatelle
+        path: cmd/schemadoc/module_graph_models.go
   settings:
     goheader:
       template: |-
