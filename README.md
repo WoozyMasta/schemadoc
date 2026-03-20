@@ -1,13 +1,13 @@
 # schemadoc
 
-Markdown documentation generator for JSON Schema.
+Markdown/HTML documentation generator for JSON Schema.
 It is available as both a CLI tool and a Go package.
 
 It can:
 
-* render markdown from schema files or stdin
+* render markdown/HTML from schema files or stdin
 * reflect Go types to JSON Schema
-* generate markdown directly from Go types in one step
+* generate markdown/HTML directly from Go types in one step
 * export and use built-in templates or custom templates
 
 ## CLI
@@ -19,9 +19,9 @@ and subcommands for exact flags and arguments.
 
 ### `schema2md`
 
-Convert JSON Schema to markdown.  
+Convert JSON Schema to markdown/HTML.  
 Reads schema from file argument or stdin;
-writes markdown to file argument or stdout.
+writes documentation to file argument or stdout.
 
 ```shell
 schemadoc schema2md schema.json > schema.md
@@ -101,6 +101,12 @@ Use it as a starting point for a custom template file.
 ```shell
 schemadoc template > list.gotmpl
 schemadoc template -t table templates/table.gotmpl
+```
+
+Print built-in HTML template text (`html`).
+
+```shell
+schemadoc template -t html templates/html.gotmpl
 ```
 
 Generated example artifacts:
@@ -195,7 +201,7 @@ Example Go model with `jsonschema` tags:
 ```go
 type Config struct {
     Name     string `json:"name" jsonschema:"required,minLength=1,example=demo"`
-    Template string `json:"template,omitempty" jsonschema:"default=list,enum=list,enum=table"`
+    Template string `json:"template,omitempty" jsonschema:"default=list,enum=list,enum=table,enum=html"`
     Wrap     int    `json:"wrap,omitempty" jsonschema:"default=80,minimum=1,example=100"`
 }
 ```
