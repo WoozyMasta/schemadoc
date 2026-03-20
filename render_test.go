@@ -756,7 +756,7 @@ func TestBuiltinTemplates(t *testing.T) {
 	t.Parallel()
 
 	names := BuiltinTemplateNames()
-	if strings.Join(names, ",") != "list,table" {
+	if strings.Join(names, ",") != "html,list,table" {
 		t.Fatalf("unexpected template names: %v", names)
 	}
 

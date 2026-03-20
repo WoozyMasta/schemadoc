@@ -52,6 +52,7 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 
 	view := renderView{
 		Title:              sanitizeText(title),
+		Description:        sanitizeText(strings.TrimSpace(opt.Description)),
 		SourceSchema:       escapeInline(sourcePath),
 		SourceFileURL:      buildSourceFileURL(sourcePath, doc.ID),
 		SchemaSourceURL:    buildSchemaSourceURL(doc.ID, sourcePath),
@@ -61,6 +62,10 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 		SchemaDraftSupport: draftSupportText(doc.Draft),
 		RootRef:            escapeInline(orNone(doc.Ref)),
 		ListMarker:         listMarker,
+		FooterToolName:     sanitizeText(strings.TrimSpace(opt.FooterToolName)),
+		FooterToolURL:      sanitizeText(strings.TrimSpace(opt.FooterToolURL)),
+		FooterVersion:      sanitizeText(strings.TrimSpace(opt.FooterVersion)),
+		FooterCommit:       sanitizeText(strings.TrimSpace(opt.FooterCommit)),
 		Contents:           buildContents(definitions, rootDefinition, defOrder),
 		Definitions:        make([]definitionView, 0, len(defOrder)),
 	}

@@ -21,6 +21,9 @@ type Options struct {
 	// This value is rendered as `# <title>`.
 	Title string `json:"title,omitempty" jsonschema:"default=schema reference,minLength=1,example=schema reference,example=My Project Config Reference"`
 
+	// Description is optional top-level document description under title.
+	Description string `json:"description,omitempty" jsonschema:"example=Generated reference for runtime configuration schema."`
+
 	// SourcePath is metadata shown in the document header.
 	//
 	// It does not affect schema parsing, only rendered output.
@@ -32,7 +35,8 @@ type Options struct {
 	//
 	//  - `list`
 	//  - `table`
-	TemplateName string `json:"template_name,omitempty" jsonschema:"default=list,enum=list,enum=table,example=list,example=table"`
+	//  - `html`
+	TemplateName string `json:"template_name,omitempty" jsonschema:"default=list,enum=list,enum=table,enum=html,example=list,example=table,example=html"`
 
 	// TemplateText overrides built-in templates with custom template text.
 	//
@@ -61,6 +65,18 @@ type Options struct {
 	//
 	// Empty value disables example embedding.
 	ExampleFormat ExampleFormat `json:"example_format,omitempty" jsonschema:"enum=json,enum=yaml,example=json,example=yaml"`
+
+	// FooterToolName is optional footer tool label for rendered documents.
+	FooterToolName string `json:"footer_tool_name,omitempty" jsonschema:"example=schemadoc,example=lintkit"`
+
+	// FooterToolURL is optional footer tool project URL.
+	FooterToolURL string `json:"footer_tool_url,omitempty" jsonschema:"format=uri,example=https://github.com/woozymasta/schemadoc"`
+
+	// FooterVersion is optional footer build version.
+	FooterVersion string `json:"footer_version,omitempty" jsonschema:"example=v0.2.0,example=dev"`
+
+	// FooterCommit is optional footer build commit.
+	FooterCommit string `json:"footer_commit,omitempty" jsonschema:"example=abcdef1,example=unknown"`
 
 	// WrapWidth defines word-wrap width for plain description paragraphs.
 	//

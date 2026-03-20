@@ -25,11 +25,13 @@ const (
 const (
 	templateListName  = "list"
 	templateTableName = "table"
+	templateHTMLName  = "html"
 )
 
 // renderView is the root view model passed to markdown templates.
 type renderView struct {
 	Title              string
+	Description        string
 	SourceSchema       string
 	SourceFileURL      string
 	SchemaSourceURL    string
@@ -41,6 +43,10 @@ type renderView struct {
 	ListMarker         string
 	ExampleFormat      string
 	ExampleDocument    string
+	FooterToolName     string
+	FooterToolURL      string
+	FooterVersion      string
+	FooterCommit       string
 	Contents           []tocEntry
 	Definitions        []definitionView
 }
