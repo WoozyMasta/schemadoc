@@ -109,6 +109,7 @@ Generated example artifacts:
 * [`examples/schema.list.md`](examples/schema.list.md)
 * [`examples/schema.table.md`](examples/schema.table.md)
 * [`examples/schema.html`](examples/schema.html)
+  [HTML preview](https://html-preview.github.io/?url=https://github.com/WoozyMasta/schemadoc/blob/master/examples/schema.html)
 
 Generate or refresh them:
 
