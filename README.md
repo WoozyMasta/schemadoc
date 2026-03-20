@@ -108,6 +108,7 @@ Generated example artifacts:
 * [`examples/schema.json`](examples/schema.json)
 * [`examples/schema.list.md`](examples/schema.list.md)
 * [`examples/schema.table.md`](examples/schema.table.md)
+* [`examples/schema.html`](examples/schema.html)
 
 Generate or refresh them:
 

@@ -216,3 +216,5 @@ example:
 		"$(EXAMPLE_DIR)/schema.json" "$(EXAMPLE_DIR)/schema.list.md"
 	$(GO) run ./cmd/schemadoc schema2md -T 'Example Schema Reference' -t table -F yaml \
 		"$(EXAMPLE_DIR)/schema.json" "$(EXAMPLE_DIR)/schema.table.md"
+	$(GO) run ./cmd/schemadoc schema2md -T 'Example Schema Reference' -t html -F yaml \
+		"$(EXAMPLE_DIR)/schema.json" "$(EXAMPLE_DIR)/schema.html"
