@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=../cmd/schemadoc/doc/config.schema.json
+# Stage: generate base schema fixture from module_base model.
+
+schema: testdata/generated/base.schema.json
+mod2schema:
+  module: testdata/module_base
+  package: github.com/woozymasta/schemadoc-test-base/model
+  type: SharedOptions
+
+---
+# yaml-language-server: $schema=../cmd/schemadoc/doc/config.schema.json
+# Stage: build merged app schema and generate JSON/YAML examples plus list docs.
+
+schema: testdata/generated/app.schema.json
+mod2schema:
+  module: testdata/module_app
+  package: github.com/woozymasta/schemadoc-test-app/model
+  type: ServiceConfig
+merge:
+  prune_unreachable_defs: true
+  patches:
+    - file: testdata/generated/base.schema.json
+      source: /$defs/EndpointMeta
+      target: /$defs/model_EndpointMeta
+      op:
+        node: replace
+  imports:
+    - file: testdata/generated/base.schema.json
+      conflict: keep
+    - file: testdata/generated/base.schema.json
+      rename:
+        mode: prefix
+        value: model_
+      conflict: replace
+schema2json:
+  mode: all
+  output: testdata/generated/app.config.json
+schema2yaml:
+  mode: all
+  output: testdata/generated/app.config.yaml
+schema2doc:
+  title: Testdata Reference (List + YAML Example)
+  description: Golden fixture for list template with embedded required YAML example.
+  template: list
+  mode: required
+  format: yaml
+  list_marker: '-'
+  wrap: 72
+  output: testdata/generated/app.doc.list.md
+
+---
+# yaml-language-server: $schema=../cmd/schemadoc/doc/config.schema.yaml
+# Stage: generate the same base schema fixture in YAML format.
+
+schema: testdata/generated/base.schema.yaml
+mod2schema:
+  module: testdata/module_base
+  package: github.com/woozymasta/schemadoc-test-base/model
+  type: SharedOptions
+
+---
+# yaml-language-server: $schema=../cmd/schemadoc/doc/config.schema.json
+# Stage: render table markdown documentation from app schema fixture.
+
+schema: testdata/generated/app.schema.json
+schema2doc:
+  title: Testdata Reference (Table + JSON Example)
+  description: Golden fixture for table template with embedded full JSON example.
+  template: table
+  mode: all
+  format: json
+  wrap: 88
+  output: testdata/generated/app.doc.table.md
+
+---
+# yaml-language-server: $schema=../cmd/schemadoc/doc/config.schema.json
+# Stage: render HTML documentation from app schema fixture.
+
+schema: testdata/generated/app.schema.json
+schema2doc:
+  title: Testdata Reference (HTML + YAML Example)
+  description: Golden fixture for html template with embedded YAML example and rich comments.
+  template: html
+  mode: all
+  format: yaml
+  wrap: 90
+  output: testdata/generated/app.doc.html

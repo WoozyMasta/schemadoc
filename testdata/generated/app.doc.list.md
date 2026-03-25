@@ -1,0 +1,1897 @@
+<!-- Automatically generated file, do not modify! -->
+
+# Testdata Reference (List + YAML Example)
+
+Golden fixture for list template with embedded required YAML example.
+
+- Source file: [`testdata/generated/app.schema.json`](https://github.com/woozymasta/schemadoc-test-app/blob/HEAD/testdata/generated/app.schema.json)
+- Source URL: [Raw schema URL](https://raw.githubusercontent.com/woozymasta/schemadoc-test-app/HEAD/testdata/generated/app.schema.json)
+- Schema identifier: `https://github.com/woozymasta/schemadoc-test-app/model/service-config`
+- JSON Schema version: `https://json-schema.org/draft/2020-12/schema`
+- Version support: `supported (2020-12)`
+- Root reference: `#/$defs/ServiceConfig`
+
+## Contents
+
+- [ServiceConfig](#serviceconfig)
+  - [AdvancedOptions](#advancedoptions)
+  - [AlertTarget](#alerttarget)
+  - [DeepProbe](#deepprobe)
+  - [Level1](#level1)
+    - [Level2](#level2)
+      - [Level3](#level3)
+        - [Level4](#level4)
+          - [Level5](#level5)
+            - [Level6](#level6)
+  - [QueueOptions](#queueoptions)
+  - [RetryPolicy](#retrypolicy)
+  - [StorageBucket](#storagebucket)
+  - [TLSOverride](#tlsoverride)
+  - [Window](#window)
+  - [model_SharedEndpointBinding](#model_sharedendpointbinding)
+    - [EndpointMeta](#endpointmeta)
+  - [model_SharedOptions](#model_sharedoptions)
+    - [SharedEndpointBinding](#sharedendpointbinding)
+    - [SharedEndpoints](#sharedendpoints)
+    - [SharedTLS](#sharedtls)
+    - [SharedToggle](#sharedtoggle)
+    - [SharedWindow](#sharedwindow)
+  - [model_SharedToggle](#model_sharedtoggle)
+  - [model_SharedWindow](#model_sharedwindow)
+- [Example yaml document](#example-yaml-document)
+
+## ServiceConfig
+
+ServiceConfig is root schema used in golden docs tests.
+
+Attributes:
+
+- Type: `object`
+- Properties: 23
+- Additional properties: boolean schema=false
+
+### ServiceConfig.model_SharedOptions
+
+Key: `shared`
+
+Shared is shared options imported from base module.
+
+Attributes:
+
+- Required: yes
+- Reference: [`model_SharedOptions`](#model_sharedoptions) (`#/$defs/model_SharedOptions`)
+- Title: `Shared Options`
+- Other keywords: x-order=1
+
+### ServiceConfig.name
+
+Key: `name`
+
+Human-readable service name.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Title: `Service Name`
+- Default: `demo-service`
+- Constraints: `minLength=3`
+- Other keywords: x-order=10
+
+### ServiceConfig.RetryPolicy
+
+Key: `retry`
+
+Retry is transient retry strategy.
+
+Attributes:
+
+- Required: yes
+- Reference: [`RetryPolicy`](#retrypolicy) (`#/$defs/RetryPolicy`)
+- Title: `Retry Policy`
+- Other keywords: x-order=11
+
+### ServiceConfig.schedule
+
+Key: `schedule`
+
+Schedule is fixed-size weekly maintenance windows.
+
+Attributes:
+
+- Type: `array`
+- Required: no
+- Items reference: [`Window`](#window) (`#/$defs/Window`)
+- Constraints: `minItems=7`; `maxItems=7`
+- Other keywords: x-order=13
+
+### ServiceConfig.endpoint_tls_overrides
+
+Key: `endpoint_tls_overrides`
+
+EndpointTLSOverrides overrides TLS by endpoint name.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties reference: [`TLSOverride`](#tlsoverride) (`#/$defs/TLSOverride`)
+- Other keywords: x-order=14
+
+### ServiceConfig.RetryPolicy
+
+Key: `optional_retry`
+
+OptionalRetry allows temporary retry override.
+
+Attributes:
+
+- Required: no
+- Reference: [`RetryPolicy`](#retrypolicy) (`#/$defs/RetryPolicy`)
+- Other keywords: x-order=15
+
+### ServiceConfig.model_SharedToggle
+
+Key: `base_toggle`
+
+BaseToggle references tiny base reusable toggle structure.
+
+Attributes:
+
+- Required: no
+- Reference: [`model_SharedToggle`](#model_sharedtoggle) (`#/$defs/model_SharedToggle`)
+- Other keywords: x-order=16
+
+### ServiceConfig.model_SharedEndpointBinding
+
+Key: `base_binding`
+
+BaseBinding references base structure that nests existing EndpointMeta.
+
+Attributes:
+
+- Required: no
+- Reference: [`model_SharedEndpointBinding`](#model_sharedendpointbinding) (`#/$defs/model_SharedEndpointBinding`)
+- Other keywords: x-order=17
+
+### ServiceConfig.DeepProbe
+
+Key: `direct_probe`
+
+DirectProbe is root-level direct reusable probe.
+
+Attributes:
+
+- Required: no
+- Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
+- Other keywords: x-order=18
+
+### ServiceConfig.Level1
+
+Key: `deep_primary`
+
+DeepPrimary is first deep branch with six levels.
+
+Attributes:
+
+- Required: no
+- Reference: [`Level1`](#level1) (`#/$defs/Level1`)
+- Other keywords: x-order=19
+
+### ServiceConfig.Level1
+
+Key: `deep_secondary`
+
+DeepSecondary is second deep branch using same deep chain.
+
+Attributes:
+
+- Required: no
+- Reference: [`Level1`](#level1) (`#/$defs/Level1`)
+- Other keywords: x-order=20
+
+### ServiceConfig.deep_by_env
+
+Key: `deep_by_env`
+
+DeepByEnv stores deep branches by environment key.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties reference: [`Level1`](#level1) (`#/$defs/Level1`)
+- Other keywords: x-order=21
+
+### ServiceConfig.AdvancedOptions
+
+Key: `advanced`
+
+Advanced groups optional advanced behavior flags.
+
+Attributes:
+
+- Required: no
+- Reference: [`AdvancedOptions`](#advancedoptions) (`#/$defs/AdvancedOptions`)
+- Other keywords: x-order=22
+
+### ServiceConfig.queues
+
+Key: `queues`
+
+Queues configures processing queues by queue name.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties reference: [`QueueOptions`](#queueoptions) (`#/$defs/QueueOptions`)
+- Other keywords: x-order=150
+
+### ServiceConfig.named_buckets
+
+Key: `named_buckets`
+
+NamedBuckets configures storage by logical bucket key.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties reference: [`StorageBucket`](#storagebucket) (`#/$defs/StorageBucket`)
+- Other keywords: x-order=151
+
+### ServiceConfig.buckets_by_priority
+
+Key: `buckets_by_priority`
+
+BucketsByPriority maps numeric priority to bucket config.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Pattern properties: 1
+- Additional properties: boolean schema=false
+- Other keywords: x-order=152
+
+### ServiceConfig.bucket_groups
+
+Key: `bucket_groups`
+
+BucketGroups stores grouped bucket lists.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `array`
+- Other keywords: x-order=153
+
+### ServiceConfig.queue_workers_by_zone
+
+Key: `queue_workers_by_zone`
+
+QueueWorkersByZone stores workers count by zone.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `object`
+- Other keywords: x-order=154
+
+### ServiceConfig.alert_targets
+
+Key: `alert_targets`
+
+AlertTargets stores alerting destinations by level.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `array`
+- Other keywords: x-order=155
+
+### ServiceConfig.mode
+
+Key: `mode`
+
+Mode is execution mode.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Default: `safe`
+- Enum: `safe`, `fast`
+- Other keywords: x-order=400
+
+### ServiceConfig.mirror_endpoints
+
+Key: `mirror_endpoints`
+
+MirrorEndpoints is optional explicit mirror list.
+
+Attributes:
+
+- Type: `array`
+- Required: no
+- Items type: `string`
+- Other keywords: x-order=900
+
+### ServiceConfig.extensions
+
+Key: `extensions`
+
+Extensions stores external integration raw values.
+
+This section is intentionally flexible and can be used by external
+delivery teams. The core service should not rely on these fields for
+baseline startup decisions.
+
+**Allowed usage patterns**
+
+  - Feature toggles owned by integration team.
+  - Provider-specific adapter hints.
+  - Temporary migration markers.
+
+**Do not store**
+
+  - Secrets and tokens.
+  - Large binary payloads.
+  - Contract-breaking values that redefine core behavior.
+
+> Keep values small, explicit, and disposable.
+
+Example:
+
+{
+    "x-provider": "acme-cloud",
+    "x-migration-stage": "phase-2",
+    "x-flags": ["shadow-write", "dry-run"]
+}
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Other keywords: x-order=1000
+
+### ServiceConfig.model_SharedWindow
+
+Key: `base_window`
+
+BaseWindow references nested base timing structure.
+
+Attributes:
+
+- Required: no
+- Reference: [`model_SharedWindow`](#model_sharedwindow) (`#/$defs/model_SharedWindow`)
+- Other keywords: x-order=1200
+
+## AdvancedOptions
+
+AdvancedOptions groups additional optional controls.
+
+Attributes:
+
+- Type: `object`
+- Properties: 4
+- Additional properties: boolean schema=false
+
+### AdvancedOptions.metadata
+
+Key: `metadata`
+
+Path: [`advanced`](#serviceconfigadvancedoptions).`metadata`
+
+Metadata keeps arbitrary nested metadata.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `object`
+- Other keywords: x-order=6
+
+### AdvancedOptions.cooldown
+
+Key: `cooldown`
+
+Path: [`advanced`](#serviceconfigadvancedoptions).`cooldown`
+
+Cooldown sets cooldown duration after errors.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+- Other keywords: x-order=7
+
+### AdvancedOptions.circuit_breaker
+
+Key: `circuit_breaker`
+
+Path: [`advanced`](#serviceconfigadvancedoptions).`circuit_breaker`
+
+CircuitBreaker enables circuit breaker behavior.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+- Other keywords: x-order=100
+
+### AdvancedOptions.tags
+
+Key: `tags`
+
+Path: [`advanced`](#serviceconfigadvancedoptions).`tags`
+
+Tags adds free-form tags.
+
+Attributes:
+
+- Type: `array`
+- Required: no
+- Items type: `string`
+- Other keywords: x-order=101
+
+## AlertTarget
+
+AlertTarget describes one alerting destination.
+
+Attributes:
+
+- Type: `object`
+- Properties: 3
+- Additional properties: boolean schema=false
+
+### AlertTarget.channel
+
+Key: `channel`
+
+Path: [`alert_targets`](#serviceconfigalert_targets).`[]`.`[]`.`channel`
+
+Channel is target channel name.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Examples: `slack`
+- Other keywords: x-order=2
+
+### AlertTarget.severity
+
+Key: `severity`
+
+Path: [`alert_targets`](#serviceconfigalert_targets).`[]`.`[]`.`severity`
+
+Severity is optional minimum severity.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Enum: `info`, `warn`, `error`
+- Other keywords: x-order=3
+
+### AlertTarget.address
+
+Key: `address`
+
+Path: [`alert_targets`](#serviceconfigalert_targets).`[]`.`[]`.`address`
+
+Address is destination address.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Examples: `https://hooks.slack.com/...`
+- Other keywords: x-order=200
+
+## DeepProbe
+
+DeepProbe is reused on every deep nesting level for path tests.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### DeepProbe.enabled
+
+Key: `enabled`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`enabled`
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`enabled`
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`enabled`
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`enabled`
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`probe`](#level2deepprobe).`enabled`
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`probe`](#level1deepprobe).`enabled`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`enabled`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`enabled`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`enabled`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`enabled`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`probe`](#level2deepprobe).`enabled`
+
+- [`deep_primary`](#serviceconfiglevel1).[`probe`](#level1deepprobe).`enabled`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`enabled`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`enabled`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`enabled`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`enabled`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`probe`](#level2deepprobe).`enabled`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`probe`](#level1deepprobe).`enabled`
+
+- [`direct_probe`](#serviceconfigdeepprobe).`enabled`
+
+Enabled toggles probe branch.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+- Default: `true`
+- Other keywords: x-order=1
+
+### DeepProbe.token
+
+Key: `token`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`token`
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`token`
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`token`
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`token`
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`probe`](#level2deepprobe).`token`
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`probe`](#level1deepprobe).`token`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`token`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`token`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`token`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`token`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`probe`](#level2deepprobe).`token`
+
+- [`deep_primary`](#serviceconfiglevel1).[`probe`](#level1deepprobe).`token`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`token`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`token`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`token`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`token`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`probe`](#level2deepprobe).`token`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`probe`](#level1deepprobe).`token`
+
+- [`direct_probe`](#serviceconfigdeepprobe).`token`
+
+Token is stable probe token value.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Default: `probe`
+- Other keywords: x-order=12
+
+## EndpointMeta
+
+EndpointMeta describes metadata for one endpoint target.
+
+Attributes:
+
+- Type: `object`
+- Properties: 3
+- Additional properties: boolean schema=false
+
+### EndpointMeta.weight
+
+Key: `weight`
+
+Paths:
+
+- [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`weight`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`weight`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`weight`
+
+Weight is load balancing weight.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+- Constraints: `minimum=0`; `maximum=100`
+- Other keywords: x-order=7
+
+### EndpointMeta.region
+
+Key: `region`
+
+Paths:
+
+- [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`region`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`region`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`region`
+
+Region is deployment region code.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Examples: `eu-central-1`
+- Other keywords: x-order=91
+
+### EndpointMeta.read_only
+
+Key: `read_only`
+
+Paths:
+
+- [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`read_only`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`read_only`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`read_only`
+
+ReadOnly marks endpoint as read-only.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+- Other keywords: x-order=250
+
+## Level1
+
+Level1 contains one deeper nested level.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### Level1.DeepProbe
+
+Key: `probe`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.`probe`
+
+- [`deep_primary`](#serviceconfiglevel1).`probe`
+
+- [`deep_secondary`](#serviceconfiglevel1).`probe`
+
+Probe is repeated reusable type on this level.
+
+Attributes:
+
+- Required: yes
+- Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
+- Other keywords: x-order=2
+
+### Level1.Level2
+
+Key: `next`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.`next`
+
+- [`deep_primary`](#serviceconfiglevel1).`next`
+
+- [`deep_secondary`](#serviceconfiglevel1).`next`
+
+Next points to next nested level.
+
+Attributes:
+
+- Required: yes
+- Reference: [`Level2`](#level2) (`#/$defs/Level2`)
+- Other keywords: x-order=200
+
+## Level2
+
+Level2 contains one deeper nested level.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### Level2.DeepProbe
+
+Key: `probe`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).`probe`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).`probe`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).`probe`
+
+Probe is repeated reusable type on this level.
+
+Attributes:
+
+- Required: yes
+- Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
+- Other keywords: x-order=9
+
+### Level2.Level3
+
+Key: `next`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).`next`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).`next`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).`next`
+
+Next points to next nested level.
+
+Attributes:
+
+- Required: yes
+- Reference: [`Level3`](#level3) (`#/$defs/Level3`)
+- Other keywords: x-order=10
+
+## Level3
+
+Level3 contains one deeper nested level.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### Level3.Level4
+
+Key: `next`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).`next`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).`next`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).`next`
+
+Next points to next nested level.
+
+Attributes:
+
+- Required: yes
+- Reference: [`Level4`](#level4) (`#/$defs/Level4`)
+- Other keywords: x-order=1
+
+### Level3.DeepProbe
+
+Key: `probe`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).`probe`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).`probe`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).`probe`
+
+Probe is repeated reusable type on this level.
+
+Attributes:
+
+- Required: yes
+- Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
+- Other keywords: x-order=42
+
+## Level4
+
+Level4 contains one deeper nested level.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### Level4.Level5
+
+Key: `next`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`next`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`next`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`next`
+
+Next points to next nested level.
+
+Attributes:
+
+- Required: yes
+- Reference: [`Level5`](#level5) (`#/$defs/Level5`)
+- Other keywords: x-order=4
+
+### Level4.DeepProbe
+
+Key: `probe`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`probe`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`probe`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`probe`
+
+Probe is repeated reusable type on this level.
+
+Attributes:
+
+- Required: yes
+- Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
+- Other keywords: x-order=41
+
+## Level5
+
+Level5 contains one deeper nested level.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### Level5.Level6
+
+Key: `next`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`next`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`next`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`next`
+
+Next points to next nested level.
+
+Attributes:
+
+- Required: yes
+- Reference: [`Level6`](#level6) (`#/$defs/Level6`)
+- Other keywords: x-order=3
+
+### Level5.DeepProbe
+
+Key: `probe`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`probe`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`probe`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`probe`
+
+Probe is repeated reusable type on this level.
+
+Attributes:
+
+- Required: yes
+- Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
+- Other keywords: x-order=77
+
+## Level6
+
+Level6 is the deepest level in deep branch.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### Level6.final_value
+
+Key: `final_value`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`final_value`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`final_value`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`final_value`
+
+FinalValue is terminal deep value.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Examples: `done`
+- Other keywords: x-order=2
+
+### Level6.DeepProbe
+
+Key: `probe`
+
+Paths:
+
+- [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`probe`
+
+- [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`probe`
+
+- [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`probe`
+
+Probe is repeated reusable type on this level.
+
+Attributes:
+
+- Required: yes
+- Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
+- Other keywords: x-order=20
+
+## QueueOptions
+
+QueueOptions describes options for one queue.
+
+Attributes:
+
+- Type: `object`
+- Properties: 3
+- Additional properties: boolean schema=false
+
+### QueueOptions.workers
+
+Key: `workers`
+
+Path: [`queues`](#serviceconfigqueues).`[]`.`workers`
+
+Workers is number of worker goroutines.
+
+Attributes:
+
+- Type: `integer`
+- Required: yes
+- Default: `4`
+- Constraints: `minimum=1`; `maximum=128`
+- Other keywords: x-order=1
+
+### QueueOptions.visibility_timeout
+
+Key: `visibility_timeout`
+
+Path: [`queues`](#serviceconfigqueues).`[]`.`visibility_timeout`
+
+VisibilityTimeout is message visibility timeout.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+- Other keywords: x-order=2
+
+### QueueOptions.batch_size
+
+Key: `batch_size`
+
+Path: [`queues`](#serviceconfigqueues).`[]`.`batch_size`
+
+BatchSize is number of entries in one batch.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+- Default: `100`
+- Constraints: `minimum=1`; `maximum=10000`
+- Other keywords: x-order=80
+
+## RetryPolicy
+
+RetryPolicy controls retry behavior for transient failures.
+
+Attributes:
+
+- Type: `object`
+- Properties: 3
+- Additional properties: boolean schema=false
+
+### RetryPolicy.backoff_ms
+
+Key: `backoff_ms`
+
+Paths:
+
+- [`optional_retry`](#serviceconfigretrypolicy).`backoff_ms`
+
+- [`retry`](#serviceconfigretrypolicy).`backoff_ms`
+
+Backoff is delay between attempts in milliseconds.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+- Default: `250`
+- Constraints: `minimum=10`; `maximum=30000`
+- Other keywords: x-order=4
+
+### RetryPolicy.max_jitter_ms
+
+Key: `max_jitter_ms`
+
+Paths:
+
+- [`optional_retry`](#serviceconfigretrypolicy).`max_jitter_ms`
+
+- [`retry`](#serviceconfigretrypolicy).`max_jitter_ms`
+
+MaxJitter is random jitter upper bound in milliseconds.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+- Default: `100`
+- Constraints: `minimum=0`; `maximum=10000`
+- Other keywords: x-order=40
+
+### RetryPolicy.attempts
+
+Key: `attempts`
+
+Paths:
+
+- [`optional_retry`](#serviceconfigretrypolicy).`attempts`
+
+- [`retry`](#serviceconfigretrypolicy).`attempts`
+
+Maximum number of retry attempts for one operation.
+
+Attributes:
+
+- Type: `integer`
+- Required: yes
+- Title: `Retry Attempts`
+- Default: `3`
+- Constraints: `minimum=1`; `maximum=10`
+- Other keywords: x-order=500
+
+## SharedEndpointBinding
+
+SharedEndpointBinding nests existing endpoint metadata into a binding.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### SharedEndpointBinding.EndpointMeta
+
+Key: `meta`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).`meta`
+
+Meta reuses existing endpoint metadata schema.
+
+Attributes:
+
+- Required: yes
+- Reference: [`EndpointMeta`](#endpointmeta) (`#/$defs/EndpointMeta`)
+- Other keywords: x-order=3
+
+### SharedEndpointBinding.name
+
+Key: `name`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).`name`
+
+Name is logical binding name.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Examples: `primary`
+- Other keywords: x-order=14
+
+## SharedEndpoints
+
+SharedEndpoints describes common endpoint set used by services.
+
+Attributes:
+
+- Type: `object`
+- Properties: 4
+- Additional properties: boolean schema=false
+
+### SharedEndpoints.api
+
+Key: `api`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`api`
+
+API is primary API base URL.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Title: `API Endpoint`
+- Examples: `https://api.acme.local`
+- Format: `uri`
+- Other keywords: x-order=5
+
+### SharedEndpoints.internal
+
+Key: `internal`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`internal`
+
+Internal is internal service endpoint URL.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Examples: `http://internal:8080`
+- Format: `uri`
+- Other keywords: x-order=6
+
+### SharedEndpoints.metrics
+
+Key: `metrics`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`metrics`
+
+Metrics is optional metrics endpoint URL.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Examples: `https://metrics.acme.local`
+- Format: `uri`
+- Other keywords: x-order=111
+
+### SharedEndpoints.meta
+
+Key: `meta`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`meta`
+
+Meta stores endpoint metadata by endpoint name.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties reference: [`EndpointMeta`](#endpointmeta) (`#/$defs/EndpointMeta`)
+- Other keywords: x-order=204
+
+## SharedTLS
+
+SharedTLS describes shared transport security settings.
+
+Attributes:
+
+- Type: `object`
+- Properties: 4
+- Additional properties: boolean schema=false
+
+### SharedTLS.enabled
+
+Key: `enabled`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`enabled`
+
+Enable TLS for outbound connections.
+
+Attributes:
+
+- Type: `boolean`
+- Required: yes
+- Title: `TLS Enabled`
+- Default: `true`
+- Other keywords: x-order=12
+
+### SharedTLS.cipher_suites
+
+Key: `cipher_suites`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`cipher_suites`
+
+CipherSuites lists explicitly allowed cipher suites.
+
+Attributes:
+
+- Type: `array`
+- Required: no
+- Items type: `string`
+- Items examples: `TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`
+- Other keywords: x-order=13
+
+### SharedTLS.min_version
+
+Key: `min_version`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`min_version`
+
+MinVersion is lowest allowed TLS protocol version.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Default: `1.2`
+- Enum: `1.2`, `1.3`
+- Other keywords: x-order=88
+
+### SharedTLS.handshake_timeout
+
+Key: `handshake_timeout`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`handshake_timeout`
+
+HandshakeTimeout sets TLS handshake timeout.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+- Other keywords: x-order=377
+
+## SharedToggle
+
+SharedToggle is a tiny reusable on/off configuration block.
+
+Attributes:
+
+- Type: `object`
+- Properties: 1
+- Additional properties: boolean schema=false
+
+### SharedToggle.enabled
+
+Key: `enabled`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`feature_toggle`](#model_sharedoptionssharedtoggle).`enabled`
+
+Enabled toggles one optional feature branch.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+- Default: `true`
+- Other keywords: x-order=42
+
+## SharedWindow
+
+SharedWindow is a nested window with retry-aware timing.
+
+Attributes:
+
+- Type: `object`
+- Properties: 3
+- Additional properties: boolean schema=false
+
+### SharedWindow.start
+
+Key: `start`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`maintenance_window`](#model_sharedoptionssharedwindow).`start`
+
+Start is start minute in a one-hour window.
+
+Attributes:
+
+- Type: `integer`
+- Required: yes
+- Constraints: `minimum=0`; `maximum=59`
+- Other keywords: x-order=2
+
+### SharedWindow.retry_delay
+
+Key: `retry_delay`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`maintenance_window`](#model_sharedoptionssharedwindow).`retry_delay`
+
+Retry uses existing base retry-like duration style.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+- Other keywords: x-order=17
+
+### SharedWindow.end
+
+Key: `end`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`maintenance_window`](#model_sharedoptionssharedwindow).`end`
+
+End is end minute in a one-hour window.
+
+Attributes:
+
+- Type: `integer`
+- Required: yes
+- Constraints: `minimum=0`; `maximum=59`
+- Other keywords: x-order=999
+
+## StorageBucket
+
+StorageBucket describes one storage target.
+
+Attributes:
+
+- Type: `object`
+- Properties: 3
+- Additional properties: boolean schema=false
+
+### StorageBucket.region
+
+Key: `region`
+
+Paths:
+
+- [`bucket_groups`](#serviceconfigbucket_groups).`[]`.`[]`.`region`
+
+- [`buckets_by_priority`](#serviceconfigbuckets_by_priority).`^[0-9]+$`.`region`
+
+- [`named_buckets`](#serviceconfignamed_buckets).`[]`.`region`
+
+Region is bucket region.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Examples: `us-east-1`
+- Other keywords: x-order=3
+
+### StorageBucket.name
+
+Key: `name`
+
+Paths:
+
+- [`bucket_groups`](#serviceconfigbucket_groups).`[]`.`[]`.`name`
+
+- [`buckets_by_priority`](#serviceconfigbuckets_by_priority).`^[0-9]+$`.`name`
+
+- [`named_buckets`](#serviceconfignamed_buckets).`[]`.`name`
+
+Name is bucket name.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Examples: `artifacts-main`
+- Constraints: `minLength=3`
+- Other keywords: x-order=70
+
+### StorageBucket.read_only
+
+Key: `read_only`
+
+Paths:
+
+- [`bucket_groups`](#serviceconfigbucket_groups).`[]`.`[]`.`read_only`
+
+- [`buckets_by_priority`](#serviceconfigbuckets_by_priority).`^[0-9]+$`.`read_only`
+
+- [`named_buckets`](#serviceconfignamed_buckets).`[]`.`read_only`
+
+ReadOnly marks bucket as read-only.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+- Other keywords: x-order=71
+
+## TLSOverride
+
+TLSOverride describes TLS override for one endpoint.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### TLSOverride.min_version
+
+Key: `min_version`
+
+Path: [`endpoint_tls_overrides`](#serviceconfigendpoint_tls_overrides).`[]`.`min_version`
+
+MinVersion overrides minimal TLS version.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Enum: `1.2`, `1.3`
+- Other keywords: x-order=1
+
+### TLSOverride.enabled
+
+Key: `enabled`
+
+Path: [`endpoint_tls_overrides`](#serviceconfigendpoint_tls_overrides).`[]`.`enabled`
+
+Enabled overrides TLS state.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+- Other keywords: x-order=9
+
+## Window
+
+Window describes daily maintenance time window.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### Window.end
+
+Key: `end`
+
+Path: [`schedule`](#serviceconfigschedule).`[]`.`end`
+
+End is end time (HH:MM).
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Constraints: `pattern=^[0-2][0-9]:[0-5][0-9]$`
+- Other keywords: x-order=5
+
+### Window.start
+
+Key: `start`
+
+Path: [`schedule`](#serviceconfigschedule).`[]`.`start`
+
+Start is start time (HH:MM).
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Constraints: `pattern=^[0-2][0-9]:[0-5][0-9]$`
+- Other keywords: x-order=44
+
+## model_SharedEndpointBinding
+
+SharedEndpointBinding nests existing endpoint metadata into a binding.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### model_SharedEndpointBinding.EndpointMeta
+
+Key: `meta`
+
+Path: [`base_binding`](#serviceconfigmodel_sharedendpointbinding).`meta`
+
+Meta reuses existing endpoint metadata schema.
+
+Attributes:
+
+- Required: yes
+- Reference: [`EndpointMeta`](#endpointmeta) (`#/$defs/EndpointMeta`)
+- Other keywords: x-order=3
+
+### model_SharedEndpointBinding.name
+
+Key: `name`
+
+Path: [`base_binding`](#serviceconfigmodel_sharedendpointbinding).`name`
+
+Name is logical binding name.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Examples: `primary`
+- Other keywords: x-order=14
+
+## model_SharedOptions
+
+SharedOptions is reusable part expected to be merged into app schema.
+
+Attributes:
+
+- Type: `object`
+- Properties: 12
+- Additional properties: boolean schema=false
+
+### model_SharedOptions.SharedEndpoints
+
+Key: `endpoints`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoints`
+
+Endpoints are network endpoints shared across components.
+
+Attributes:
+
+- Required: yes
+- Reference: [`SharedEndpoints`](#sharedendpoints) (`#/$defs/SharedEndpoints`)
+- Title: `Endpoint Options`
+- Other keywords: x-order=1
+
+### model_SharedOptions.level_by_subsystem
+
+Key: `level_by_subsystem`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`level_by_subsystem`
+
+LevelBySubsystem maps subsystem name to log level.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `string`
+- Other keywords: x-order=4
+
+### model_SharedOptions.endpoint_groups
+
+Key: `endpoint_groups`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoint_groups`
+
+EndpointGroups stores endpoint names grouped by key.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `array`
+- Other keywords: x-order=8
+
+### model_SharedOptions.SharedTLS
+
+Key: `tls`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`tls`
+
+TLS is TLS configuration shared across components.
+
+Attributes:
+
+- Required: yes
+- Reference: [`SharedTLS`](#sharedtls) (`#/$defs/SharedTLS`)
+- Title: `TLS Options`
+- Other keywords: x-order=10
+
+### model_SharedOptions.labels
+
+Key: `labels`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`labels`
+
+Labels maps short numeric label IDs to values.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Pattern properties: 1
+- Additional properties: boolean schema=false
+- Other keywords: x-order=21
+
+### model_SharedOptions.feature_matrix
+
+Key: `feature_matrix`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`feature_matrix`
+
+FeatureMatrix stores feature flags as nested map.
+
+**Matrix semantics**
+
+  - First key: feature group name.
+  - Second key: feature flag name.
+  - Value: desired on/off state.
+
+Example:
+
+  - `auth.mfa_required = true`
+  - `billing.v2_invoice = false`
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `object`
+- Other keywords: x-order=41
+
+### model_SharedOptions.SharedEndpointBinding
+
+Key: `endpoint_binding`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoint_binding`
+
+EndpointBinding links endpoint identity and metadata.
+
+Attributes:
+
+- Required: no
+- Reference: [`SharedEndpointBinding`](#sharedendpointbinding) (`#/$defs/SharedEndpointBinding`)
+- Other keywords: x-order=65
+
+### model_SharedOptions.SharedToggle
+
+Key: `feature_toggle`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`feature_toggle`
+
+FeatureToggle is a small reusable boolean options block.
+
+Attributes:
+
+- Required: no
+- Reference: [`SharedToggle`](#sharedtoggle) (`#/$defs/SharedToggle`)
+- Other keywords: x-order=66
+
+### model_SharedOptions.SharedWindow
+
+Key: `maintenance_window`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`maintenance_window`
+
+MaintenanceWindow stores shared maintenance timing.
+
+Attributes:
+
+- Required: no
+- Reference: [`SharedWindow`](#sharedwindow) (`#/$defs/SharedWindow`)
+- Other keywords: x-order=67
+
+### model_SharedOptions.ports
+
+Key: `ports`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`ports`
+
+Ports maps external service names to exposed port.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `integer`
+- Other keywords: x-order=300
+
+### model_SharedOptions.endpoint_ports
+
+Key: `endpoint_ports`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoint_ports`
+
+EndpointPorts stores ports by endpoint and protocol name.
+
+This field is useful when one logical endpoint exposes multiple listener
+protocols (for example `http`, `grpc`, `admin`). Consumers can resolve
+exact port by `(endpoint, protocol)` pair without hardcoding transport
+assumptions.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `object`
+- Other keywords: x-order=305
+
+### model_SharedOptions.timeout_by_endpoint
+
+Key: `timeout_by_endpoint`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`timeout_by_endpoint`
+
+TimeoutByEndpoint stores timeout per endpoint name.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `integer`
+- Other keywords: x-order=700
+
+## model_SharedToggle
+
+SharedToggle is a tiny reusable on/off configuration block.
+
+Attributes:
+
+- Type: `object`
+- Properties: 1
+- Additional properties: boolean schema=false
+
+### model_SharedToggle.enabled
+
+Key: `enabled`
+
+Path: [`base_toggle`](#serviceconfigmodel_sharedtoggle).`enabled`
+
+Enabled toggles one optional feature branch.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+- Default: `true`
+- Other keywords: x-order=42
+
+## model_SharedWindow
+
+SharedWindow is a nested window with retry-aware timing.
+
+Attributes:
+
+- Type: `object`
+- Properties: 3
+- Additional properties: boolean schema=false
+
+### model_SharedWindow.start
+
+Key: `start`
+
+Path: [`base_window`](#serviceconfigmodel_sharedwindow).`start`
+
+Start is start minute in a one-hour window.
+
+Attributes:
+
+- Type: `integer`
+- Required: yes
+- Constraints: `minimum=0`; `maximum=59`
+- Other keywords: x-order=2
+
+### model_SharedWindow.retry_delay
+
+Key: `retry_delay`
+
+Path: [`base_window`](#serviceconfigmodel_sharedwindow).`retry_delay`
+
+Retry uses existing base retry-like duration style.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+- Other keywords: x-order=17
+
+### model_SharedWindow.end
+
+Key: `end`
+
+Path: [`base_window`](#serviceconfigmodel_sharedwindow).`end`
+
+End is end minute in a one-hour window.
+
+Attributes:
+
+- Type: `integer`
+- Required: yes
+- Constraints: `minimum=0`; `maximum=59`
+- Other keywords: x-order=999
+
+## Example yaml document
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/woozymasta/schemadoc-test-app/HEAD/testdata/generated/app.schema.json
+
+# Shared Options
+# Shared is shared options imported from base module.
+shared:
+  # Endpoint Options
+  # Endpoints are network endpoints shared across components.
+  endpoints:
+    # API Endpoint
+    # API is primary API base URL.
+    # Example: https://api.acme.local
+    api: https://api.acme.local
+  # TLS Options
+  # TLS is TLS configuration shared across components.
+  tls:
+    # TLS Enabled
+    # Enable TLS for outbound connections.
+    # Default: true
+    enabled: true
+    # MinVersion is lowest allowed TLS protocol version.
+    # Default: 1.2
+    # Allowed values: 1.2, 1.3
+    min_version: "1.2"
+# Service Name
+# Human-readable service name.
+# Default: demo-service
+name: demo-service
+# Retry Policy
+# Retry is transient retry strategy.
+retry:
+  # Retry Attempts
+  # Maximum number of retry attempts for one operation.
+  # Default: 3
+  attempts: 3
+```
+
+---
+
+> Generated with
+> [schemadoc](https://github.com/woozymasta/schemadoc)
+> version `dev`
+> commit `unknown`
+
+<!-- Automatically generated file, do not modify! -->

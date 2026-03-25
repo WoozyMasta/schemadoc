@@ -13,7 +13,6 @@ GOFTAGS     ?= forceposix
 
 BENCH_COUNT ?= 6
 BENCH_REF   ?= bench_baseline.txt
-EXAMPLE_DIR ?= examples
 MODULE_PATH ?= $(shell GOWORK=off $(GO) list -m -f '{{.Path}}')
 
 BINARY      ?= schemadoc
@@ -148,7 +147,8 @@ align:
 	$(ALIGNER) ./...
 
 align-fix:
-	$(ALIGNER) -apply ./...
+	-$(ALIGNER) -apply ./...
+	$(ALIGNER) ./...
 
 vulncheck:
 	$(VULNCHECK) ./...
@@ -209,12 +209,6 @@ _sbom_bin_one:
 	fi
 
 example:
-	@mkdir -p "$(EXAMPLE_DIR)"
-	$(GO) run ./cmd/schemadoc mod2schema -r . -y SchemaModel \
-		"$(MODULE_PATH)" "$(EXAMPLE_DIR)/schema.json"
-	$(GO) run ./cmd/schemadoc schema2md -T 'Example Schema Reference' -t list -F json \
-		"$(EXAMPLE_DIR)/schema.json" "$(EXAMPLE_DIR)/schema.list.md"
-	$(GO) run ./cmd/schemadoc schema2md -T 'Example Schema Reference' -t table -F yaml \
-		"$(EXAMPLE_DIR)/schema.json" "$(EXAMPLE_DIR)/schema.table.md"
-	$(GO) run ./cmd/schemadoc schema2md -T 'Example Schema Reference' -t html -F yaml \
-		"$(EXAMPLE_DIR)/schema.json" "$(EXAMPLE_DIR)/schema.html"
+	@mkdir -p cmd/schemadoc/doc
+	$(GO) run ./cmd/schemadoc build schemadoc.build.yaml
+	$(GO) run ./cmd/schemadoc build testdata/fixtures.build.yaml

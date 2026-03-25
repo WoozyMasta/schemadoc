@@ -12,7 +12,7 @@ import (
 
 // BenchmarkParseDocument measures schema decoding and normalization cost.
 func BenchmarkParseDocument(b *testing.B) {
-	schemaPath := filepath.Join("testdata", "schema.fixture.json")
+	schemaPath := filepath.Join("testdata", "app.schema.json")
 	schemaBytes := readBenchmarkFile(b, schemaPath)
 
 	b.ReportAllocs()
@@ -22,6 +22,49 @@ func BenchmarkParseDocument(b *testing.B) {
 		if _, err := parseDocument(schemaBytes); err != nil {
 			b.Fatalf("parseDocument: %v", err)
 		}
+	}
+}
+
+// BenchmarkParseDocumentScale measures parse cost for different schema shapes.
+func BenchmarkParseDocumentScale(b *testing.B) {
+	schemaPath := filepath.Join("testdata", "app.schema.json")
+	fixtureSchemaBytes := readBenchmarkFile(b, schemaPath)
+
+	benchmarks := []struct {
+		name   string
+		schema []byte
+	}{
+		{
+			name:   "bool_root",
+			schema: []byte(`true`),
+		},
+		{
+			name: "minimal_object",
+			schema: []byte(`{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" }
+  }
+}`),
+		},
+		{
+			name:   "fixture",
+			schema: fixtureSchemaBytes,
+		},
+	}
+
+	for _, benchmark := range benchmarks {
+		b.Run(benchmark.name, func(b *testing.B) {
+			b.ReportAllocs()
+			b.SetBytes(int64(len(benchmark.schema)))
+
+			for i := 0; i < b.N; i++ {
+				if _, err := parseDocument(benchmark.schema); err != nil {
+					b.Fatalf("parseDocument: %v", err)
+				}
+			}
+		})
 	}
 }
 
@@ -35,9 +78,14 @@ func BenchmarkRenderTableTemplate(b *testing.B) {
 	benchmarkRenderTemplate(b, "table")
 }
 
+// BenchmarkRenderHTMLTemplate measures full in-memory render flow for html template.
+func BenchmarkRenderHTMLTemplate(b *testing.B) {
+	benchmarkRenderTemplate(b, "html")
+}
+
 // BenchmarkRenderFileListTemplate measures read + render flow from file path.
 func BenchmarkRenderFileListTemplate(b *testing.B) {
-	schemaPath := filepath.Join("testdata", "schema.fixture.json")
+	schemaPath := filepath.Join("testdata", "app.schema.json")
 
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -53,7 +101,7 @@ func BenchmarkRenderFileListTemplate(b *testing.B) {
 
 // benchmarkRenderTemplate runs common in-memory benchmark for selected template.
 func benchmarkRenderTemplate(b *testing.B, templateName string) {
-	schemaPath := filepath.Join("testdata", "schema.fixture.json")
+	schemaPath := filepath.Join("testdata", "app.schema.json")
 	schemaBytes := readBenchmarkFile(b, schemaPath)
 
 	options := Options{

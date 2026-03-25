@@ -7,8 +7,9 @@ package schemadoc
 import (
 	"fmt"
 	"os"
-	"sort"
 	"strings"
+
+	schemadocAssets "github.com/woozymasta/schemadoc/assets"
 )
 
 const (
@@ -20,12 +21,6 @@ const (
 	defaultWrapWidth = 80
 	// defaultListMarker is used when caller does not provide list marker style.
 	defaultListMarker = "*"
-)
-
-const (
-	templateListName  = "list"
-	templateTableName = "table"
-	templateHTMLName  = "html"
 )
 
 // renderView is the root view model passed to markdown templates.
@@ -56,6 +51,7 @@ type tocEntry struct {
 	Name   string
 	Anchor string
 	Indent string
+	Depth  int
 }
 
 // definitionView represents one top-level definition section in markdown output.
@@ -141,7 +137,12 @@ func applyExampleRenderView(schemaBytes []byte, opt Options, view *renderView) e
 		mode = ExampleModeAll
 	}
 
-	generated, err := GenerateExample(schemaBytes, mode, opt.ExampleFormat)
+	generated, err := GenerateExampleWithOptions(
+		schemaBytes,
+		mode,
+		opt.ExampleFormat,
+		opt.ExampleOptions,
+	)
 	if err != nil {
 		return fmt.Errorf("generate embedded example: %w", err)
 	}
@@ -153,24 +154,17 @@ func applyExampleRenderView(schemaBytes []byte, opt Options, view *renderView) e
 
 // BuiltinTemplateNames returns all available built-in template names.
 func BuiltinTemplateNames() []string {
-	names := make([]string, 0, len(builtInTemplateFiles))
-	for name := range builtInTemplateFiles {
-		names = append(names, name)
-	}
-
-	sort.Strings(names)
-	return names
+	return schemadocAssets.TemplateNames()
 }
 
 // BuiltinTemplate returns one built-in template by name.
 func BuiltinTemplate(name string) (string, error) {
-	name = normalizeTemplateName(name)
-	path, ok := builtInTemplateFiles[name]
-	if !ok {
+	normalizedName := normalizeTemplateName(name)
+	if !schemadocAssets.HasTemplate(normalizedName) {
 		return "", fmt.Errorf("%w %q", ErrUnknownBuiltinTemplate, name)
 	}
 
-	data, err := templateFS.ReadFile(path)
+	data, err := schemadocAssets.ReadTemplate(normalizedName)
 	if err != nil {
 		return "", fmt.Errorf("%w: %w", ErrReadBuiltinTemplate, err)
 	}

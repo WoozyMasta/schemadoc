@@ -1,0 +1,173 @@
+{
+  "advanced": {
+    "circuit_breaker": false,
+    "cooldown": 0,
+    "metadata": {},
+    "tags": [
+      "<string>"
+    ]
+  },
+  "alert_targets": {},
+  "base_binding": {
+    "meta": {
+      "read_only": false,
+      "region": "eu-central-1",
+      "weight": 0
+    },
+    "name": "primary"
+  },
+  "base_toggle": {
+    "enabled": true
+  },
+  "base_window": {
+    "end": 0,
+    "retry_delay": 0,
+    "start": 0
+  },
+  "bucket_groups": {},
+  "buckets_by_priority": {},
+  "deep_by_env": {},
+  "deep_primary": {
+    "next": {
+      "next": {
+        "next": {
+          "next": {
+            "next": {
+              "final_value": "done",
+              "probe": {
+                "enabled": true,
+                "token": "probe"
+              }
+            },
+            "probe": {
+              "enabled": true,
+              "token": "probe"
+            }
+          },
+          "probe": {
+            "enabled": true,
+            "token": "probe"
+          }
+        },
+        "probe": {
+          "enabled": true,
+          "token": "probe"
+        }
+      },
+      "probe": {
+        "enabled": true,
+        "token": "probe"
+      }
+    },
+    "probe": {
+      "enabled": true,
+      "token": "probe"
+    }
+  },
+  "deep_secondary": {
+    "next": {
+      "next": {
+        "next": {
+          "next": {
+            "next": {
+              "final_value": "done",
+              "probe": {
+                "enabled": true,
+                "token": "probe"
+              }
+            },
+            "probe": {
+              "enabled": true,
+              "token": "probe"
+            }
+          },
+          "probe": {
+            "enabled": true,
+            "token": "probe"
+          }
+        },
+        "probe": {
+          "enabled": true,
+          "token": "probe"
+        }
+      },
+      "probe": {
+        "enabled": true,
+        "token": "probe"
+      }
+    },
+    "probe": {
+      "enabled": true,
+      "token": "probe"
+    }
+  },
+  "direct_probe": {
+    "enabled": true,
+    "token": "probe"
+  },
+  "endpoint_tls_overrides": {},
+  "extensions": {},
+  "mirror_endpoints": [
+    "<string>"
+  ],
+  "mode": "safe",
+  "name": "demo-service",
+  "named_buckets": {},
+  "optional_retry": {
+    "attempts": 3,
+    "backoff_ms": 250,
+    "max_jitter_ms": 100
+  },
+  "queue_workers_by_zone": {},
+  "queues": {},
+  "retry": {
+    "attempts": 3,
+    "backoff_ms": 250,
+    "max_jitter_ms": 100
+  },
+  "schedule": [
+    {
+      "end": "<string>",
+      "start": "<string>"
+    }
+  ],
+  "shared": {
+    "endpoint_binding": {
+      "meta": {
+        "read_only": false,
+        "region": "eu-central-1",
+        "weight": 0
+      },
+      "name": "primary"
+    },
+    "endpoint_groups": {},
+    "endpoint_ports": {},
+    "endpoints": {
+      "api": "https://api.acme.local",
+      "internal": "http://internal:8080",
+      "meta": {},
+      "metrics": "https://metrics.acme.local"
+    },
+    "feature_matrix": {},
+    "feature_toggle": {
+      "enabled": true
+    },
+    "labels": {},
+    "level_by_subsystem": {},
+    "maintenance_window": {
+      "end": 0,
+      "retry_delay": 0,
+      "start": 0
+    },
+    "ports": {},
+    "timeout_by_endpoint": {},
+    "tls": {
+      "cipher_suites": [
+        "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+      ],
+      "enabled": true,
+      "handshake_timeout": 0,
+      "min_version": "1.2"
+    }
+  }
+}

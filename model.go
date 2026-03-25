@@ -5,10 +5,11 @@
 package schemadoc
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -78,10 +79,18 @@ type Options struct {
 	// FooterCommit is optional footer build commit.
 	FooterCommit string `json:"footer_commit,omitempty" jsonschema:"example=abcdef1,example=unknown"`
 
+	// ExampleOptions configures embedded example formatting.
+	ExampleOptions ExampleOptions `json:"example_options"`
+
 	// WrapWidth defines word-wrap width for plain description paragraphs.
 	//
 	// Markdown structures such as lists, blockquotes, and fenced code blocks are preserved.
 	WrapWidth int `json:"wrap_width,omitempty" jsonschema:"default=80,minimum=1,example=80,example=100"`
+
+	// HideExtraKeywords hides "Other keywords" attribute rows in rendered docs.
+	//
+	// When false, non-standard schema keywords (for example `x-order`) are shown.
+	HideExtraKeywords bool `json:"hide_extra_keywords,omitempty" jsonschema:"default=false"`
 }
 
 // DraftInfo describes detected JSON Schema draft support status.
@@ -100,11 +109,11 @@ type DraftInfo struct {
 //
 // The generator CLI (`schemadoc-schema`) reflects this type into JSON Schema.
 type SchemaModel struct {
-	// Options configures markdown generation.
-	Options Options `json:"options" jsonschema:"required"`
-
 	// DraftInfo is the normalized output of draft detection.
 	DraftInfo DraftInfo `json:"draft_info" jsonschema:"required"`
+
+	// Options configures markdown generation.
+	Options Options `json:"options" jsonschema:"required"`
 }
 
 // schemaDocument is the normalized JSON Schema root model used by renderer.
@@ -131,11 +140,8 @@ func (value schemaValue) isZero() bool {
 
 // parseDocument decodes raw schema bytes into normalized schemaDocument model.
 func parseDocument(schemaBytes []byte) (schemaDocument, error) {
-	decoder := json.NewDecoder(bytes.NewReader(schemaBytes))
-	decoder.UseNumber()
-
 	var root any
-	if err := decoder.Decode(&root); err != nil {
+	if err := json.Unmarshal(schemaBytes, &root); err != nil {
 		return schemaDocument{}, fmt.Errorf("%w: %w", ErrDecodeSchema, err)
 	}
 
@@ -264,6 +270,58 @@ func asStringSlice(value any) []string {
 	}
 
 	return out
+}
+
+// asNumber converts numeric JSON-like values to float64.
+func asNumber(value any) (float64, bool) {
+	switch typed := value.(type) {
+	case float64:
+		return typed, !math.IsNaN(typed) && !math.IsInf(typed, 0)
+	case float32:
+		floatValue := float64(typed)
+		return floatValue, !math.IsNaN(floatValue) && !math.IsInf(floatValue, 0)
+	case int:
+		return float64(typed), true
+	case int8:
+		return float64(typed), true
+	case int16:
+		return float64(typed), true
+	case int32:
+		return float64(typed), true
+	case int64:
+		return float64(typed), true
+	case uint:
+		return float64(typed), true
+	case uint8:
+		return float64(typed), true
+	case uint16:
+		return float64(typed), true
+	case uint32:
+		return float64(typed), true
+	case uint64:
+		return float64(typed), true
+	case json.Number:
+		floatValue, err := typed.Float64()
+		if err != nil {
+			return 0, false
+		}
+
+		return floatValue, !math.IsNaN(floatValue) && !math.IsInf(floatValue, 0)
+	case string:
+		text := strings.TrimSpace(typed)
+		if text == "" {
+			return 0, false
+		}
+
+		floatValue, err := strconv.ParseFloat(text, 64)
+		if err != nil {
+			return 0, false
+		}
+
+		return floatValue, !math.IsNaN(floatValue) && !math.IsInf(floatValue, 0)
+	default:
+		return 0, false
+	}
 }
 
 // sortedKeys returns deterministic sorted keys for string map.

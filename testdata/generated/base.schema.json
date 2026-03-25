@@ -1,0 +1,297 @@
+{
+  "$defs": {
+    "EndpointMeta": {
+      "additionalProperties": false,
+      "description": "EndpointMeta describes metadata for one endpoint target.",
+      "properties": {
+        "read_only": {
+          "description": "ReadOnly marks endpoint as read-only.",
+          "type": "boolean",
+          "x-order": "250"
+        },
+        "region": {
+          "description": "Region is deployment region code.",
+          "examples": [
+            "eu-central-1"
+          ],
+          "type": "string",
+          "x-order": "91"
+        },
+        "weight": {
+          "description": "Weight is load balancing weight.",
+          "maximum": 100,
+          "minimum": 0,
+          "type": "integer",
+          "x-order": "7"
+        }
+      },
+      "type": "object"
+    },
+    "SharedEndpointBinding": {
+      "additionalProperties": false,
+      "description": "SharedEndpointBinding nests existing endpoint metadata into a binding.",
+      "properties": {
+        "meta": {
+          "$ref": "#/$defs/EndpointMeta",
+          "description": "Meta reuses existing endpoint metadata schema.",
+          "x-order": "3"
+        },
+        "name": {
+          "description": "Name is logical binding name.",
+          "examples": [
+            "primary"
+          ],
+          "type": "string",
+          "x-order": "14"
+        }
+      },
+      "required": [
+        "name",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "SharedEndpoints": {
+      "additionalProperties": false,
+      "description": "SharedEndpoints describes common endpoint set used by services.",
+      "properties": {
+        "api": {
+          "description": "API is primary API base URL.",
+          "examples": [
+            "https://api.acme.local"
+          ],
+          "format": "uri",
+          "title": "API Endpoint",
+          "type": "string",
+          "x-order": "5"
+        },
+        "internal": {
+          "description": "Internal is internal service endpoint URL.",
+          "examples": [
+            "http://internal:8080"
+          ],
+          "format": "uri",
+          "type": "string",
+          "x-order": "6"
+        },
+        "meta": {
+          "additionalProperties": {
+            "$ref": "#/$defs/EndpointMeta"
+          },
+          "description": "Meta stores endpoint metadata by endpoint name.",
+          "type": "object",
+          "x-order": "204"
+        },
+        "metrics": {
+          "description": "Metrics is optional metrics endpoint URL.",
+          "examples": [
+            "https://metrics.acme.local"
+          ],
+          "format": "uri",
+          "type": "string",
+          "x-order": "111"
+        }
+      },
+      "required": [
+        "api"
+      ],
+      "type": "object"
+    },
+    "SharedOptions": {
+      "additionalProperties": false,
+      "description": "SharedOptions is reusable part expected to be merged into app schema.",
+      "properties": {
+        "endpoint_binding": {
+          "$ref": "#/$defs/SharedEndpointBinding",
+          "description": "EndpointBinding links endpoint identity and metadata.",
+          "x-order": "65"
+        },
+        "endpoint_groups": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": "EndpointGroups stores endpoint names grouped by key.",
+          "type": "object",
+          "x-order": "8"
+        },
+        "endpoint_ports": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "description": "EndpointPorts stores ports by endpoint and protocol name.\n\nThis field is useful when one logical endpoint exposes multiple listener\nprotocols (for example `http`, `grpc`, `admin`). Consumers can resolve\nexact port by `(endpoint, protocol)` pair without hardcoding transport\nassumptions.",
+          "type": "object",
+          "x-order": "305"
+        },
+        "endpoints": {
+          "$ref": "#/$defs/SharedEndpoints",
+          "description": "Endpoints are network endpoints shared across components.",
+          "title": "Endpoint Options",
+          "x-order": "1"
+        },
+        "feature_matrix": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "description": "FeatureMatrix stores feature flags as nested map.\n\n**Matrix semantics**\n\n  - First key: feature group name.\n  - Second key: feature flag name.\n  - Value: desired on/off state.\n\nExample:\n\n  - `auth.mfa_required = true`\n  - `billing.v2_invoice = false`",
+          "type": "object",
+          "x-order": "41"
+        },
+        "feature_toggle": {
+          "$ref": "#/$defs/SharedToggle",
+          "description": "FeatureToggle is a small reusable boolean options block.",
+          "x-order": "66"
+        },
+        "labels": {
+          "additionalProperties": false,
+          "description": "Labels maps short numeric label IDs to values.",
+          "patternProperties": {
+            "^[0-9]+$": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "x-order": "21"
+        },
+        "level_by_subsystem": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "LevelBySubsystem maps subsystem name to log level.",
+          "type": "object",
+          "x-order": "4"
+        },
+        "maintenance_window": {
+          "$ref": "#/$defs/SharedWindow",
+          "description": "MaintenanceWindow stores shared maintenance timing.",
+          "x-order": "67"
+        },
+        "ports": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "Ports maps external service names to exposed port.",
+          "type": "object",
+          "x-order": "300"
+        },
+        "timeout_by_endpoint": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "TimeoutByEndpoint stores timeout per endpoint name.",
+          "type": "object",
+          "x-order": "700"
+        },
+        "tls": {
+          "$ref": "#/$defs/SharedTLS",
+          "description": "TLS is TLS configuration shared across components.",
+          "title": "TLS Options",
+          "x-order": "10"
+        }
+      },
+      "required": [
+        "tls",
+        "endpoints"
+      ],
+      "type": "object"
+    },
+    "SharedTLS": {
+      "additionalProperties": false,
+      "description": "SharedTLS describes shared transport security settings.",
+      "properties": {
+        "cipher_suites": {
+          "description": "CipherSuites lists explicitly allowed cipher suites.",
+          "items": {
+            "examples": [
+              "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+            ],
+            "type": "string"
+          },
+          "type": "array",
+          "x-order": "13"
+        },
+        "enabled": {
+          "default": true,
+          "description": "Enable TLS for outbound connections.",
+          "title": "TLS Enabled",
+          "type": "boolean",
+          "x-order": "12"
+        },
+        "handshake_timeout": {
+          "description": "HandshakeTimeout sets TLS handshake timeout.",
+          "type": "integer",
+          "x-order": "377"
+        },
+        "min_version": {
+          "default": "1.2",
+          "description": "MinVersion is lowest allowed TLS protocol version.",
+          "enum": [
+            "1.2",
+            "1.3"
+          ],
+          "type": "string",
+          "x-order": "88"
+        }
+      },
+      "required": [
+        "enabled",
+        "min_version"
+      ],
+      "type": "object"
+    },
+    "SharedToggle": {
+      "additionalProperties": false,
+      "description": "SharedToggle is a tiny reusable on/off configuration block.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Enabled toggles one optional feature branch.",
+          "type": "boolean",
+          "x-order": "42"
+        }
+      },
+      "type": "object"
+    },
+    "SharedWindow": {
+      "additionalProperties": false,
+      "description": "SharedWindow is a nested window with retry-aware timing.",
+      "properties": {
+        "end": {
+          "description": "End is end minute in a one-hour window.",
+          "maximum": 59,
+          "minimum": 0,
+          "type": "integer",
+          "x-order": "999"
+        },
+        "retry_delay": {
+          "description": "Retry uses existing base retry-like duration style.",
+          "type": "integer",
+          "x-order": "17"
+        },
+        "start": {
+          "description": "Start is start minute in a one-hour window.",
+          "maximum": 59,
+          "minimum": 0,
+          "type": "integer",
+          "x-order": "2"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/woozymasta/schemadoc-test-base/model/shared-options",
+  "$ref": "#/$defs/SharedOptions",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

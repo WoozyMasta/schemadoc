@@ -13,6 +13,28 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.5.0][] - 2026-03-26
+
+### Added
+
+* YAML-based `build` orchestration pipeline for multi-stage generation:
+  schema reflection, merge, docs rendering, and JSON/YAML example generation.
+* Separated packages `modschema` for schema generation from Go types
+* Package `merge` for deterministic schema composition.
+* Support for hiding non-standard schema keywords in rendered docs.
+* Validation for unsupported reflection targets,
+  including `package main` in module reflection.
+
+### Changed
+
+* CLI refactored into command-scoped modules with cleaner execution boundaries.
+* Renamed commands `schema2md` and `mod2md` to `schema2doc` and `mod2doc`.
+
+### Fixed
+
+* TOC hierarchy rendering in HTML output.
+* Rendering of constraint values (for example regex `pattern`) in docs.
+
 ## [0.4.0][] - 2026-03-21
 
 ### Added
@@ -34,6 +56,7 @@ and this project adheres to [Semantic Versioning][].
   including local workspace (`go.work`) scenarios.
 
 [0.4.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.3.2...v0.4.0
+[0.5.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.4.0...v0.5.0
 
 ## [0.3.2][] - 2026-03-07
 

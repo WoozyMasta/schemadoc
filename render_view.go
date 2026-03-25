@@ -81,7 +81,7 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 		definition := definitionView{
 			Name:        escapeInline(defName),
 			Description: formatDescriptionMarkdown(nodeDescription(node), wrapWidth, listMarker),
-			Attributes:  schemaAttributes(node, nil),
+			Attributes:  schemaAttributes(node, nil, opt.HideExtraKeywords),
 		}
 
 		properties := nodeProperties(node)
@@ -109,7 +109,7 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 				Name:        escapeInline(propName),
 				Paths:       paths,
 				Description: formatDescriptionMarkdown(nodeDescription(prop), wrapWidth, listMarker),
-				Attributes:  schemaAttributes(prop, &propRequired),
+				Attributes:  schemaAttributes(prop, &propRequired, opt.HideExtraKeywords),
 			})
 		}
 
@@ -290,6 +290,7 @@ func buildContents(definitions map[string]schemaValue, rootDefinition string, de
 			Name:   escapeInline(name),
 			Anchor: markdownHeadingAnchor(name),
 			Indent: strings.Repeat("  ", indentDepth),
+			Depth:  indentDepth,
 		})
 
 		for _, target := range adjacency[name] {
@@ -754,6 +755,23 @@ func definitionOrder(defs map[string]schemaValue, rootName string) []string {
 func propertyOrder(required []string, properties map[string]schemaValue) []string {
 	if len(properties) == 0 {
 		return nil
+	}
+
+	keys := make([]string, 0, len(properties))
+	hasSchemaOrder := false
+	for key, property := range properties {
+		keys = append(keys, key)
+		if property.Object == nil {
+			continue
+		}
+
+		if _, ok := asNumber(property.Object["x-order"]); ok {
+			hasSchemaOrder = true
+		}
+	}
+
+	if hasSchemaOrder {
+		return sortKeysBySchemaOrder(keys, properties)
 	}
 
 	out := make([]string, 0, len(properties))

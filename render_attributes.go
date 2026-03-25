@@ -84,7 +84,7 @@ var knownSchemaKeywords = map[string]struct{}{
 }
 
 // schemaAttributes renders flat attribute list for one schema node.
-func schemaAttributes(node schemaValue, required *bool) []attributeView {
+func schemaAttributes(node schemaValue, required *bool, disableOtherKeywords bool) []attributeView {
 	out := make([]attributeView, 0, 32)
 
 	if node.Bool != nil {
@@ -257,8 +257,11 @@ func schemaAttributes(node schemaValue, required *bool) []attributeView {
 		out = append(out, attributeView{Name: "Comment", Value: fmt.Sprintf("`%s`", escapeInline(value))})
 	}
 
-	if other := otherKeywordList(obj); len(other) > 0 {
-		out = append(out, attributeView{Name: "Other keywords", Value: strings.Join(other, "; ")})
+	if !disableOtherKeywords {
+		other := otherKeywordList(obj)
+		if len(other) > 0 {
+			out = append(out, attributeView{Name: "Other keywords", Value: strings.Join(other, "; ")})
+		}
 	}
 
 	return out
@@ -528,12 +531,7 @@ func constraintList(node map[string]any) []string {
 			continue
 		}
 
-		if key == "pattern" {
-			out = append(out, key+"="+inlineValueText(value))
-			continue
-		}
-
-		out = append(out, key+"="+inlineValueText(value))
+		out = append(out, inlineCodeValue(key+"="+inlineValueText(value)))
 	}
 
 	return out

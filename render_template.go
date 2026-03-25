@@ -5,25 +5,15 @@
 package schemadoc
 
 import (
-	"embed"
 	"fmt"
 	"html"
 	"strings"
+	"sync"
 	"text/template"
 	"unicode"
 )
 
-// templateFS stores built-in markdown templates embedded into the package.
-//
-//go:embed templates/*.md.gotmpl templates/html.gotmpl
-var templateFS embed.FS
-
-// builtInTemplateFiles maps template aliases to embedded file paths.
-var builtInTemplateFiles = map[string]string{
-	templateListName:  "templates/list.md.gotmpl",
-	templateTableName: "templates/table.md.gotmpl",
-	templateHTMLName:  "templates/html.gotmpl",
-}
+var builtinParsedTemplateCache sync.Map // map[string]*template.Template
 
 // resolveTemplate resolves either custom or built-in template text into a parsed template.
 func resolveTemplate(opt Options) (*template.Template, error) {
@@ -37,6 +27,13 @@ func resolveTemplate(opt Options) (*template.Template, error) {
 		templateName = defaultTemplateName
 	}
 
+	if cached, ok := builtinParsedTemplateCache.Load(templateName); ok {
+		tpl, ok := cached.(*template.Template)
+		if ok && tpl != nil {
+			return tpl, nil
+		}
+	}
+
 	templateText, err := BuiltinTemplate(templateName)
 	if err != nil {
 		return nil, err
@@ -47,6 +44,7 @@ func resolveTemplate(opt Options) (*template.Template, error) {
 		return nil, fmt.Errorf("%w %q: %w", ErrParseBuiltinTemplate, templateName, err)
 	}
 
+	builtinParsedTemplateCache.Store(templateName, parsed)
 	return parsed, nil
 }
 
@@ -63,6 +61,7 @@ func templateFuncs() template.FuncMap {
 		"inlineHTML":    renderInlineMarkdownHTML,
 		"attrHTML":      renderAttributeValueHTML,
 		"blockHTML":     renderMarkdownBlockHTML,
+		"tocHTML":       renderContentsHTML,
 
 		"renderAttrList": func(attrs []attributeView, marker string) string {
 			if len(attrs) == 0 {
@@ -85,6 +84,75 @@ func templateFuncs() template.FuncMap {
 			return html.EscapeString(fmt.Sprint(value))
 		},
 	}
+}
+
+// renderContentsHTML renders nested HTML table-of-contents list.
+func renderContentsHTML(contents []tocEntry, exampleFormat, exampleDocument string) string {
+	entries := make([]tocEntry, 0, len(contents)+1)
+	for _, item := range contents {
+		if strings.TrimSpace(item.Name) == "" || strings.TrimSpace(item.Anchor) == "" {
+			continue
+		}
+
+		if item.Depth < 0 {
+			item.Depth = 0
+		}
+
+		entries = append(entries, item)
+	}
+
+	if strings.TrimSpace(exampleDocument) != "" {
+		heading := "Example " + strings.TrimSpace(exampleFormat) + " document"
+		entries = append(entries, tocEntry{
+			Name:   heading,
+			Anchor: markdownHeadingAnchor(heading),
+			Depth:  0,
+		})
+	}
+
+	if len(entries) == 0 {
+		return "<ul></ul>"
+	}
+
+	var out strings.Builder
+	out.WriteString("<ul>\n")
+
+	currentDepth := 0
+	for index, item := range entries {
+		depth := item.Depth
+		switch {
+		case depth > currentDepth:
+			for level := currentDepth; level < depth; level++ {
+				out.WriteString("<ul>\n")
+			}
+
+		case depth < currentDepth:
+			for level := currentDepth; level > depth; level-- {
+				out.WriteString("</li>\n</ul>\n")
+			}
+
+			if index > 0 {
+				out.WriteString("</li>\n")
+			}
+
+		case index > 0:
+			out.WriteString("</li>\n")
+		}
+
+		out.WriteString("<li><a href=\"#")
+		out.WriteString(html.EscapeString(item.Anchor))
+		out.WriteString("\">")
+		out.WriteString(html.EscapeString(item.Name))
+		out.WriteString("</a>")
+		currentDepth = depth
+	}
+
+	for level := currentDepth; level > 0; level-- {
+		out.WriteString("</li>\n</ul>\n")
+	}
+	out.WriteString("</li>\n</ul>")
+
+	return out.String()
 }
 
 // renderAttrItemMarkdown renders one markdown attribute list item.

@@ -1,0 +1,336 @@
+# Shared Options
+# Shared is shared options imported from base module.
+shared:
+  # Endpoint Options
+  # Endpoints are network endpoints shared across components.
+  endpoints:
+    # API Endpoint
+    # API is primary API base URL.
+    # Example: https://api.acme.local
+    api: https://api.acme.local
+    # Internal is internal service endpoint URL.
+    # Example: http://internal:8080
+    internal: http://internal:8080
+    # Metrics is optional metrics endpoint URL.
+    # Example: https://metrics.acme.local
+    metrics: https://metrics.acme.local
+    # Meta stores endpoint metadata by endpoint name.
+    meta: {}
+  # LevelBySubsystem maps subsystem name to log level.
+  level_by_subsystem: {}
+  # EndpointGroups stores endpoint names grouped by key.
+  endpoint_groups: {}
+  # TLS Options
+  # TLS is TLS configuration shared across components.
+  tls:
+    # TLS Enabled
+    # Enable TLS for outbound connections.
+    # Default: true
+    enabled: true
+    # CipherSuites lists explicitly allowed cipher suites.
+    cipher_suites:
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    # MinVersion is lowest allowed TLS protocol version.
+    # Default: 1.2
+    # Allowed values: 1.2, 1.3
+    min_version: "1.2"
+    # HandshakeTimeout sets TLS handshake timeout.
+    handshake_timeout: 0
+  # Labels maps short numeric label IDs to values.
+  labels: {}
+  # FeatureMatrix stores feature flags as nested map.
+  # **Matrix semantics**
+  #   - First key: feature group name.
+  #   - Second key: feature flag name.
+  #   - Value: desired on/off state.
+  # Example:
+  #   - `auth.mfa_required = true`
+  #   - `billing.v2_invoice = false`
+  feature_matrix: {}
+  # EndpointBinding links endpoint identity and metadata.
+  endpoint_binding:
+    # Meta reuses existing endpoint metadata schema.
+    meta:
+      # Weight is load balancing weight.
+      weight: 0
+      # Region is deployment region code.
+      # Example: eu-central-1
+      region: eu-central-1
+      # ReadOnly marks endpoint as read-only.
+      read_only: false
+    # Name is logical binding name.
+    # Example: primary
+    name: primary
+  # FeatureToggle is a small reusable boolean options block.
+  feature_toggle:
+    # Enabled toggles one optional feature branch.
+    # Default: true
+    enabled: true
+  # MaintenanceWindow stores shared maintenance timing.
+  maintenance_window:
+    # Start is start minute in a one-hour window.
+    start: 0
+    # Retry uses existing base retry-like duration style.
+    retry_delay: 0
+    # End is end minute in a one-hour window.
+    end: 0
+  # Ports maps external service names to exposed port.
+  ports: {}
+  # EndpointPorts stores ports by endpoint and protocol name.
+  # This field is useful when one logical endpoint exposes multiple listener
+  # protocols (for example `http`, `grpc`, `admin`). Consumers can resolve
+  # exact port by `(endpoint, protocol)` pair without hardcoding transport
+  # assumptions.
+  endpoint_ports: {}
+  # TimeoutByEndpoint stores timeout per endpoint name.
+  timeout_by_endpoint: {}
+# Service Name
+# Human-readable service name.
+# Default: demo-service
+name: demo-service
+# Retry Policy
+# Retry is transient retry strategy.
+retry:
+  # Backoff is delay between attempts in milliseconds.
+  # Default: 250
+  backoff_ms: 250
+  # MaxJitter is random jitter upper bound in milliseconds.
+  # Default: 100
+  max_jitter_ms: 100
+  # Retry Attempts
+  # Maximum number of retry attempts for one operation.
+  # Default: 3
+  attempts: 3
+# Schedule is fixed-size weekly maintenance windows.
+schedule:
+  - # End is end time (HH:MM).
+    end: <string>
+    # Start is start time (HH:MM).
+    start: <string>
+# EndpointTLSOverrides overrides TLS by endpoint name.
+endpoint_tls_overrides: {}
+# OptionalRetry allows temporary retry override.
+optional_retry:
+  # Backoff is delay between attempts in milliseconds.
+  # Default: 250
+  backoff_ms: 250
+  # MaxJitter is random jitter upper bound in milliseconds.
+  # Default: 100
+  max_jitter_ms: 100
+  # Retry Attempts
+  # Maximum number of retry attempts for one operation.
+  # Default: 3
+  attempts: 3
+# BaseToggle references tiny base reusable toggle structure.
+base_toggle:
+  # Enabled toggles one optional feature branch.
+  # Default: true
+  enabled: true
+# BaseBinding references base structure that nests existing EndpointMeta.
+base_binding:
+  # Meta reuses existing endpoint metadata schema.
+  meta:
+    # Weight is load balancing weight.
+    weight: 0
+    # Region is deployment region code.
+    # Example: eu-central-1
+    region: eu-central-1
+    # ReadOnly marks endpoint as read-only.
+    read_only: false
+  # Name is logical binding name.
+  # Example: primary
+  name: primary
+# DirectProbe is root-level direct reusable probe.
+direct_probe:
+  # Enabled toggles probe branch.
+  # Default: true
+  enabled: true
+  # Token is stable probe token value.
+  # Default: probe
+  token: probe
+# DeepPrimary is first deep branch with six levels.
+deep_primary:
+  # Probe is repeated reusable type on this level.
+  probe:
+    # Enabled toggles probe branch.
+    # Default: true
+    enabled: true
+    # Token is stable probe token value.
+    # Default: probe
+    token: probe
+  # Next points to next nested level.
+  next:
+    # Probe is repeated reusable type on this level.
+    probe:
+      # Enabled toggles probe branch.
+      # Default: true
+      enabled: true
+      # Token is stable probe token value.
+      # Default: probe
+      token: probe
+    # Next points to next nested level.
+    next:
+      # Next points to next nested level.
+      next:
+        # Next points to next nested level.
+        next:
+          # Next points to next nested level.
+          next:
+            # FinalValue is terminal deep value.
+            # Example: done
+            final_value: done
+            # Probe is repeated reusable type on this level.
+            probe:
+              # Enabled toggles probe branch.
+              # Default: true
+              enabled: true
+              # Token is stable probe token value.
+              # Default: probe
+              token: probe
+          # Probe is repeated reusable type on this level.
+          probe:
+            # Enabled toggles probe branch.
+            # Default: true
+            enabled: true
+            # Token is stable probe token value.
+            # Default: probe
+            token: probe
+        # Probe is repeated reusable type on this level.
+        probe:
+          # Enabled toggles probe branch.
+          # Default: true
+          enabled: true
+          # Token is stable probe token value.
+          # Default: probe
+          token: probe
+      # Probe is repeated reusable type on this level.
+      probe:
+        # Enabled toggles probe branch.
+        # Default: true
+        enabled: true
+        # Token is stable probe token value.
+        # Default: probe
+        token: probe
+# DeepSecondary is second deep branch using same deep chain.
+deep_secondary:
+  # Probe is repeated reusable type on this level.
+  probe:
+    # Enabled toggles probe branch.
+    # Default: true
+    enabled: true
+    # Token is stable probe token value.
+    # Default: probe
+    token: probe
+  # Next points to next nested level.
+  next:
+    # Probe is repeated reusable type on this level.
+    probe:
+      # Enabled toggles probe branch.
+      # Default: true
+      enabled: true
+      # Token is stable probe token value.
+      # Default: probe
+      token: probe
+    # Next points to next nested level.
+    next:
+      # Next points to next nested level.
+      next:
+        # Next points to next nested level.
+        next:
+          # Next points to next nested level.
+          next:
+            # FinalValue is terminal deep value.
+            # Example: done
+            final_value: done
+            # Probe is repeated reusable type on this level.
+            probe:
+              # Enabled toggles probe branch.
+              # Default: true
+              enabled: true
+              # Token is stable probe token value.
+              # Default: probe
+              token: probe
+          # Probe is repeated reusable type on this level.
+          probe:
+            # Enabled toggles probe branch.
+            # Default: true
+            enabled: true
+            # Token is stable probe token value.
+            # Default: probe
+            token: probe
+        # Probe is repeated reusable type on this level.
+        probe:
+          # Enabled toggles probe branch.
+          # Default: true
+          enabled: true
+          # Token is stable probe token value.
+          # Default: probe
+          token: probe
+      # Probe is repeated reusable type on this level.
+      probe:
+        # Enabled toggles probe branch.
+        # Default: true
+        enabled: true
+        # Token is stable probe token value.
+        # Default: probe
+        token: probe
+# DeepByEnv stores deep branches by environment key.
+deep_by_env: {}
+# Advanced groups optional advanced behavior flags.
+advanced:
+  # Metadata keeps arbitrary nested metadata.
+  metadata: {}
+  # Cooldown sets cooldown duration after errors.
+  cooldown: 0
+  # CircuitBreaker enables circuit breaker behavior.
+  circuit_breaker: false
+  # Tags adds free-form tags.
+  tags:
+    - <string>
+# Queues configures processing queues by queue name.
+queues: {}
+# NamedBuckets configures storage by logical bucket key.
+named_buckets: {}
+# BucketsByPriority maps numeric priority to bucket config.
+buckets_by_priority: {}
+# BucketGroups stores grouped bucket lists.
+bucket_groups: {}
+# QueueWorkersByZone stores workers count by zone.
+queue_workers_by_zone: {}
+# AlertTargets stores alerting destinations by level.
+alert_targets: {}
+# Mode is execution mode.
+# Default: safe
+# Allowed values: safe, fast
+mode: safe
+# MirrorEndpoints is optional explicit mirror list.
+mirror_endpoints:
+  - <string>
+# Extensions stores external integration raw values.
+# This section is intentionally flexible and can be used by external
+# delivery teams. The core service should not rely on these fields for
+# baseline startup decisions.
+# **Allowed usage patterns**
+#   - Feature toggles owned by integration team.
+#   - Provider-specific adapter hints.
+#   - Temporary migration markers.
+# **Do not store**
+#   - Secrets and tokens.
+#   - Large binary payloads.
+#   - Contract-breaking values that redefine core behavior.
+# > Keep values small, explicit, and disposable.
+# Example:
+#   {
+#     "x-provider": "acme-cloud",
+#     "x-migration-stage": "phase-2",
+#     "x-flags": ["shadow-write", "dry-run"]
+#   }
+extensions: {}
+# BaseWindow references nested base timing structure.
+base_window:
+  # Start is start minute in a one-hour window.
+  start: 0
+  # Retry uses existing base retry-like duration style.
+  retry_delay: 0
+  # End is end minute in a one-hour window.
+  end: 0

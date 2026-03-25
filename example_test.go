@@ -83,10 +83,31 @@ func TestGenerateExampleYAMLRequiredMode(t *testing.T) {
 	assertContains(t, got, "name: demo")
 	assertContains(t, got, "settings:")
 	assertContains(t, got, "# Enabled")
-	assertContains(t, got, "# Enables processing pipeline.")
+	assertContains(t, got, "# Enables processing flow.")
 	assertContains(t, got, "enabled: true")
 	assertNotContains(t, got, "mode:")
 	assertNotContains(t, got, "count:")
+}
+
+func TestGenerateExampleYAMLCommentsIncludeEnumValues(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"mode": map[string]any{
+				"type": "string",
+				"enum": []any{"safe", "fast", "debug"},
+			},
+		},
+	})
+
+	gotBytes, err := GenerateExampleYAML(schema, ExampleModeAll)
+	if err != nil {
+		t.Fatalf("GenerateExampleYAML: %v", err)
+	}
+
+	assertContains(t, string(gotBytes), "# Allowed values: safe, fast, debug")
 }
 
 func TestGenerateExampleJSONModeValidation(t *testing.T) {
@@ -202,7 +223,7 @@ func buildExampleSchemaFixture(t *testing.T) []byte {
 								"type":        "boolean",
 								"default":     true,
 								"title":       "Enabled",
-								"description": "Enables processing pipeline.",
+								"description": "Enables processing flow.",
 							},
 							"note": map[string]any{
 								"type": "string",

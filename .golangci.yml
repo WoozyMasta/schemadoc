@@ -37,9 +37,10 @@ linters:
       - builtin$
       - examples$
     rules:
+      # Go tool JSON field names is CamelCase.
       - linters:
           - tagliatelle
-        path: cmd/schemadoc/module_graph_models.go
+        path: modschema/models.go
   settings:
     goheader:
       template: |-

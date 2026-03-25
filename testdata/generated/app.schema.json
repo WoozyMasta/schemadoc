@@ -1,0 +1,910 @@
+{
+  "$defs": {
+    "AdvancedOptions": {
+      "additionalProperties": false,
+      "description": "AdvancedOptions groups additional optional controls.",
+      "properties": {
+        "circuit_breaker": {
+          "description": "CircuitBreaker enables circuit breaker behavior.",
+          "type": "boolean",
+          "x-order": "100"
+        },
+        "cooldown": {
+          "description": "Cooldown sets cooldown duration after errors.",
+          "type": "integer",
+          "x-order": "7"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "description": "Metadata keeps arbitrary nested metadata.",
+          "type": "object",
+          "x-order": "6"
+        },
+        "tags": {
+          "description": "Tags adds free-form tags.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-order": "101"
+        }
+      },
+      "type": "object"
+    },
+    "AlertTarget": {
+      "additionalProperties": false,
+      "description": "AlertTarget describes one alerting destination.",
+      "properties": {
+        "address": {
+          "description": "Address is destination address.",
+          "examples": [
+            "https://hooks.slack.com/..."
+          ],
+          "type": "string",
+          "x-order": "200"
+        },
+        "channel": {
+          "description": "Channel is target channel name.",
+          "examples": [
+            "slack"
+          ],
+          "type": "string",
+          "x-order": "2"
+        },
+        "severity": {
+          "description": "Severity is optional minimum severity.",
+          "enum": [
+            "info",
+            "warn",
+            "error"
+          ],
+          "type": "string",
+          "x-order": "3"
+        }
+      },
+      "required": [
+        "channel",
+        "address"
+      ],
+      "type": "object"
+    },
+    "DeepProbe": {
+      "additionalProperties": false,
+      "description": "DeepProbe is reused on every deep nesting level for path tests.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Enabled toggles probe branch.",
+          "type": "boolean",
+          "x-order": "1"
+        },
+        "token": {
+          "default": "probe",
+          "description": "Token is stable probe token value.",
+          "type": "string",
+          "x-order": "12"
+        }
+      },
+      "required": [
+        "token"
+      ],
+      "type": "object"
+    },
+    "EndpointMeta": {
+      "additionalProperties": false,
+      "description": "EndpointMeta describes metadata for one endpoint target.",
+      "properties": {
+        "read_only": {
+          "description": "ReadOnly marks endpoint as read-only.",
+          "type": "boolean",
+          "x-order": "250"
+        },
+        "region": {
+          "description": "Region is deployment region code.",
+          "examples": [
+            "eu-central-1"
+          ],
+          "type": "string",
+          "x-order": "91"
+        },
+        "weight": {
+          "description": "Weight is load balancing weight.",
+          "maximum": 100,
+          "minimum": 0,
+          "type": "integer",
+          "x-order": "7"
+        }
+      },
+      "type": "object"
+    },
+    "Level1": {
+      "additionalProperties": false,
+      "description": "Level1 contains one deeper nested level.",
+      "properties": {
+        "next": {
+          "$ref": "#/$defs/Level2",
+          "description": "Next points to next nested level.",
+          "x-order": "200"
+        },
+        "probe": {
+          "$ref": "#/$defs/DeepProbe",
+          "description": "Probe is repeated reusable type on this level.",
+          "x-order": "2"
+        }
+      },
+      "required": [
+        "probe",
+        "next"
+      ],
+      "type": "object"
+    },
+    "Level2": {
+      "additionalProperties": false,
+      "description": "Level2 contains one deeper nested level.",
+      "properties": {
+        "next": {
+          "$ref": "#/$defs/Level3",
+          "description": "Next points to next nested level.",
+          "x-order": "10"
+        },
+        "probe": {
+          "$ref": "#/$defs/DeepProbe",
+          "description": "Probe is repeated reusable type on this level.",
+          "x-order": "9"
+        }
+      },
+      "required": [
+        "probe",
+        "next"
+      ],
+      "type": "object"
+    },
+    "Level3": {
+      "additionalProperties": false,
+      "description": "Level3 contains one deeper nested level.",
+      "properties": {
+        "next": {
+          "$ref": "#/$defs/Level4",
+          "description": "Next points to next nested level.",
+          "x-order": "1"
+        },
+        "probe": {
+          "$ref": "#/$defs/DeepProbe",
+          "description": "Probe is repeated reusable type on this level.",
+          "x-order": "42"
+        }
+      },
+      "required": [
+        "probe",
+        "next"
+      ],
+      "type": "object"
+    },
+    "Level4": {
+      "additionalProperties": false,
+      "description": "Level4 contains one deeper nested level.",
+      "properties": {
+        "next": {
+          "$ref": "#/$defs/Level5",
+          "description": "Next points to next nested level.",
+          "x-order": "4"
+        },
+        "probe": {
+          "$ref": "#/$defs/DeepProbe",
+          "description": "Probe is repeated reusable type on this level.",
+          "x-order": "41"
+        }
+      },
+      "required": [
+        "probe",
+        "next"
+      ],
+      "type": "object"
+    },
+    "Level5": {
+      "additionalProperties": false,
+      "description": "Level5 contains one deeper nested level.",
+      "properties": {
+        "next": {
+          "$ref": "#/$defs/Level6",
+          "description": "Next points to next nested level.",
+          "x-order": "3"
+        },
+        "probe": {
+          "$ref": "#/$defs/DeepProbe",
+          "description": "Probe is repeated reusable type on this level.",
+          "x-order": "77"
+        }
+      },
+      "required": [
+        "probe",
+        "next"
+      ],
+      "type": "object"
+    },
+    "Level6": {
+      "additionalProperties": false,
+      "description": "Level6 is the deepest level in deep branch.",
+      "properties": {
+        "final_value": {
+          "description": "FinalValue is terminal deep value.",
+          "examples": [
+            "done"
+          ],
+          "type": "string",
+          "x-order": "2"
+        },
+        "probe": {
+          "$ref": "#/$defs/DeepProbe",
+          "description": "Probe is repeated reusable type on this level.",
+          "x-order": "20"
+        }
+      },
+      "required": [
+        "probe"
+      ],
+      "type": "object"
+    },
+    "QueueOptions": {
+      "additionalProperties": false,
+      "description": "QueueOptions describes options for one queue.",
+      "properties": {
+        "batch_size": {
+          "default": 100,
+          "description": "BatchSize is number of entries in one batch.",
+          "maximum": 10000,
+          "minimum": 1,
+          "type": "integer",
+          "x-order": "80"
+        },
+        "visibility_timeout": {
+          "description": "VisibilityTimeout is message visibility timeout.",
+          "type": "integer",
+          "x-order": "2"
+        },
+        "workers": {
+          "default": 4,
+          "description": "Workers is number of worker goroutines.",
+          "maximum": 128,
+          "minimum": 1,
+          "type": "integer",
+          "x-order": "1"
+        }
+      },
+      "required": [
+        "workers"
+      ],
+      "type": "object"
+    },
+    "RetryPolicy": {
+      "additionalProperties": false,
+      "description": "RetryPolicy controls retry behavior for transient failures.",
+      "properties": {
+        "attempts": {
+          "default": 3,
+          "description": "Maximum number of retry attempts for one operation.",
+          "maximum": 10,
+          "minimum": 1,
+          "title": "Retry Attempts",
+          "type": "integer",
+          "x-order": "500"
+        },
+        "backoff_ms": {
+          "default": 250,
+          "description": "Backoff is delay between attempts in milliseconds.",
+          "maximum": 30000,
+          "minimum": 10,
+          "type": "integer",
+          "x-order": "4"
+        },
+        "max_jitter_ms": {
+          "default": 100,
+          "description": "MaxJitter is random jitter upper bound in milliseconds.",
+          "maximum": 10000,
+          "minimum": 0,
+          "type": "integer",
+          "x-order": "40"
+        }
+      },
+      "required": [
+        "attempts"
+      ],
+      "type": "object"
+    },
+    "ServiceConfig": {
+      "additionalProperties": false,
+      "description": "ServiceConfig is root schema used in golden docs tests.",
+      "properties": {
+        "advanced": {
+          "$ref": "#/$defs/AdvancedOptions",
+          "description": "Advanced groups optional advanced behavior flags.",
+          "x-order": "22"
+        },
+        "alert_targets": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/$defs/AlertTarget"
+            },
+            "type": "array"
+          },
+          "description": "AlertTargets stores alerting destinations by level.",
+          "type": "object",
+          "x-order": "155"
+        },
+        "base_binding": {
+          "$ref": "#/$defs/model_SharedEndpointBinding",
+          "description": "BaseBinding references base structure that nests existing EndpointMeta.",
+          "x-order": "17"
+        },
+        "base_toggle": {
+          "$ref": "#/$defs/model_SharedToggle",
+          "description": "BaseToggle references tiny base reusable toggle structure.",
+          "x-order": "16"
+        },
+        "base_window": {
+          "$ref": "#/$defs/model_SharedWindow",
+          "description": "BaseWindow references nested base timing structure.",
+          "x-order": "1200"
+        },
+        "bucket_groups": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/$defs/StorageBucket"
+            },
+            "type": "array"
+          },
+          "description": "BucketGroups stores grouped bucket lists.",
+          "type": "object",
+          "x-order": "153"
+        },
+        "buckets_by_priority": {
+          "additionalProperties": false,
+          "description": "BucketsByPriority maps numeric priority to bucket config.",
+          "patternProperties": {
+            "^[0-9]+$": {
+              "$ref": "#/$defs/StorageBucket"
+            }
+          },
+          "type": "object",
+          "x-order": "152"
+        },
+        "deep_by_env": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Level1"
+          },
+          "description": "DeepByEnv stores deep branches by environment key.",
+          "type": "object",
+          "x-order": "21"
+        },
+        "deep_primary": {
+          "$ref": "#/$defs/Level1",
+          "description": "DeepPrimary is first deep branch with six levels.",
+          "x-order": "19"
+        },
+        "deep_secondary": {
+          "$ref": "#/$defs/Level1",
+          "description": "DeepSecondary is second deep branch using same deep chain.",
+          "x-order": "20"
+        },
+        "direct_probe": {
+          "$ref": "#/$defs/DeepProbe",
+          "description": "DirectProbe is root-level direct reusable probe.",
+          "x-order": "18"
+        },
+        "endpoint_tls_overrides": {
+          "additionalProperties": {
+            "$ref": "#/$defs/TLSOverride"
+          },
+          "description": "EndpointTLSOverrides overrides TLS by endpoint name.",
+          "type": "object",
+          "x-order": "14"
+        },
+        "extensions": {
+          "description": "Extensions stores external integration raw values.\n\nThis section is intentionally flexible and can be used by external\ndelivery teams. The core service should not rely on these fields for\nbaseline startup decisions.\n\n**Allowed usage patterns**\n\n  - Feature toggles owned by integration team.\n  - Provider-specific adapter hints.\n  - Temporary migration markers.\n\n**Do not store**\n\n  - Secrets and tokens.\n  - Large binary payloads.\n  - Contract-breaking values that redefine core behavior.\n\n\u003e Keep values small, explicit, and disposable.\n\nExample:\n\n  {\n    \"x-provider\": \"acme-cloud\",\n    \"x-migration-stage\": \"phase-2\",\n    \"x-flags\": [\"shadow-write\", \"dry-run\"]\n  }",
+          "type": "object",
+          "x-order": "1000"
+        },
+        "mirror_endpoints": {
+          "description": "MirrorEndpoints is optional explicit mirror list.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-order": "900"
+        },
+        "mode": {
+          "default": "safe",
+          "description": "Mode is execution mode.",
+          "enum": [
+            "safe",
+            "fast"
+          ],
+          "type": "string",
+          "x-order": "400"
+        },
+        "name": {
+          "default": "demo-service",
+          "description": "Human-readable service name.",
+          "minLength": 3,
+          "title": "Service Name",
+          "type": "string",
+          "x-order": "10"
+        },
+        "named_buckets": {
+          "additionalProperties": {
+            "$ref": "#/$defs/StorageBucket"
+          },
+          "description": "NamedBuckets configures storage by logical bucket key.",
+          "type": "object",
+          "x-order": "151"
+        },
+        "optional_retry": {
+          "$ref": "#/$defs/RetryPolicy",
+          "description": "OptionalRetry allows temporary retry override.",
+          "x-order": "15"
+        },
+        "queue_workers_by_zone": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "description": "QueueWorkersByZone stores workers count by zone.",
+          "type": "object",
+          "x-order": "154"
+        },
+        "queues": {
+          "additionalProperties": {
+            "$ref": "#/$defs/QueueOptions"
+          },
+          "description": "Queues configures processing queues by queue name.",
+          "type": "object",
+          "x-order": "150"
+        },
+        "retry": {
+          "$ref": "#/$defs/RetryPolicy",
+          "description": "Retry is transient retry strategy.",
+          "title": "Retry Policy",
+          "x-order": "11"
+        },
+        "schedule": {
+          "description": "Schedule is fixed-size weekly maintenance windows.",
+          "items": {
+            "$ref": "#/$defs/Window"
+          },
+          "maxItems": 7,
+          "minItems": 7,
+          "type": "array",
+          "x-order": "13"
+        },
+        "shared": {
+          "$ref": "#/$defs/model_SharedOptions",
+          "description": "Shared is shared options imported from base module.",
+          "title": "Shared Options",
+          "x-order": "1"
+        }
+      },
+      "required": [
+        "name",
+        "retry",
+        "shared"
+      ],
+      "type": "object"
+    },
+    "SharedEndpointBinding": {
+      "additionalProperties": false,
+      "description": "SharedEndpointBinding nests existing endpoint metadata into a binding.",
+      "properties": {
+        "meta": {
+          "$ref": "#/$defs/EndpointMeta",
+          "description": "Meta reuses existing endpoint metadata schema.",
+          "x-order": "3"
+        },
+        "name": {
+          "description": "Name is logical binding name.",
+          "examples": [
+            "primary"
+          ],
+          "type": "string",
+          "x-order": "14"
+        }
+      },
+      "required": [
+        "name",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "SharedEndpoints": {
+      "additionalProperties": false,
+      "description": "SharedEndpoints describes common endpoint set used by services.",
+      "properties": {
+        "api": {
+          "description": "API is primary API base URL.",
+          "examples": [
+            "https://api.acme.local"
+          ],
+          "format": "uri",
+          "title": "API Endpoint",
+          "type": "string",
+          "x-order": "5"
+        },
+        "internal": {
+          "description": "Internal is internal service endpoint URL.",
+          "examples": [
+            "http://internal:8080"
+          ],
+          "format": "uri",
+          "type": "string",
+          "x-order": "6"
+        },
+        "meta": {
+          "additionalProperties": {
+            "$ref": "#/$defs/EndpointMeta"
+          },
+          "description": "Meta stores endpoint metadata by endpoint name.",
+          "type": "object",
+          "x-order": "204"
+        },
+        "metrics": {
+          "description": "Metrics is optional metrics endpoint URL.",
+          "examples": [
+            "https://metrics.acme.local"
+          ],
+          "format": "uri",
+          "type": "string",
+          "x-order": "111"
+        }
+      },
+      "required": [
+        "api"
+      ],
+      "type": "object"
+    },
+    "SharedTLS": {
+      "additionalProperties": false,
+      "description": "SharedTLS describes shared transport security settings.",
+      "properties": {
+        "cipher_suites": {
+          "description": "CipherSuites lists explicitly allowed cipher suites.",
+          "items": {
+            "examples": [
+              "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+            ],
+            "type": "string"
+          },
+          "type": "array",
+          "x-order": "13"
+        },
+        "enabled": {
+          "default": true,
+          "description": "Enable TLS for outbound connections.",
+          "title": "TLS Enabled",
+          "type": "boolean",
+          "x-order": "12"
+        },
+        "handshake_timeout": {
+          "description": "HandshakeTimeout sets TLS handshake timeout.",
+          "type": "integer",
+          "x-order": "377"
+        },
+        "min_version": {
+          "default": "1.2",
+          "description": "MinVersion is lowest allowed TLS protocol version.",
+          "enum": [
+            "1.2",
+            "1.3"
+          ],
+          "type": "string",
+          "x-order": "88"
+        }
+      },
+      "required": [
+        "enabled",
+        "min_version"
+      ],
+      "type": "object"
+    },
+    "SharedToggle": {
+      "additionalProperties": false,
+      "description": "SharedToggle is a tiny reusable on/off configuration block.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Enabled toggles one optional feature branch.",
+          "type": "boolean",
+          "x-order": "42"
+        }
+      },
+      "type": "object"
+    },
+    "SharedWindow": {
+      "additionalProperties": false,
+      "description": "SharedWindow is a nested window with retry-aware timing.",
+      "properties": {
+        "end": {
+          "description": "End is end minute in a one-hour window.",
+          "maximum": 59,
+          "minimum": 0,
+          "type": "integer",
+          "x-order": "999"
+        },
+        "retry_delay": {
+          "description": "Retry uses existing base retry-like duration style.",
+          "type": "integer",
+          "x-order": "17"
+        },
+        "start": {
+          "description": "Start is start minute in a one-hour window.",
+          "maximum": 59,
+          "minimum": 0,
+          "type": "integer",
+          "x-order": "2"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "type": "object"
+    },
+    "StorageBucket": {
+      "additionalProperties": false,
+      "description": "StorageBucket describes one storage target.",
+      "properties": {
+        "name": {
+          "description": "Name is bucket name.",
+          "examples": [
+            "artifacts-main"
+          ],
+          "minLength": 3,
+          "type": "string",
+          "x-order": "70"
+        },
+        "read_only": {
+          "description": "ReadOnly marks bucket as read-only.",
+          "type": "boolean",
+          "x-order": "71"
+        },
+        "region": {
+          "description": "Region is bucket region.",
+          "examples": [
+            "us-east-1"
+          ],
+          "type": "string",
+          "x-order": "3"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "TLSOverride": {
+      "additionalProperties": false,
+      "description": "TLSOverride describes TLS override for one endpoint.",
+      "properties": {
+        "enabled": {
+          "description": "Enabled overrides TLS state.",
+          "type": "boolean",
+          "x-order": "9"
+        },
+        "min_version": {
+          "description": "MinVersion overrides minimal TLS version.",
+          "enum": [
+            "1.2",
+            "1.3"
+          ],
+          "type": "string",
+          "x-order": "1"
+        }
+      },
+      "type": "object"
+    },
+    "Window": {
+      "additionalProperties": false,
+      "description": "Window describes daily maintenance time window.",
+      "properties": {
+        "end": {
+          "description": "End is end time (HH:MM).",
+          "pattern": "^[0-2][0-9]:[0-5][0-9]$",
+          "type": "string",
+          "x-order": "5"
+        },
+        "start": {
+          "description": "Start is start time (HH:MM).",
+          "pattern": "^[0-2][0-9]:[0-5][0-9]$",
+          "type": "string",
+          "x-order": "44"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "type": "object"
+    },
+    "model_SharedEndpointBinding": {
+      "additionalProperties": false,
+      "description": "SharedEndpointBinding nests existing endpoint metadata into a binding.",
+      "properties": {
+        "meta": {
+          "$ref": "#/$defs/EndpointMeta",
+          "description": "Meta reuses existing endpoint metadata schema.",
+          "x-order": "3"
+        },
+        "name": {
+          "description": "Name is logical binding name.",
+          "examples": [
+            "primary"
+          ],
+          "type": "string",
+          "x-order": "14"
+        }
+      },
+      "required": [
+        "name",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "model_SharedOptions": {
+      "additionalProperties": false,
+      "description": "SharedOptions is reusable part expected to be merged into app schema.",
+      "properties": {
+        "endpoint_binding": {
+          "$ref": "#/$defs/SharedEndpointBinding",
+          "description": "EndpointBinding links endpoint identity and metadata.",
+          "x-order": "65"
+        },
+        "endpoint_groups": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": "EndpointGroups stores endpoint names grouped by key.",
+          "type": "object",
+          "x-order": "8"
+        },
+        "endpoint_ports": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "description": "EndpointPorts stores ports by endpoint and protocol name.\n\nThis field is useful when one logical endpoint exposes multiple listener\nprotocols (for example `http`, `grpc`, `admin`). Consumers can resolve\nexact port by `(endpoint, protocol)` pair without hardcoding transport\nassumptions.",
+          "type": "object",
+          "x-order": "305"
+        },
+        "endpoints": {
+          "$ref": "#/$defs/SharedEndpoints",
+          "description": "Endpoints are network endpoints shared across components.",
+          "title": "Endpoint Options",
+          "x-order": "1"
+        },
+        "feature_matrix": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "description": "FeatureMatrix stores feature flags as nested map.\n\n**Matrix semantics**\n\n  - First key: feature group name.\n  - Second key: feature flag name.\n  - Value: desired on/off state.\n\nExample:\n\n  - `auth.mfa_required = true`\n  - `billing.v2_invoice = false`",
+          "type": "object",
+          "x-order": "41"
+        },
+        "feature_toggle": {
+          "$ref": "#/$defs/SharedToggle",
+          "description": "FeatureToggle is a small reusable boolean options block.",
+          "x-order": "66"
+        },
+        "labels": {
+          "additionalProperties": false,
+          "description": "Labels maps short numeric label IDs to values.",
+          "patternProperties": {
+            "^[0-9]+$": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "x-order": "21"
+        },
+        "level_by_subsystem": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "LevelBySubsystem maps subsystem name to log level.",
+          "type": "object",
+          "x-order": "4"
+        },
+        "maintenance_window": {
+          "$ref": "#/$defs/SharedWindow",
+          "description": "MaintenanceWindow stores shared maintenance timing.",
+          "x-order": "67"
+        },
+        "ports": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "Ports maps external service names to exposed port.",
+          "type": "object",
+          "x-order": "300"
+        },
+        "timeout_by_endpoint": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "TimeoutByEndpoint stores timeout per endpoint name.",
+          "type": "object",
+          "x-order": "700"
+        },
+        "tls": {
+          "$ref": "#/$defs/SharedTLS",
+          "description": "TLS is TLS configuration shared across components.",
+          "title": "TLS Options",
+          "x-order": "10"
+        }
+      },
+      "required": [
+        "tls",
+        "endpoints"
+      ],
+      "type": "object"
+    },
+    "model_SharedToggle": {
+      "additionalProperties": false,
+      "description": "SharedToggle is a tiny reusable on/off configuration block.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Enabled toggles one optional feature branch.",
+          "type": "boolean",
+          "x-order": "42"
+        }
+      },
+      "type": "object"
+    },
+    "model_SharedWindow": {
+      "additionalProperties": false,
+      "description": "SharedWindow is a nested window with retry-aware timing.",
+      "properties": {
+        "end": {
+          "description": "End is end minute in a one-hour window.",
+          "maximum": 59,
+          "minimum": 0,
+          "type": "integer",
+          "x-order": "999"
+        },
+        "retry_delay": {
+          "description": "Retry uses existing base retry-like duration style.",
+          "type": "integer",
+          "x-order": "17"
+        },
+        "start": {
+          "description": "Start is start minute in a one-hour window.",
+          "maximum": 59,
+          "minimum": 0,
+          "type": "integer",
+          "x-order": "2"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/woozymasta/schemadoc-test-app/model/service-config",
+  "$ref": "#/$defs/ServiceConfig",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

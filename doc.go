@@ -7,7 +7,7 @@ Package schemadoc renders CommonMark documentation from JSON Schema documents.
 
 The package focuses on deterministic markdown output for generated schemas and
 project configuration models. It supports built-in templates ("list", "table")
-and custom template text.
+and "html", plus custom template text.
 
 Basic render from schema bytes:
 
@@ -77,5 +77,18 @@ Enable embedded example block in markdown template output:
 	}
 
 	fmt.Println(md)
+
+Render HTML output via built-in template:
+
+	rendered, err := schemadoc.Render(schemaBytes, schemadoc.Options{
+		TemplateName:   "html",
+		Title:          "Schema Reference",
+		FooterToolName: "schemadoc",
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(rendered)
 */
 package schemadoc

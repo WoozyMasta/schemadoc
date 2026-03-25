@@ -1,0 +1,2349 @@
+<!-- Automatically generated file, do not modify! -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Testdata Reference (HTML + YAML Example)</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --fg: #24292f;
+      --muted: #57606a;
+      --border: #c6cdd5;
+      --panel: #edf1f5;
+      --code-bg: #edf1f5;
+      --accent: #0969da;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.5;
+    }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+    h1, h2, h3 {
+      line-height: 1.25;
+      margin: 1.3rem 0 0.7rem;
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 1.9rem;
+    }
+    h2 {
+      font-size: 1.35rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 {
+      font-size: 1.08rem;
+      margin-top: 1.05rem;
+    }
+    p {
+      margin: 0 0 0.8rem;
+      overflow-wrap: anywhere;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    .muted { color: var(--muted); }
+    .panel {
+      margin: 0.9rem 0 1rem;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 10px;
+      padding: 0.85rem 0.95rem;
+    }
+    .toc ul, .attr-list, .paths {
+      margin: 0.35rem 0 0;
+      padding-left: 1.2rem;
+    }
+    .card {
+      margin: 0.8rem 0 1rem;
+      border: 1px solid var(--border);
+      background: #fbfcfd;
+      border-radius: 10px;
+      padding: 0.85rem 0.95rem;
+    }
+    details.definition {
+      margin: 0.9rem 0 1rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+    details.definition > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 0.7rem 0.9rem;
+      user-select: none;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+    details.definition > summary::-webkit-details-marker {
+      display: none;
+    }
+    details.definition > summary::before {
+      content: "▾";
+      margin-right: 0.45rem;
+      color: var(--muted);
+    }
+    details.definition:not([open]) > summary::before {
+      content: "▸";
+    }
+    .def-body {
+      padding: 0.85rem 0.95rem 0.6rem;
+      background: var(--bg);
+    }
+    .meta {
+      margin: 0;
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 0.32rem 0.7rem;
+      font-size: 0.94rem;
+    }
+    .meta dt {
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .meta dd { margin: 0; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.08rem 0.35rem;
+      font-size: 0.88em;
+    }
+    pre {
+      margin: 0.7rem 0 0;
+      background: #eef2f6;
+      color: #1f2328;
+      border-radius: 8px;
+      border: 1px solid #c6cdd5;
+      padding: 0.8rem 0.95rem;
+      overflow: auto;
+      font-size: 0.9rem;
+    }
+    pre code {
+      background: transparent;
+      border: 0;
+      color: inherit;
+      padding: 0;
+    }
+.tok-key { color: #0b5fff; }
+    .tok-string { color: #0a6e31; }
+    .tok-number { color: #b35c00; }
+    .tok-bool,
+    .tok-null { color: #8a2be2; font-weight: 600; }
+    .tok-punc { color: var(--muted); }
+    .tok-comment { color: #6a737d; font-style: italic; }
+.attr-list pre {
+      margin: 0.35rem 0 0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --fg: #e6edf3;
+        --muted: #9da7b3;
+        --border: #30363d;
+        --panel: #161b22;
+        --code-bg: #161b22;
+        --accent: #58a6ff;
+      }
+      .card { background: #11161d; }
+      pre {
+        background: #0b0f14;
+        color: #c9d1d9;
+        border-color: #30363d;
+      }
+.tok-key { color: #79c0ff; }
+      .tok-string { color: #7ee787; }
+      .tok-number { color: #ffa657; }
+      .tok-bool,
+      .tok-null { color: #d2a8ff; }
+      .tok-punc { color: #8b949e; }
+      .tok-comment { color: #8b949e; }
+}
+    footer {
+      margin-top: 2rem;
+      padding: 0.9rem 1rem;
+      border-top: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Testdata Reference (HTML + YAML Example)</h1>
+<div class="muted"><p>Golden fixture for html template with embedded YAML example and rich comments.</p></div>
+<section class="panel">
+      <dl class="meta">
+<dt>Source file</dt>
+<dd><a href="https://github.com/woozymasta/schemadoc-test-app/blob/HEAD/testdata/generated/app.schema.json"><code>testdata/generated/app.schema.json</code></a></dd>
+<dt>Source URL</dt>
+        <dd><a href="https://raw.githubusercontent.com/woozymasta/schemadoc-test-app/HEAD/testdata/generated/app.schema.json">Raw schema URL</a></dd>
+<dt>Schema identifier</dt>
+        <dd><code>https://github.com/woozymasta/schemadoc-test-app/model/service-config</code></dd>
+        <dt>JSON Schema version</dt>
+        <dd><code>https://json-schema.org/draft/2020-12/schema</code></dd>
+        <dt>Version support</dt>
+        <dd><code>supported (2020-12)</code></dd>
+        <dt>Root reference</dt>
+        <dd><code>#/$defs/ServiceConfig</code></dd>
+      </dl>
+    </section>
+
+    <section class="panel toc">
+      <h2>Contents</h2>
+      <ul>
+<li><a href="#serviceconfig">ServiceConfig</a><ul>
+<li><a href="#advancedoptions">AdvancedOptions</a></li>
+<li><a href="#alerttarget">AlertTarget</a></li>
+<li><a href="#deepprobe">DeepProbe</a></li>
+<li><a href="#level1">Level1</a><ul>
+<li><a href="#level2">Level2</a><ul>
+<li><a href="#level3">Level3</a><ul>
+<li><a href="#level4">Level4</a><ul>
+<li><a href="#level5">Level5</a><ul>
+<li><a href="#level6">Level6</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#queueoptions">QueueOptions</a></li>
+<li><a href="#retrypolicy">RetryPolicy</a></li>
+<li><a href="#storagebucket">StorageBucket</a></li>
+<li><a href="#tlsoverride">TLSOverride</a></li>
+<li><a href="#window">Window</a></li>
+<li><a href="#model_sharedendpointbinding">model_SharedEndpointBinding</a><ul>
+<li><a href="#endpointmeta">EndpointMeta</a></li>
+</ul>
+</li>
+<li><a href="#model_sharedoptions">model_SharedOptions</a><ul>
+<li><a href="#sharedendpointbinding">SharedEndpointBinding</a></li>
+<li><a href="#sharedendpoints">SharedEndpoints</a></li>
+<li><a href="#sharedtls">SharedTLS</a></li>
+<li><a href="#sharedtoggle">SharedToggle</a></li>
+<li><a href="#sharedwindow">SharedWindow</a></li>
+</ul>
+</li>
+<li><a href="#model_sharedtoggle">model_SharedToggle</a></li>
+<li><a href="#model_sharedwindow">model_SharedWindow</a></li>
+</ul>
+</li>
+<li><a href="#example-yaml-document">Example yaml document</a></li>
+</ul>
+    </section>
+
+<section>
+      <details class="definition" open>
+        <summary>ServiceConfig</summary>
+        <div class="def-body" id="serviceconfig">
+<p>ServiceConfig is root schema used in golden docs tests.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 23</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="serviceconfigmodel_sharedoptions">ServiceConfig.model_SharedOptions</h3>
+        <p><strong>Key:</strong> <code>shared</code></p>
+<p>Shared is shared options imported from base module.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#model_sharedoptions"><code>model_SharedOptions</code></a> (<code>#/$defs/model_SharedOptions</code>)</li>
+<li><strong>Title:</strong> <code>Shared Options</code></li>
+<li><strong>Other keywords:</strong> x-order=1</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigname">ServiceConfig.name</h3>
+        <p><strong>Key:</strong> <code>name</code></p>
+<p>Human-readable service name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Title:</strong> <code>Service Name</code></li>
+<li><strong>Default:</strong> <code>demo-service</code></li>
+<li><strong>Constraints:</strong> <code>minLength=3</code></li>
+<li><strong>Other keywords:</strong> x-order=10</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigretrypolicy">ServiceConfig.RetryPolicy</h3>
+        <p><strong>Key:</strong> <code>retry</code></p>
+<p>Retry is transient retry strategy.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#retrypolicy"><code>RetryPolicy</code></a> (<code>#/$defs/RetryPolicy</code>)</li>
+<li><strong>Title:</strong> <code>Retry Policy</code></li>
+<li><strong>Other keywords:</strong> x-order=11</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigschedule">ServiceConfig.schedule</h3>
+        <p><strong>Key:</strong> <code>schedule</code></p>
+<p>Schedule is fixed-size weekly maintenance windows.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>array</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Items reference:</strong> <a href="#window"><code>Window</code></a> (<code>#/$defs/Window</code>)</li>
+<li><strong>Constraints:</strong> <code>minItems=7</code>; <code>maxItems=7</code></li>
+<li><strong>Other keywords:</strong> x-order=13</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigendpoint_tls_overrides">ServiceConfig.endpoint_tls_overrides</h3>
+        <p><strong>Key:</strong> <code>endpoint_tls_overrides</code></p>
+<p>EndpointTLSOverrides overrides TLS by endpoint name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties reference:</strong> <a href="#tlsoverride"><code>TLSOverride</code></a> (<code>#/$defs/TLSOverride</code>)</li>
+<li><strong>Other keywords:</strong> x-order=14</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigretrypolicy">ServiceConfig.RetryPolicy</h3>
+        <p><strong>Key:</strong> <code>optional_retry</code></p>
+<p>OptionalRetry allows temporary retry override.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#retrypolicy"><code>RetryPolicy</code></a> (<code>#/$defs/RetryPolicy</code>)</li>
+<li><strong>Other keywords:</strong> x-order=15</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigmodel_sharedtoggle">ServiceConfig.model_SharedToggle</h3>
+        <p><strong>Key:</strong> <code>base_toggle</code></p>
+<p>BaseToggle references tiny base reusable toggle structure.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#model_sharedtoggle"><code>model_SharedToggle</code></a> (<code>#/$defs/model_SharedToggle</code>)</li>
+<li><strong>Other keywords:</strong> x-order=16</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigmodel_sharedendpointbinding">ServiceConfig.model_SharedEndpointBinding</h3>
+        <p><strong>Key:</strong> <code>base_binding</code></p>
+<p>BaseBinding references base structure that nests existing EndpointMeta.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#model_sharedendpointbinding"><code>model_SharedEndpointBinding</code></a> (<code>#/$defs/model_SharedEndpointBinding</code>)</li>
+<li><strong>Other keywords:</strong> x-order=17</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigdeepprobe">ServiceConfig.DeepProbe</h3>
+        <p><strong>Key:</strong> <code>direct_probe</code></p>
+<p>DirectProbe is root-level direct reusable probe.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
+<li><strong>Other keywords:</strong> x-order=18</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfiglevel1">ServiceConfig.Level1</h3>
+        <p><strong>Key:</strong> <code>deep_primary</code></p>
+<p>DeepPrimary is first deep branch with six levels.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#level1"><code>Level1</code></a> (<code>#/$defs/Level1</code>)</li>
+<li><strong>Other keywords:</strong> x-order=19</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfiglevel1">ServiceConfig.Level1</h3>
+        <p><strong>Key:</strong> <code>deep_secondary</code></p>
+<p>DeepSecondary is second deep branch using same deep chain.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#level1"><code>Level1</code></a> (<code>#/$defs/Level1</code>)</li>
+<li><strong>Other keywords:</strong> x-order=20</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigdeep_by_env">ServiceConfig.deep_by_env</h3>
+        <p><strong>Key:</strong> <code>deep_by_env</code></p>
+<p>DeepByEnv stores deep branches by environment key.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties reference:</strong> <a href="#level1"><code>Level1</code></a> (<code>#/$defs/Level1</code>)</li>
+<li><strong>Other keywords:</strong> x-order=21</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigadvancedoptions">ServiceConfig.AdvancedOptions</h3>
+        <p><strong>Key:</strong> <code>advanced</code></p>
+<p>Advanced groups optional advanced behavior flags.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#advancedoptions"><code>AdvancedOptions</code></a> (<code>#/$defs/AdvancedOptions</code>)</li>
+<li><strong>Other keywords:</strong> x-order=22</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigqueues">ServiceConfig.queues</h3>
+        <p><strong>Key:</strong> <code>queues</code></p>
+<p>Queues configures processing queues by queue name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties reference:</strong> <a href="#queueoptions"><code>QueueOptions</code></a> (<code>#/$defs/QueueOptions</code>)</li>
+<li><strong>Other keywords:</strong> x-order=150</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfignamed_buckets">ServiceConfig.named_buckets</h3>
+        <p><strong>Key:</strong> <code>named_buckets</code></p>
+<p>NamedBuckets configures storage by logical bucket key.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties reference:</strong> <a href="#storagebucket"><code>StorageBucket</code></a> (<code>#/$defs/StorageBucket</code>)</li>
+<li><strong>Other keywords:</strong> x-order=151</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigbuckets_by_priority">ServiceConfig.buckets_by_priority</h3>
+        <p><strong>Key:</strong> <code>buckets_by_priority</code></p>
+<p>BucketsByPriority maps numeric priority to bucket config.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Pattern properties:</strong> 1</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+<li><strong>Other keywords:</strong> x-order=152</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigbucket_groups">ServiceConfig.bucket_groups</h3>
+        <p><strong>Key:</strong> <code>bucket_groups</code></p>
+<p>BucketGroups stores grouped bucket lists.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>array</code></li>
+<li><strong>Other keywords:</strong> x-order=153</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigqueue_workers_by_zone">ServiceConfig.queue_workers_by_zone</h3>
+        <p><strong>Key:</strong> <code>queue_workers_by_zone</code></p>
+<p>QueueWorkersByZone stores workers count by zone.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>object</code></li>
+<li><strong>Other keywords:</strong> x-order=154</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigalert_targets">ServiceConfig.alert_targets</h3>
+        <p><strong>Key:</strong> <code>alert_targets</code></p>
+<p>AlertTargets stores alerting destinations by level.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>array</code></li>
+<li><strong>Other keywords:</strong> x-order=155</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigmode">ServiceConfig.mode</h3>
+        <p><strong>Key:</strong> <code>mode</code></p>
+<p>Mode is execution mode.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>safe</code></li>
+<li><strong>Enum:</strong> <code>safe</code>, <code>fast</code></li>
+<li><strong>Other keywords:</strong> x-order=400</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigmirror_endpoints">ServiceConfig.mirror_endpoints</h3>
+        <p><strong>Key:</strong> <code>mirror_endpoints</code></p>
+<p>MirrorEndpoints is optional explicit mirror list.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>array</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Items type:</strong> <code>string</code></li>
+<li><strong>Other keywords:</strong> x-order=900</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigextensions">ServiceConfig.extensions</h3>
+        <p><strong>Key:</strong> <code>extensions</code></p>
+<p>Extensions stores external integration raw values.</p>
+<p>This section is intentionally flexible and can be used by external delivery teams. The core service should not rely on these fields for baseline startup decisions.</p>
+<p>**Allowed usage patterns**</p>
+<ul><li>Feature toggles owned by integration team.</li><li>Provider-specific adapter hints.</li><li>Temporary migration markers.</li></ul>
+<p>**Do not store**</p>
+<ul><li>Secrets and tokens.</li><li>Large binary payloads.</li><li>Contract-breaking values that redefine core behavior.</li></ul>
+<p>&gt; Keep values small, explicit, and disposable.</p>
+<p>Example:</p>
+<p>{ &#34;x-provider&#34;: &#34;acme-cloud&#34;, &#34;x-migration-stage&#34;: &#34;phase-2&#34;, &#34;x-flags&#34;: [&#34;shadow-write&#34;, &#34;dry-run&#34;] }</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Other keywords:</strong> x-order=1000</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="serviceconfigmodel_sharedwindow">ServiceConfig.model_SharedWindow</h3>
+        <p><strong>Key:</strong> <code>base_window</code></p>
+<p>BaseWindow references nested base timing structure.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#model_sharedwindow"><code>model_SharedWindow</code></a> (<code>#/$defs/model_SharedWindow</code>)</li>
+<li><strong>Other keywords:</strong> x-order=1200</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>AdvancedOptions</summary>
+        <div class="def-body" id="advancedoptions">
+<p>AdvancedOptions groups additional optional controls.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 4</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="advancedoptionsmetadata">AdvancedOptions.metadata</h3>
+        <p><strong>Key:</strong> <code>metadata</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>metadata</code></p>
+<p>Metadata keeps arbitrary nested metadata.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>object</code></li>
+<li><strong>Other keywords:</strong> x-order=6</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="advancedoptionscooldown">AdvancedOptions.cooldown</h3>
+        <p><strong>Key:</strong> <code>cooldown</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>cooldown</code></p>
+<p>Cooldown sets cooldown duration after errors.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Other keywords:</strong> x-order=7</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="advancedoptionscircuit_breaker">AdvancedOptions.circuit_breaker</h3>
+        <p><strong>Key:</strong> <code>circuit_breaker</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>circuit_breaker</code></p>
+<p>CircuitBreaker enables circuit breaker behavior.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Other keywords:</strong> x-order=100</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="advancedoptionstags">AdvancedOptions.tags</h3>
+        <p><strong>Key:</strong> <code>tags</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>tags</code></p>
+<p>Tags adds free-form tags.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>array</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Items type:</strong> <code>string</code></li>
+<li><strong>Other keywords:</strong> x-order=101</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>AlertTarget</summary>
+        <div class="def-body" id="alerttarget">
+<p>AlertTarget describes one alerting destination.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 3</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="alerttargetchannel">AlertTarget.channel</h3>
+        <p><strong>Key:</strong> <code>channel</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigalert_targets"><code>alert_targets</code></a>.<code>[]</code>.<code>[]</code>.<code>channel</code></p>
+<p>Channel is target channel name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Examples:</strong> <code>slack</code></li>
+<li><strong>Other keywords:</strong> x-order=2</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="alerttargetseverity">AlertTarget.severity</h3>
+        <p><strong>Key:</strong> <code>severity</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigalert_targets"><code>alert_targets</code></a>.<code>[]</code>.<code>[]</code>.<code>severity</code></p>
+<p>Severity is optional minimum severity.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Enum:</strong> <code>info</code>, <code>warn</code>, <code>error</code></li>
+<li><strong>Other keywords:</strong> x-order=3</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="alerttargetaddress">AlertTarget.address</h3>
+        <p><strong>Key:</strong> <code>address</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigalert_targets"><code>alert_targets</code></a>.<code>[]</code>.<code>[]</code>.<code>address</code></p>
+<p>Address is destination address.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Examples:</strong> <code>https://hooks.slack.com/...</code></li>
+<li><strong>Other keywords:</strong> x-order=200</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>DeepProbe</summary>
+        <div class="def-body" id="deepprobe">
+<p>DeepProbe is reused on every deep nesting level for path tests.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="deepprobeenabled">DeepProbe.enabled</h3>
+        <p><strong>Key:</strong> <code>enabled</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<a href="#level6deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<a href="#level6deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<a href="#level6deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1deepprobe"><code>probe</code></a>.<code>enabled</code></li>
+<li><a href="#serviceconfigdeepprobe"><code>direct_probe</code></a>.<code>enabled</code></li>
+</ul>
+<p>Enabled toggles probe branch.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>true</code></li>
+<li><strong>Other keywords:</strong> x-order=1</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="deepprobetoken">DeepProbe.token</h3>
+        <p><strong>Key:</strong> <code>token</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<a href="#level6deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<a href="#level6deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<a href="#level6deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1deepprobe"><code>probe</code></a>.<code>token</code></li>
+<li><a href="#serviceconfigdeepprobe"><code>direct_probe</code></a>.<code>token</code></li>
+</ul>
+<p>Token is stable probe token value.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Default:</strong> <code>probe</code></li>
+<li><strong>Other keywords:</strong> x-order=12</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>EndpointMeta</summary>
+        <div class="def-body" id="endpointmeta">
+<p>EndpointMeta describes metadata for one endpoint target.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 3</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="endpointmetaweight">EndpointMeta.weight</h3>
+        <p><strong>Key:</strong> <code>weight</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<a href="#model_sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>weight</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<a href="#sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>weight</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<a href="#sharedendpointsmeta"><code>meta</code></a>.<code>[]</code>.<code>weight</code></li>
+</ul>
+<p>Weight is load balancing weight.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=100</code></li>
+<li><strong>Other keywords:</strong> x-order=7</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="endpointmetaregion">EndpointMeta.region</h3>
+        <p><strong>Key:</strong> <code>region</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<a href="#model_sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>region</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<a href="#sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>region</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<a href="#sharedendpointsmeta"><code>meta</code></a>.<code>[]</code>.<code>region</code></li>
+</ul>
+<p>Region is deployment region code.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>eu-central-1</code></li>
+<li><strong>Other keywords:</strong> x-order=91</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="endpointmetaread_only">EndpointMeta.read_only</h3>
+        <p><strong>Key:</strong> <code>read_only</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<a href="#model_sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>read_only</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<a href="#sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>read_only</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<a href="#sharedendpointsmeta"><code>meta</code></a>.<code>[]</code>.<code>read_only</code></li>
+</ul>
+<p>ReadOnly marks endpoint as read-only.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Other keywords:</strong> x-order=250</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Level1</summary>
+        <div class="def-body" id="level1">
+<p>Level1 contains one deeper nested level.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="level1deepprobe">Level1.DeepProbe</h3>
+        <p><strong>Key:</strong> <code>probe</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<code>probe</code></li>
+</ul>
+<p>Probe is repeated reusable type on this level.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
+<li><strong>Other keywords:</strong> x-order=2</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="level1level2">Level1.Level2</h3>
+        <p><strong>Key:</strong> <code>next</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<code>next</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<code>next</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<code>next</code></li>
+</ul>
+<p>Next points to next nested level.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#level2"><code>Level2</code></a> (<code>#/$defs/Level2</code>)</li>
+<li><strong>Other keywords:</strong> x-order=200</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Level2</summary>
+        <div class="def-body" id="level2">
+<p>Level2 contains one deeper nested level.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="level2deepprobe">Level2.DeepProbe</h3>
+        <p><strong>Key:</strong> <code>probe</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<code>probe</code></li>
+</ul>
+<p>Probe is repeated reusable type on this level.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
+<li><strong>Other keywords:</strong> x-order=9</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="level2level3">Level2.Level3</h3>
+        <p><strong>Key:</strong> <code>next</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<code>next</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<code>next</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<code>next</code></li>
+</ul>
+<p>Next points to next nested level.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#level3"><code>Level3</code></a> (<code>#/$defs/Level3</code>)</li>
+<li><strong>Other keywords:</strong> x-order=10</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Level3</summary>
+        <div class="def-body" id="level3">
+<p>Level3 contains one deeper nested level.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="level3level4">Level3.Level4</h3>
+        <p><strong>Key:</strong> <code>next</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<code>next</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<code>next</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<code>next</code></li>
+</ul>
+<p>Next points to next nested level.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#level4"><code>Level4</code></a> (<code>#/$defs/Level4</code>)</li>
+<li><strong>Other keywords:</strong> x-order=1</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="level3deepprobe">Level3.DeepProbe</h3>
+        <p><strong>Key:</strong> <code>probe</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<code>probe</code></li>
+</ul>
+<p>Probe is repeated reusable type on this level.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
+<li><strong>Other keywords:</strong> x-order=42</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Level4</summary>
+        <div class="def-body" id="level4">
+<p>Level4 contains one deeper nested level.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="level4level5">Level4.Level5</h3>
+        <p><strong>Key:</strong> <code>next</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<code>next</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<code>next</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<code>next</code></li>
+</ul>
+<p>Next points to next nested level.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#level5"><code>Level5</code></a> (<code>#/$defs/Level5</code>)</li>
+<li><strong>Other keywords:</strong> x-order=4</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="level4deepprobe">Level4.DeepProbe</h3>
+        <p><strong>Key:</strong> <code>probe</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<code>probe</code></li>
+</ul>
+<p>Probe is repeated reusable type on this level.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
+<li><strong>Other keywords:</strong> x-order=41</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Level5</summary>
+        <div class="def-body" id="level5">
+<p>Level5 contains one deeper nested level.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="level5level6">Level5.Level6</h3>
+        <p><strong>Key:</strong> <code>next</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<code>next</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<code>next</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<code>next</code></li>
+</ul>
+<p>Next points to next nested level.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#level6"><code>Level6</code></a> (<code>#/$defs/Level6</code>)</li>
+<li><strong>Other keywords:</strong> x-order=3</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="level5deepprobe">Level5.DeepProbe</h3>
+        <p><strong>Key:</strong> <code>probe</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<code>probe</code></li>
+</ul>
+<p>Probe is repeated reusable type on this level.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
+<li><strong>Other keywords:</strong> x-order=77</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Level6</summary>
+        <div class="def-body" id="level6">
+<p>Level6 is the deepest level in deep branch.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="level6final_value">Level6.final_value</h3>
+        <p><strong>Key:</strong> <code>final_value</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<code>final_value</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<code>final_value</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<code>final_value</code></li>
+</ul>
+<p>FinalValue is terminal deep value.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>done</code></li>
+<li><strong>Other keywords:</strong> x-order=2</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="level6deepprobe">Level6.DeepProbe</h3>
+        <p><strong>Key:</strong> <code>probe</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigdeep_by_env"><code>deep_by_env</code></a>.<code>[]</code>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_primary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<code>probe</code></li>
+<li><a href="#serviceconfiglevel1"><code>deep_secondary</code></a>.<a href="#level1level2"><code>next</code></a>.<a href="#level2level3"><code>next</code></a>.<a href="#level3level4"><code>next</code></a>.<a href="#level4level5"><code>next</code></a>.<a href="#level5level6"><code>next</code></a>.<code>probe</code></li>
+</ul>
+<p>Probe is repeated reusable type on this level.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
+<li><strong>Other keywords:</strong> x-order=20</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>QueueOptions</summary>
+        <div class="def-body" id="queueoptions">
+<p>QueueOptions describes options for one queue.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 3</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="queueoptionsworkers">QueueOptions.workers</h3>
+        <p><strong>Key:</strong> <code>workers</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigqueues"><code>queues</code></a>.<code>[]</code>.<code>workers</code></p>
+<p>Workers is number of worker goroutines.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Default:</strong> <code>4</code></li>
+<li><strong>Constraints:</strong> <code>minimum=1</code>; <code>maximum=128</code></li>
+<li><strong>Other keywords:</strong> x-order=1</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="queueoptionsvisibility_timeout">QueueOptions.visibility_timeout</h3>
+        <p><strong>Key:</strong> <code>visibility_timeout</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigqueues"><code>queues</code></a>.<code>[]</code>.<code>visibility_timeout</code></p>
+<p>VisibilityTimeout is message visibility timeout.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Other keywords:</strong> x-order=2</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="queueoptionsbatch_size">QueueOptions.batch_size</h3>
+        <p><strong>Key:</strong> <code>batch_size</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigqueues"><code>queues</code></a>.<code>[]</code>.<code>batch_size</code></p>
+<p>BatchSize is number of entries in one batch.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>100</code></li>
+<li><strong>Constraints:</strong> <code>minimum=1</code>; <code>maximum=10000</code></li>
+<li><strong>Other keywords:</strong> x-order=80</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>RetryPolicy</summary>
+        <div class="def-body" id="retrypolicy">
+<p>RetryPolicy controls retry behavior for transient failures.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 3</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="retrypolicybackoff_ms">RetryPolicy.backoff_ms</h3>
+        <p><strong>Key:</strong> <code>backoff_ms</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigretrypolicy"><code>optional_retry</code></a>.<code>backoff_ms</code></li>
+<li><a href="#serviceconfigretrypolicy"><code>retry</code></a>.<code>backoff_ms</code></li>
+</ul>
+<p>Backoff is delay between attempts in milliseconds.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>250</code></li>
+<li><strong>Constraints:</strong> <code>minimum=10</code>; <code>maximum=30000</code></li>
+<li><strong>Other keywords:</strong> x-order=4</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="retrypolicymax_jitter_ms">RetryPolicy.max_jitter_ms</h3>
+        <p><strong>Key:</strong> <code>max_jitter_ms</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigretrypolicy"><code>optional_retry</code></a>.<code>max_jitter_ms</code></li>
+<li><a href="#serviceconfigretrypolicy"><code>retry</code></a>.<code>max_jitter_ms</code></li>
+</ul>
+<p>MaxJitter is random jitter upper bound in milliseconds.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>100</code></li>
+<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=10000</code></li>
+<li><strong>Other keywords:</strong> x-order=40</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="retrypolicyattempts">RetryPolicy.attempts</h3>
+        <p><strong>Key:</strong> <code>attempts</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigretrypolicy"><code>optional_retry</code></a>.<code>attempts</code></li>
+<li><a href="#serviceconfigretrypolicy"><code>retry</code></a>.<code>attempts</code></li>
+</ul>
+<p>Maximum number of retry attempts for one operation.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Title:</strong> <code>Retry Attempts</code></li>
+<li><strong>Default:</strong> <code>3</code></li>
+<li><strong>Constraints:</strong> <code>minimum=1</code>; <code>maximum=10</code></li>
+<li><strong>Other keywords:</strong> x-order=500</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>SharedEndpointBinding</summary>
+        <div class="def-body" id="sharedendpointbinding">
+<p>SharedEndpointBinding nests existing endpoint metadata into a binding.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="sharedendpointbindingendpointmeta">SharedEndpointBinding.EndpointMeta</h3>
+        <p><strong>Key:</strong> <code>meta</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<code>meta</code></p>
+<p>Meta reuses existing endpoint metadata schema.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#endpointmeta"><code>EndpointMeta</code></a> (<code>#/$defs/EndpointMeta</code>)</li>
+<li><strong>Other keywords:</strong> x-order=3</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedendpointbindingname">SharedEndpointBinding.name</h3>
+        <p><strong>Key:</strong> <code>name</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<code>name</code></p>
+<p>Name is logical binding name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Examples:</strong> <code>primary</code></li>
+<li><strong>Other keywords:</strong> x-order=14</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>SharedEndpoints</summary>
+        <div class="def-body" id="sharedendpoints">
+<p>SharedEndpoints describes common endpoint set used by services.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 4</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="sharedendpointsapi">SharedEndpoints.api</h3>
+        <p><strong>Key:</strong> <code>api</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>api</code></p>
+<p>API is primary API base URL.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Title:</strong> <code>API Endpoint</code></li>
+<li><strong>Examples:</strong> <code>https://api.acme.local</code></li>
+<li><strong>Format:</strong> <code>uri</code></li>
+<li><strong>Other keywords:</strong> x-order=5</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedendpointsinternal">SharedEndpoints.internal</h3>
+        <p><strong>Key:</strong> <code>internal</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>internal</code></p>
+<p>Internal is internal service endpoint URL.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>http://internal:8080</code></li>
+<li><strong>Format:</strong> <code>uri</code></li>
+<li><strong>Other keywords:</strong> x-order=6</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedendpointsmetrics">SharedEndpoints.metrics</h3>
+        <p><strong>Key:</strong> <code>metrics</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>metrics</code></p>
+<p>Metrics is optional metrics endpoint URL.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>https://metrics.acme.local</code></li>
+<li><strong>Format:</strong> <code>uri</code></li>
+<li><strong>Other keywords:</strong> x-order=111</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedendpointsmeta">SharedEndpoints.meta</h3>
+        <p><strong>Key:</strong> <code>meta</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>meta</code></p>
+<p>Meta stores endpoint metadata by endpoint name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties reference:</strong> <a href="#endpointmeta"><code>EndpointMeta</code></a> (<code>#/$defs/EndpointMeta</code>)</li>
+<li><strong>Other keywords:</strong> x-order=204</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>SharedTLS</summary>
+        <div class="def-body" id="sharedtls">
+<p>SharedTLS describes shared transport security settings.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 4</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="sharedtlsenabled">SharedTLS.enabled</h3>
+        <p><strong>Key:</strong> <code>enabled</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>enabled</code></p>
+<p>Enable TLS for outbound connections.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Title:</strong> <code>TLS Enabled</code></li>
+<li><strong>Default:</strong> <code>true</code></li>
+<li><strong>Other keywords:</strong> x-order=12</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedtlscipher_suites">SharedTLS.cipher_suites</h3>
+        <p><strong>Key:</strong> <code>cipher_suites</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>cipher_suites</code></p>
+<p>CipherSuites lists explicitly allowed cipher suites.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>array</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Items type:</strong> <code>string</code></li>
+<li><strong>Items examples:</strong> <code>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</code></li>
+<li><strong>Other keywords:</strong> x-order=13</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedtlsmin_version">SharedTLS.min_version</h3>
+        <p><strong>Key:</strong> <code>min_version</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>min_version</code></p>
+<p>MinVersion is lowest allowed TLS protocol version.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Default:</strong> <code>1.2</code></li>
+<li><strong>Enum:</strong> <code>1.2</code>, <code>1.3</code></li>
+<li><strong>Other keywords:</strong> x-order=88</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedtlshandshake_timeout">SharedTLS.handshake_timeout</h3>
+        <p><strong>Key:</strong> <code>handshake_timeout</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>handshake_timeout</code></p>
+<p>HandshakeTimeout sets TLS handshake timeout.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Other keywords:</strong> x-order=377</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>SharedToggle</summary>
+        <div class="def-body" id="sharedtoggle">
+<p>SharedToggle is a tiny reusable on/off configuration block.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 1</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="sharedtoggleenabled">SharedToggle.enabled</h3>
+        <p><strong>Key:</strong> <code>enabled</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtoggle"><code>feature_toggle</code></a>.<code>enabled</code></p>
+<p>Enabled toggles one optional feature branch.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>true</code></li>
+<li><strong>Other keywords:</strong> x-order=42</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>SharedWindow</summary>
+        <div class="def-body" id="sharedwindow">
+<p>SharedWindow is a nested window with retry-aware timing.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 3</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="sharedwindowstart">SharedWindow.start</h3>
+        <p><strong>Key:</strong> <code>start</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedwindow"><code>maintenance_window</code></a>.<code>start</code></p>
+<p>Start is start minute in a one-hour window.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=59</code></li>
+<li><strong>Other keywords:</strong> x-order=2</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedwindowretry_delay">SharedWindow.retry_delay</h3>
+        <p><strong>Key:</strong> <code>retry_delay</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedwindow"><code>maintenance_window</code></a>.<code>retry_delay</code></p>
+<p>Retry uses existing base retry-like duration style.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Other keywords:</strong> x-order=17</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedwindowend">SharedWindow.end</h3>
+        <p><strong>Key:</strong> <code>end</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedwindow"><code>maintenance_window</code></a>.<code>end</code></p>
+<p>End is end minute in a one-hour window.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=59</code></li>
+<li><strong>Other keywords:</strong> x-order=999</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>StorageBucket</summary>
+        <div class="def-body" id="storagebucket">
+<p>StorageBucket describes one storage target.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 3</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="storagebucketregion">StorageBucket.region</h3>
+        <p><strong>Key:</strong> <code>region</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigbucket_groups"><code>bucket_groups</code></a>.<code>[]</code>.<code>[]</code>.<code>region</code></li>
+<li><a href="#serviceconfigbuckets_by_priority"><code>buckets_by_priority</code></a>.<code>^[0-9]+$</code>.<code>region</code></li>
+<li><a href="#serviceconfignamed_buckets"><code>named_buckets</code></a>.<code>[]</code>.<code>region</code></li>
+</ul>
+<p>Region is bucket region.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>us-east-1</code></li>
+<li><strong>Other keywords:</strong> x-order=3</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="storagebucketname">StorageBucket.name</h3>
+        <p><strong>Key:</strong> <code>name</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigbucket_groups"><code>bucket_groups</code></a>.<code>[]</code>.<code>[]</code>.<code>name</code></li>
+<li><a href="#serviceconfigbuckets_by_priority"><code>buckets_by_priority</code></a>.<code>^[0-9]+$</code>.<code>name</code></li>
+<li><a href="#serviceconfignamed_buckets"><code>named_buckets</code></a>.<code>[]</code>.<code>name</code></li>
+</ul>
+<p>Name is bucket name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Examples:</strong> <code>artifacts-main</code></li>
+<li><strong>Constraints:</strong> <code>minLength=3</code></li>
+<li><strong>Other keywords:</strong> x-order=70</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="storagebucketread_only">StorageBucket.read_only</h3>
+        <p><strong>Key:</strong> <code>read_only</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigbucket_groups"><code>bucket_groups</code></a>.<code>[]</code>.<code>[]</code>.<code>read_only</code></li>
+<li><a href="#serviceconfigbuckets_by_priority"><code>buckets_by_priority</code></a>.<code>^[0-9]+$</code>.<code>read_only</code></li>
+<li><a href="#serviceconfignamed_buckets"><code>named_buckets</code></a>.<code>[]</code>.<code>read_only</code></li>
+</ul>
+<p>ReadOnly marks bucket as read-only.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Other keywords:</strong> x-order=71</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>TLSOverride</summary>
+        <div class="def-body" id="tlsoverride">
+<p>TLSOverride describes TLS override for one endpoint.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="tlsoverridemin_version">TLSOverride.min_version</h3>
+        <p><strong>Key:</strong> <code>min_version</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigendpoint_tls_overrides"><code>endpoint_tls_overrides</code></a>.<code>[]</code>.<code>min_version</code></p>
+<p>MinVersion overrides minimal TLS version.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Enum:</strong> <code>1.2</code>, <code>1.3</code></li>
+<li><strong>Other keywords:</strong> x-order=1</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="tlsoverrideenabled">TLSOverride.enabled</h3>
+        <p><strong>Key:</strong> <code>enabled</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigendpoint_tls_overrides"><code>endpoint_tls_overrides</code></a>.<code>[]</code>.<code>enabled</code></p>
+<p>Enabled overrides TLS state.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Other keywords:</strong> x-order=9</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Window</summary>
+        <div class="def-body" id="window">
+<p>Window describes daily maintenance time window.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="windowend">Window.end</h3>
+        <p><strong>Key:</strong> <code>end</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigschedule"><code>schedule</code></a>.<code>[]</code>.<code>end</code></p>
+<p>End is end time (HH:MM).</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Constraints:</strong> <code>pattern=^[0-2][0-9]:[0-5][0-9]$</code></li>
+<li><strong>Other keywords:</strong> x-order=5</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="windowstart">Window.start</h3>
+        <p><strong>Key:</strong> <code>start</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigschedule"><code>schedule</code></a>.<code>[]</code>.<code>start</code></p>
+<p>Start is start time (HH:MM).</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Constraints:</strong> <code>pattern=^[0-2][0-9]:[0-5][0-9]$</code></li>
+<li><strong>Other keywords:</strong> x-order=44</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>model_SharedEndpointBinding</summary>
+        <div class="def-body" id="model_sharedendpointbinding">
+<p>SharedEndpointBinding nests existing endpoint metadata into a binding.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="model_sharedendpointbindingendpointmeta">model_SharedEndpointBinding.EndpointMeta</h3>
+        <p><strong>Key:</strong> <code>meta</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<code>meta</code></p>
+<p>Meta reuses existing endpoint metadata schema.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#endpointmeta"><code>EndpointMeta</code></a> (<code>#/$defs/EndpointMeta</code>)</li>
+<li><strong>Other keywords:</strong> x-order=3</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedendpointbindingname">model_SharedEndpointBinding.name</h3>
+        <p><strong>Key:</strong> <code>name</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<code>name</code></p>
+<p>Name is logical binding name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Examples:</strong> <code>primary</code></li>
+<li><strong>Other keywords:</strong> x-order=14</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>model_SharedOptions</summary>
+        <div class="def-body" id="model_sharedoptions">
+<p>SharedOptions is reusable part expected to be merged into app schema.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 12</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="model_sharedoptionssharedendpoints">model_SharedOptions.SharedEndpoints</h3>
+        <p><strong>Key:</strong> <code>endpoints</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoints</code></p>
+<p>Endpoints are network endpoints shared across components.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#sharedendpoints"><code>SharedEndpoints</code></a> (<code>#/$defs/SharedEndpoints</code>)</li>
+<li><strong>Title:</strong> <code>Endpoint Options</code></li>
+<li><strong>Other keywords:</strong> x-order=1</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionslevel_by_subsystem">model_SharedOptions.level_by_subsystem</h3>
+        <p><strong>Key:</strong> <code>level_by_subsystem</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>level_by_subsystem</code></p>
+<p>LevelBySubsystem maps subsystem name to log level.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>string</code></li>
+<li><strong>Other keywords:</strong> x-order=4</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionsendpoint_groups">model_SharedOptions.endpoint_groups</h3>
+        <p><strong>Key:</strong> <code>endpoint_groups</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoint_groups</code></p>
+<p>EndpointGroups stores endpoint names grouped by key.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>array</code></li>
+<li><strong>Other keywords:</strong> x-order=8</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionssharedtls">model_SharedOptions.SharedTLS</h3>
+        <p><strong>Key:</strong> <code>tls</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>tls</code></p>
+<p>TLS is TLS configuration shared across components.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#sharedtls"><code>SharedTLS</code></a> (<code>#/$defs/SharedTLS</code>)</li>
+<li><strong>Title:</strong> <code>TLS Options</code></li>
+<li><strong>Other keywords:</strong> x-order=10</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionslabels">model_SharedOptions.labels</h3>
+        <p><strong>Key:</strong> <code>labels</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>labels</code></p>
+<p>Labels maps short numeric label IDs to values.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Pattern properties:</strong> 1</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+<li><strong>Other keywords:</strong> x-order=21</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionsfeature_matrix">model_SharedOptions.feature_matrix</h3>
+        <p><strong>Key:</strong> <code>feature_matrix</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>feature_matrix</code></p>
+<p>FeatureMatrix stores feature flags as nested map.</p>
+<p>**Matrix semantics**</p>
+<ul><li>First key: feature group name.</li><li>Second key: feature flag name.</li><li>Value: desired on/off state.</li></ul>
+<p>Example:</p>
+<ul><li><code>auth.mfa_required = true</code></li><li><code>billing.v2_invoice = false</code></li></ul>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>object</code></li>
+<li><strong>Other keywords:</strong> x-order=41</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionssharedendpointbinding">model_SharedOptions.SharedEndpointBinding</h3>
+        <p><strong>Key:</strong> <code>endpoint_binding</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoint_binding</code></p>
+<p>EndpointBinding links endpoint identity and metadata.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#sharedendpointbinding"><code>SharedEndpointBinding</code></a> (<code>#/$defs/SharedEndpointBinding</code>)</li>
+<li><strong>Other keywords:</strong> x-order=65</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionssharedtoggle">model_SharedOptions.SharedToggle</h3>
+        <p><strong>Key:</strong> <code>feature_toggle</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>feature_toggle</code></p>
+<p>FeatureToggle is a small reusable boolean options block.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#sharedtoggle"><code>SharedToggle</code></a> (<code>#/$defs/SharedToggle</code>)</li>
+<li><strong>Other keywords:</strong> x-order=66</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionssharedwindow">model_SharedOptions.SharedWindow</h3>
+        <p><strong>Key:</strong> <code>maintenance_window</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>maintenance_window</code></p>
+<p>MaintenanceWindow stores shared maintenance timing.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#sharedwindow"><code>SharedWindow</code></a> (<code>#/$defs/SharedWindow</code>)</li>
+<li><strong>Other keywords:</strong> x-order=67</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionsports">model_SharedOptions.ports</h3>
+        <p><strong>Key:</strong> <code>ports</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>ports</code></p>
+<p>Ports maps external service names to exposed port.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>integer</code></li>
+<li><strong>Other keywords:</strong> x-order=300</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionsendpoint_ports">model_SharedOptions.endpoint_ports</h3>
+        <p><strong>Key:</strong> <code>endpoint_ports</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoint_ports</code></p>
+<p>EndpointPorts stores ports by endpoint and protocol name.</p>
+<p>This field is useful when one logical endpoint exposes multiple listener protocols (for example <code>http</code>, <code>grpc</code>, <code>admin</code>). Consumers can resolve exact port by <code>(endpoint, protocol)</code> pair without hardcoding transport assumptions.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>object</code></li>
+<li><strong>Other keywords:</strong> x-order=305</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionstimeout_by_endpoint">model_SharedOptions.timeout_by_endpoint</h3>
+        <p><strong>Key:</strong> <code>timeout_by_endpoint</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>timeout_by_endpoint</code></p>
+<p>TimeoutByEndpoint stores timeout per endpoint name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>integer</code></li>
+<li><strong>Other keywords:</strong> x-order=700</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>model_SharedToggle</summary>
+        <div class="def-body" id="model_sharedtoggle">
+<p>SharedToggle is a tiny reusable on/off configuration block.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 1</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="model_sharedtoggleenabled">model_SharedToggle.enabled</h3>
+        <p><strong>Key:</strong> <code>enabled</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedtoggle"><code>base_toggle</code></a>.<code>enabled</code></p>
+<p>Enabled toggles one optional feature branch.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>true</code></li>
+<li><strong>Other keywords:</strong> x-order=42</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>model_SharedWindow</summary>
+        <div class="def-body" id="model_sharedwindow">
+<p>SharedWindow is a nested window with retry-aware timing.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 3</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="model_sharedwindowstart">model_SharedWindow.start</h3>
+        <p><strong>Key:</strong> <code>start</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedwindow"><code>base_window</code></a>.<code>start</code></p>
+<p>Start is start minute in a one-hour window.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=59</code></li>
+<li><strong>Other keywords:</strong> x-order=2</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedwindowretry_delay">model_SharedWindow.retry_delay</h3>
+        <p><strong>Key:</strong> <code>retry_delay</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedwindow"><code>base_window</code></a>.<code>retry_delay</code></p>
+<p>Retry uses existing base retry-like duration style.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Other keywords:</strong> x-order=17</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedwindowend">model_SharedWindow.end</h3>
+        <p><strong>Key:</strong> <code>end</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedwindow"><code>base_window</code></a>.<code>end</code></p>
+<p>End is end minute in a one-hour window.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=59</code></li>
+<li><strong>Other keywords:</strong> x-order=999</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <h2 id="example-yaml-document">Example yaml document</h2>
+      <pre><code id="example-code" class="lang-yaml"># Shared Options
+# Shared is shared options imported from base module.
+shared:
+  # Endpoint Options
+  # Endpoints are network endpoints shared across components.
+  endpoints:
+    # API Endpoint
+    # API is primary API base URL.
+    # Example: https://api.acme.local
+    api: https://api.acme.local
+    # Internal is internal service endpoint URL.
+    # Example: http://internal:8080
+    internal: http://internal:8080
+    # Metrics is optional metrics endpoint URL.
+    # Example: https://metrics.acme.local
+    metrics: https://metrics.acme.local
+    # Meta stores endpoint metadata by endpoint name.
+    meta: {}
+  # LevelBySubsystem maps subsystem name to log level.
+  level_by_subsystem: {}
+  # EndpointGroups stores endpoint names grouped by key.
+  endpoint_groups: {}
+  # TLS Options
+  # TLS is TLS configuration shared across components.
+  tls:
+    # TLS Enabled
+    # Enable TLS for outbound connections.
+    # Default: true
+    enabled: true
+    # CipherSuites lists explicitly allowed cipher suites.
+    cipher_suites:
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    # MinVersion is lowest allowed TLS protocol version.
+    # Default: 1.2
+    # Allowed values: 1.2, 1.3
+    min_version: &#34;1.2&#34;
+    # HandshakeTimeout sets TLS handshake timeout.
+    handshake_timeout: 0
+  # Labels maps short numeric label IDs to values.
+  labels: {}
+  # FeatureMatrix stores feature flags as nested map.
+  # **Matrix semantics**
+  #   - First key: feature group name.
+  #   - Second key: feature flag name.
+  #   - Value: desired on/off state.
+  # Example:
+  #   - `auth.mfa_required = true`
+  #   - `billing.v2_invoice = false`
+  feature_matrix: {}
+  # EndpointBinding links endpoint identity and metadata.
+  endpoint_binding:
+    # Meta reuses existing endpoint metadata schema.
+    meta:
+      # Weight is load balancing weight.
+      weight: 0
+      # Region is deployment region code.
+      # Example: eu-central-1
+      region: eu-central-1
+      # ReadOnly marks endpoint as read-only.
+      read_only: false
+    # Name is logical binding name.
+    # Example: primary
+    name: primary
+  # FeatureToggle is a small reusable boolean options block.
+  feature_toggle:
+    # Enabled toggles one optional feature branch.
+    # Default: true
+    enabled: true
+  # MaintenanceWindow stores shared maintenance timing.
+  maintenance_window:
+    # Start is start minute in a one-hour window.
+    start: 0
+    # Retry uses existing base retry-like duration style.
+    retry_delay: 0
+    # End is end minute in a one-hour window.
+    end: 0
+  # Ports maps external service names to exposed port.
+  ports: {}
+  # EndpointPorts stores ports by endpoint and protocol name.
+  # This field is useful when one logical endpoint exposes multiple listener
+  # protocols (for example `http`, `grpc`, `admin`). Consumers can resolve
+  # exact port by `(endpoint, protocol)` pair without hardcoding transport
+  # assumptions.
+  endpoint_ports: {}
+  # TimeoutByEndpoint stores timeout per endpoint name.
+  timeout_by_endpoint: {}
+# Service Name
+# Human-readable service name.
+# Default: demo-service
+name: demo-service
+# Retry Policy
+# Retry is transient retry strategy.
+retry:
+  # Backoff is delay between attempts in milliseconds.
+  # Default: 250
+  backoff_ms: 250
+  # MaxJitter is random jitter upper bound in milliseconds.
+  # Default: 100
+  max_jitter_ms: 100
+  # Retry Attempts
+  # Maximum number of retry attempts for one operation.
+  # Default: 3
+  attempts: 3
+# Schedule is fixed-size weekly maintenance windows.
+schedule:
+  - # End is end time (HH:MM).
+    end: &lt;string&gt;
+    # Start is start time (HH:MM).
+    start: &lt;string&gt;
+# EndpointTLSOverrides overrides TLS by endpoint name.
+endpoint_tls_overrides: {}
+# OptionalRetry allows temporary retry override.
+optional_retry:
+  # Backoff is delay between attempts in milliseconds.
+  # Default: 250
+  backoff_ms: 250
+  # MaxJitter is random jitter upper bound in milliseconds.
+  # Default: 100
+  max_jitter_ms: 100
+  # Retry Attempts
+  # Maximum number of retry attempts for one operation.
+  # Default: 3
+  attempts: 3
+# BaseToggle references tiny base reusable toggle structure.
+base_toggle:
+  # Enabled toggles one optional feature branch.
+  # Default: true
+  enabled: true
+# BaseBinding references base structure that nests existing EndpointMeta.
+base_binding:
+  # Meta reuses existing endpoint metadata schema.
+  meta:
+    # Weight is load balancing weight.
+    weight: 0
+    # Region is deployment region code.
+    # Example: eu-central-1
+    region: eu-central-1
+    # ReadOnly marks endpoint as read-only.
+    read_only: false
+  # Name is logical binding name.
+  # Example: primary
+  name: primary
+# DirectProbe is root-level direct reusable probe.
+direct_probe:
+  # Enabled toggles probe branch.
+  # Default: true
+  enabled: true
+  # Token is stable probe token value.
+  # Default: probe
+  token: probe
+# DeepPrimary is first deep branch with six levels.
+deep_primary:
+  # Probe is repeated reusable type on this level.
+  probe:
+    # Enabled toggles probe branch.
+    # Default: true
+    enabled: true
+    # Token is stable probe token value.
+    # Default: probe
+    token: probe
+  # Next points to next nested level.
+  next:
+    # Probe is repeated reusable type on this level.
+    probe:
+      # Enabled toggles probe branch.
+      # Default: true
+      enabled: true
+      # Token is stable probe token value.
+      # Default: probe
+      token: probe
+    # Next points to next nested level.
+    next:
+      # Next points to next nested level.
+      next:
+        # Next points to next nested level.
+        next:
+          # Next points to next nested level.
+          next:
+            # FinalValue is terminal deep value.
+            # Example: done
+            final_value: done
+            # Probe is repeated reusable type on this level.
+            probe:
+              # Enabled toggles probe branch.
+              # Default: true
+              enabled: true
+              # Token is stable probe token value.
+              # Default: probe
+              token: probe
+          # Probe is repeated reusable type on this level.
+          probe:
+            # Enabled toggles probe branch.
+            # Default: true
+            enabled: true
+            # Token is stable probe token value.
+            # Default: probe
+            token: probe
+        # Probe is repeated reusable type on this level.
+        probe:
+          # Enabled toggles probe branch.
+          # Default: true
+          enabled: true
+          # Token is stable probe token value.
+          # Default: probe
+          token: probe
+      # Probe is repeated reusable type on this level.
+      probe:
+        # Enabled toggles probe branch.
+        # Default: true
+        enabled: true
+        # Token is stable probe token value.
+        # Default: probe
+        token: probe
+# DeepSecondary is second deep branch using same deep chain.
+deep_secondary:
+  # Probe is repeated reusable type on this level.
+  probe:
+    # Enabled toggles probe branch.
+    # Default: true
+    enabled: true
+    # Token is stable probe token value.
+    # Default: probe
+    token: probe
+  # Next points to next nested level.
+  next:
+    # Probe is repeated reusable type on this level.
+    probe:
+      # Enabled toggles probe branch.
+      # Default: true
+      enabled: true
+      # Token is stable probe token value.
+      # Default: probe
+      token: probe
+    # Next points to next nested level.
+    next:
+      # Next points to next nested level.
+      next:
+        # Next points to next nested level.
+        next:
+          # Next points to next nested level.
+          next:
+            # FinalValue is terminal deep value.
+            # Example: done
+            final_value: done
+            # Probe is repeated reusable type on this level.
+            probe:
+              # Enabled toggles probe branch.
+              # Default: true
+              enabled: true
+              # Token is stable probe token value.
+              # Default: probe
+              token: probe
+          # Probe is repeated reusable type on this level.
+          probe:
+            # Enabled toggles probe branch.
+            # Default: true
+            enabled: true
+            # Token is stable probe token value.
+            # Default: probe
+            token: probe
+        # Probe is repeated reusable type on this level.
+        probe:
+          # Enabled toggles probe branch.
+          # Default: true
+          enabled: true
+          # Token is stable probe token value.
+          # Default: probe
+          token: probe
+      # Probe is repeated reusable type on this level.
+      probe:
+        # Enabled toggles probe branch.
+        # Default: true
+        enabled: true
+        # Token is stable probe token value.
+        # Default: probe
+        token: probe
+# DeepByEnv stores deep branches by environment key.
+deep_by_env: {}
+# Advanced groups optional advanced behavior flags.
+advanced:
+  # Metadata keeps arbitrary nested metadata.
+  metadata: {}
+  # Cooldown sets cooldown duration after errors.
+  cooldown: 0
+  # CircuitBreaker enables circuit breaker behavior.
+  circuit_breaker: false
+  # Tags adds free-form tags.
+  tags:
+    - &lt;string&gt;
+# Queues configures processing queues by queue name.
+queues: {}
+# NamedBuckets configures storage by logical bucket key.
+named_buckets: {}
+# BucketsByPriority maps numeric priority to bucket config.
+buckets_by_priority: {}
+# BucketGroups stores grouped bucket lists.
+bucket_groups: {}
+# QueueWorkersByZone stores workers count by zone.
+queue_workers_by_zone: {}
+# AlertTargets stores alerting destinations by level.
+alert_targets: {}
+# Mode is execution mode.
+# Default: safe
+# Allowed values: safe, fast
+mode: safe
+# MirrorEndpoints is optional explicit mirror list.
+mirror_endpoints:
+  - &lt;string&gt;
+# Extensions stores external integration raw values.
+# This section is intentionally flexible and can be used by external
+# delivery teams. The core service should not rely on these fields for
+# baseline startup decisions.
+# **Allowed usage patterns**
+#   - Feature toggles owned by integration team.
+#   - Provider-specific adapter hints.
+#   - Temporary migration markers.
+# **Do not store**
+#   - Secrets and tokens.
+#   - Large binary payloads.
+#   - Contract-breaking values that redefine core behavior.
+# &gt; Keep values small, explicit, and disposable.
+# Example:
+#   {
+#     &#34;x-provider&#34;: &#34;acme-cloud&#34;,
+#     &#34;x-migration-stage&#34;: &#34;phase-2&#34;,
+#     &#34;x-flags&#34;: [&#34;shadow-write&#34;, &#34;dry-run&#34;]
+#   }
+extensions: {}
+# BaseWindow references nested base timing structure.
+base_window:
+  # Start is start minute in a one-hour window.
+  start: 0
+  # Retry uses existing base retry-like duration style.
+  retry_delay: 0
+  # End is end minute in a one-hour window.
+  end: 0</code></pre>
+    </section>
+<footer>
+      Generated with
+      <a href="https://github.com/woozymasta/schemadoc">schemadoc</a>
+      version <code>dev</code>
+      commit <code>unknown</code>
+    </footer>
+<script>
+    (function () {
+      const code = document.getElementById("example-code");
+      if (!code) {
+        return;
+      }
+
+      const format = (code.className || "").replace("lang-", "").trim().toLowerCase();
+      const text = code.textContent || "";
+      if (text.trim() === "") {
+        return;
+      }
+
+      function escapeHTML(value) {
+        return value
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function appendToken(parts, kind, value) {
+        if (value === "") {
+          return;
+        }
+        if (!kind) {
+          parts.push(escapeHTML(value));
+          return;
+        }
+        parts.push('<span class="' + kind + '">' + escapeHTML(value) + '</span>');
+      }
+
+      function highlightJSON(input) {
+        const re = /"(?:\\.|[^"\\])*"(?=\s*:)|"(?:\\.|[^"\\])*"|true|false|null|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|[{}\[\]:,]/g;
+        let result = [];
+        let index = 0;
+        let match;
+        while ((match = re.exec(input)) !== null) {
+          appendToken(result, "", input.slice(index, match.index));
+          const token = match[0];
+          let kind = "tok-punc";
+          if (token[0] === '"') {
+            kind = token.endsWith(":") ? "tok-key" : "tok-string";
+          } else if (token === "true" || token === "false") {
+            kind = "tok-bool";
+          } else if (token === "null") {
+            kind = "tok-null";
+          } else if (token[0] === "-" || (token[0] >= "0" && token[0] <= "9")) {
+            kind = "tok-number";
+          }
+          appendToken(result, kind, token);
+          index = re.lastIndex;
+        }
+        appendToken(result, "", input.slice(index));
+        return result.join("");
+      }
+
+      function highlightYAML(input) {
+        const lines = input.split("\n");
+        let out = [];
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const commentIndex = line.indexOf("#");
+          let base = line;
+          let comment = "";
+          if (commentIndex >= 0) {
+            base = line.slice(0, commentIndex);
+            comment = line.slice(commentIndex);
+          }
+
+          const keyMatch = base.match(/^(\s*-\s+|\s*)([A-Za-z0-9_.-]+)(\s*:\s*)(.*)$/);
+          if (keyMatch) {
+            out.push(
+              escapeHTML(keyMatch[1]) +
+              '<span class="tok-key">' + escapeHTML(keyMatch[2]) + '</span>' +
+              '<span class="tok-punc">' + escapeHTML(keyMatch[3]) + '</span>' +
+              highlightYAMLValue(keyMatch[4])
+            );
+          } else {
+            out.push(highlightYAMLValue(base));
+          }
+
+          if (comment !== "") {
+            out[out.length - 1] += '<span class="tok-comment">' + escapeHTML(comment) + '</span>';
+          }
+        }
+        return out.join("\n");
+      }
+
+      function highlightYAMLValue(value) {
+        const trimmed = value.trim();
+        if (trimmed === "") {
+          return escapeHTML(value);
+        }
+
+        if (/^(true|false)$/i.test(trimmed)) {
+          return value.replace(trimmed, '<span class="tok-bool">' + escapeHTML(trimmed) + '</span>');
+        }
+        if (/^null$/i.test(trimmed)) {
+          return value.replace(trimmed, '<span class="tok-null">' + escapeHTML(trimmed) + '</span>');
+        }
+        if (/^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(trimmed)) {
+          return value.replace(trimmed, '<span class="tok-number">' + escapeHTML(trimmed) + '</span>');
+        }
+        if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+          return value.replace(trimmed, '<span class="tok-string">' + escapeHTML(trimmed) + '</span>');
+        }
+
+        const listScalarMatch = value.match(/^(\s*-\s+)(.+)$/);
+        if (listScalarMatch) {
+          return (
+            escapeHTML(listScalarMatch[1]) +
+            '<span class="tok-string">' + escapeHTML(listScalarMatch[2]) + '</span>'
+          );
+        }
+
+        const plainScalarMatch = value.match(/^(\s*)([^{}\[\],].*)$/);
+        if (plainScalarMatch) {
+          return (
+            escapeHTML(plainScalarMatch[1]) +
+            '<span class="tok-string">' + escapeHTML(plainScalarMatch[2]) + '</span>'
+          );
+        }
+
+        return escapeHTML(value);
+      }
+
+      if (format === "json") {
+        code.innerHTML = highlightJSON(text);
+        return;
+      }
+      if (format === "yaml") {
+        code.innerHTML = highlightYAML(text);
+      }
+    })();
+  </script>
+</main>
+</body>
+</html>
+<!-- Automatically generated file, do not modify! -->

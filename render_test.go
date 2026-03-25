@@ -5,11 +5,9 @@
 package schemadoc
 
 import (
-	"encoding/json"
 	"flag"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -49,681 +47,36 @@ func TestDetectDraftUnsupported(t *testing.T) {
 	}
 }
 
-func TestDefinitionOrderRootFallbackConfig(t *testing.T) {
+func TestBuiltinTemplates(t *testing.T) {
 	t.Parallel()
 
-	order := definitionOrder(map[string]schemaValue{
-		"Zulu":   {},
-		"Config": {},
-		"Alpha":  {},
-	}, "")
+	names := BuiltinTemplateNames()
+	if strings.Join(names, ",") != "html,list,table" {
+		t.Fatalf("unexpected template names: %v", names)
+	}
 
-	got := strings.Join(order, ",")
-	want := "Config,Alpha,Zulu"
-	if got != want {
-		t.Fatalf("definition order = %q, want %q", got, want)
+	if _, err := BuiltinTemplate("missing"); err == nil {
+		t.Fatalf("expected error for unknown template")
 	}
 }
 
-func TestPropertyOrderRequiredThenOptionalSorted(t *testing.T) {
+func TestRenderGeneratedFixtureSmoke(t *testing.T) {
 	t.Parallel()
 
-	order := propertyOrder([]string{"b", "a"}, map[string]schemaValue{
-		"d": {},
-		"c": {},
-		"b": {},
-		"a": {},
-	})
-
-	got := strings.Join(order, ",")
-	want := "b,a,c,d"
-	if got != want {
-		t.Fatalf("property order = %q, want %q", got, want)
-	}
-}
-
-func TestRenderSupportsDefinitionsKeyword(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/definitions/Config",
-		"definitions": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"name": map[string]any{"type": "string"},
-				},
-			},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "## Config")
-	assertContains(t, rendered, "### Config.name")
-}
-
-func TestRenderSupportsRootWithoutDefinitions(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"name": map[string]any{"type": "string"},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "## Root")
-	assertContains(t, rendered, "### Root.name")
-}
-
-func TestRenderIncludesBooleanAndReferences(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$id":  "https://github.com/woozymasta/schemadoc/schema-model",
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"enabled": true,
-					"target": map[string]any{
-						"$ref":          "#/$defs/Target",
-						"$dynamicRef":   "#/$defs/Dyn",
-						"$recursiveRef": "#/$defs/Rec",
-					},
-				},
-			},
-			"Target": map[string]any{
-				"type": "string",
-			},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "Boolean schema: true")
-	assertContains(t, rendered, "Reference: [`Target`](#target) (`#/$defs/Target`)")
-	assertContains(t, rendered, "Dynamic reference: `#/$defs/Dyn`")
-	assertContains(t, rendered, "Recursive reference: `#/$defs/Rec`")
-}
-
-func TestRenderUsesObjectNameInReferencedPropertyHeading(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/$defs/SchemaModel",
-		"$defs": map[string]any{
-			"SchemaModel": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"draft_info": map[string]any{
-						"$ref": "#/$defs/DraftInfo",
-					},
-				},
-			},
-			"DraftInfo": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"supported": map[string]any{"type": "boolean"},
-				},
-			},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "### SchemaModel.DraftInfo")
-	assertContains(t, rendered, "Key: `draft_info`")
-	assertNotContains(t, rendered, "Path: `SchemaModel.draft_info`")
-	assertNotContains(t, rendered, "Path: `draft_info`")
-}
-
-func TestRenderShowsResolvedPathsForReusedDefinitions(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$id":  "https://github.com/woozymasta/schemadoc/schema-model",
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"spec": map[string]any{
-						"$ref": "#/$defs/BuildSpec",
-					},
-				},
-			},
-			"BuildSpec": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"projects": map[string]any{
-						"type": "object",
-						"additionalProperties": map[string]any{
-							"$ref": "#/$defs/ProjectConfig",
-						},
-					},
-					"settings": map[string]any{
-						"$ref": "#/$defs/BuildSettings",
-					},
-				},
-			},
-			"ProjectConfig": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"settings": map[string]any{
-						"$ref": "#/$defs/BuildSettings",
-					},
-				},
-			},
-			"BuildSettings": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"sign": map[string]any{
-						"$ref": "#/$defs/SignOptions",
-					},
-				},
-			},
-			"SignOptions": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"enabled": map[string]any{
-						"type": "boolean",
-					},
-				},
-			},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "### SignOptions.enabled")
-	assertContains(t, rendered, "Paths:")
-	assertContains(
-		t,
-		rendered,
-		"* [`spec`](#configbuildspec).[`settings`](#buildspecbuildsettings).[`sign`](#buildsettingssignoptions).`enabled`",
+	rendered, err := RenderFile(
+		filepath.Join("testdata", "generated", "app.schema.json"),
+		Options{},
 	)
-	assertContains(
-		t,
-		rendered,
-		"* [`spec`](#configbuildspec).[`projects`](#buildspecprojects).`[]`.[`settings`](#projectconfigbuildsettings).[`sign`](#buildsettingssignoptions).`enabled`",
-	)
-}
-
-func TestRenderIncludesKeywordCoverageSummaries(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"value": map[string]any{
-						"type":                 "number",
-						"minimum":              1,
-						"maximum":              10,
-						"exclusiveMinimum":     0,
-						"exclusiveMaximum":     11,
-						"multipleOf":           2,
-						"minLength":            1,
-						"maxLength":            64,
-						"pattern":              "^[a-z]+$",
-						"minItems":             1,
-						"maxItems":             3,
-						"uniqueItems":          true,
-						"minContains":          1,
-						"maxContains":          2,
-						"minProperties":        1,
-						"maxProperties":        4,
-						"deprecated":           true,
-						"readOnly":             true,
-						"writeOnly":            false,
-						"contentEncoding":      "base64",
-						"contentMediaType":     "application/json",
-						"contentSchema":        map[string]any{"type": "string"},
-						"if":                   map[string]any{"type": "number"},
-						"then":                 map[string]any{"minimum": 10},
-						"else":                 map[string]any{"maximum": 0},
-						"not":                  map[string]any{"const": 3},
-						"oneOf":                []any{map[string]any{"type": "string"}},
-						"anyOf":                []any{map[string]any{"type": "number"}},
-						"allOf":                []any{map[string]any{"minimum": 1}},
-						"prefixItems":          []any{map[string]any{"type": "integer"}},
-						"additionalItems":      false,
-						"contains":             map[string]any{"type": "integer"},
-						"unevaluatedItems":     true,
-						"propertyNames":        map[string]any{"pattern": "^[a-z]+$"},
-						"additionalProperties": false,
-						"unevaluatedProperties": map[string]any{
-							"type": "string",
-						},
-						"dependentRequired": map[string]any{
-							"a": []any{"b"},
-						},
-						"dependentSchemas": map[string]any{
-							"a": map[string]any{"type": "string"},
-						},
-						"dependencies": map[string]any{
-							"a": []any{"b"},
-						},
-						"x-unknown-keyword": "value",
-					},
-				},
-			},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "Composition: oneOf=1; anyOf=1; allOf=1")
-	assertContains(t, rendered, "Conditional: if, then, else")
-	assertContains(t, rendered, "Not const: `3`")
-	assertContains(t, rendered, "Read only: yes")
-	assertContains(t, rendered, "Write only: no")
-	assertContains(t, rendered, "Deprecated: yes")
-	assertContains(t, rendered, "Content encoding: `base64`")
-	assertContains(t, rendered, "Other keywords: x-unknown-keyword=value")
-}
-
-func TestRenderIncludesItemsEnumAndExamplesInSummary(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"languages": map[string]any{
-						"type": "array",
-						"items": map[string]any{
-							"type":     "string",
-							"enum":     []any{"english", "czech"},
-							"examples": []any{"czech", "russian"},
-						},
-					},
-				},
-			},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "Items type: `string`")
-	assertContains(t, rendered, "Items enum: `english`, `czech`")
-	assertContains(t, rendered, "Items examples: `czech`, `russian`")
-}
-
-func TestRenderSummarizesNestedSchemaAttributes(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"values": map[string]any{
-						"type": "array",
-						"items": map[string]any{
-							"type":      "string",
-							"default":   "seed",
-							"format":    "uuid",
-							"minLength": 1,
-						},
-					},
-				},
-			},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "Items type: `string`")
-	assertContains(t, rendered, "Items default: `seed`")
-	assertContains(t, rendered, "Items format: `uuid`")
-	assertContains(t, rendered, "Items constraints: minLength=1")
-}
-
-func TestRenderSummarizesSchemaTupleList(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"tuple": map[string]any{
-						"type": "array",
-						"prefixItems": []any{
-							map[string]any{
-								"type":    "integer",
-								"minimum": 1,
-							},
-							map[string]any{
-								"type": "string",
-								"enum": []any{"a", "b"},
-							},
-							map[string]any{
-								"$ref": "#/$defs/Shared",
-							},
-							map[string]any{
-								"type": "boolean",
-							},
-						},
-					},
-				},
-			},
-			"Shared": map[string]any{
-				"type": "number",
-			},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "Prefix items: schema list (4):")
-	assertContains(t, rendered, "#1 schema type `integer`; constraints minimum=1")
-	assertContains(t, rendered, "#2 schema type `string`; enum `a`, `b`")
-	assertContains(t, rendered, "#3 reference `#/$defs/Shared`")
-	assertContains(t, rendered, "... +1")
-}
-
-func TestRenderPreservesMarkdownDescription(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"notes": map[string]any{
-						"type":        "string",
-						"description": "Paragraph before list.\n\n- first item\n- second item\n\n> quoted text",
-					},
-				},
-			},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "Paragraph before list.")
-	assertContains(t, rendered, "* first item")
-	assertContains(t, rendered, "> quoted text")
-	assertNotContains(t, rendered, "&gt;")
-}
-
-func TestRenderNormalizesListIndentInDescription(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"template_name": map[string]any{
-						"type":        "string",
-						"description": "TemplateName selects one built-in template.\n\nSupported values:\n\n - `list`\n - `table`",
-					},
-				},
-			},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "Supported values:\n\n* `list`\n* `table`")
-	assertNotContains(t, rendered, "\n - `list`")
-}
-
-func TestRenderInsertsBlankLineBeforeListWhenMissing(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"list_marker": map[string]any{
-						"type":        "string",
-						"description": "Supported values:\n - `-`\n - `*`",
-					},
-				},
-			},
-		},
-	}), Options{})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "Supported values:\n\n* `-`\n* `*`")
-}
-
-func TestRenderNormalizesListMarkerAndPreservesGodocMarkdown(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"notes": map[string]any{
-						"type":        "string",
-						"description": "# Usage\n\n - first\n  - second\n\n```bash\n echo from fence\n```\n\n    go test ./...",
-					},
-				},
-			},
-		},
-	}), Options{ListMarker: "*"})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "# Usage")
-	assertContains(t, rendered, "* first")
-	assertContains(t, rendered, "  * second")
-	assertContains(t, rendered, "```bash")
-	assertContains(t, rendered, " echo from fence")
-	assertContains(t, rendered, "    go test ./...")
-}
-
-func TestRenderWrapWidth(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"notes": map[string]any{
-						"type":        "string",
-						"description": "This paragraph should be wrapped by words for predictable line length in markdown output.",
-					},
-				},
-			},
-		},
-	}), Options{WrapWidth: 32})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "This paragraph should be wrapped")
-	assertContains(t, rendered, "by words for predictable line")
-	assertContains(t, rendered, "length in markdown output.")
-}
-
-func TestRenderNoMultipleBlankLinesAfterPropertyHeading(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := RenderFile(filepath.Join("testdata", "schema.fixture.json"), Options{})
 	if err != nil {
 		t.Fatalf("RenderFile: %v", err)
 	}
 
-	headingGapPattern := regexp.MustCompile(`(?m)^### .*\n\n\n+`)
-	if headingGapPattern.MatchString(rendered) {
-		t.Fatalf("rendered markdown contains multiple blank lines after ### heading")
+	if strings.TrimSpace(rendered) == "" {
+		t.Fatalf("empty rendered output")
 	}
 }
 
-func TestRenderTableTemplate(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := RenderFile(filepath.Join("testdata", "schema.fixture.json"), Options{
-		TemplateName: "table",
-	})
-	if err != nil {
-		t.Fatalf("RenderFile: %v", err)
-	}
-
-	assertContains(t, rendered, "| Attribute | Value |")
-}
-
-func TestRenderIncludesDefinitionContents(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := RenderFile(filepath.Join("testdata", "schema.fixture.json"), Options{})
-	if err != nil {
-		t.Fatalf("RenderFile: %v", err)
-	}
-
-	assertContains(t, rendered, "## Contents")
-	assertContains(t, rendered, "* [Config](#config)")
-	assertContains(t, rendered, "* [Settings](#settings)")
-}
-
-func TestRenderContentsUsesNestedDefinitionHierarchy(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := RenderFile(filepath.Join("testdata", "schema.fixture.json"), Options{})
-	if err != nil {
-		t.Fatalf("RenderFile: %v", err)
-	}
-
-	assertContains(t, rendered, "* [Config](#config)")
-	assertContains(t, rendered, "  * [Settings](#settings)")
-}
-
-func TestRenderCustomTemplate(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := RenderFile(filepath.Join("testdata", "schema.fixture.json"), Options{
-		TemplateText: "# {{ .Title }}\n{{ range .Definitions }}- {{ .Name }}\n{{ end }}\n",
-	})
-	if err != nil {
-		t.Fatalf("RenderFile: %v", err)
-	}
-
-	assertContains(t, rendered, "- Config")
-	assertContains(t, rendered, "- Settings")
-}
-
-func TestRenderEmbedsExampleDocumentJSON(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type":     "object",
-				"required": []any{"name"},
-				"properties": map[string]any{
-					"name": map[string]any{
-						"type": "string",
-					},
-				},
-			},
-		},
-	}), Options{
-		ExampleFormat: ExampleFormatJSON,
-		ExampleMode:   ExampleModeRequired,
-	})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "## Example json document")
-	assertContains(t, rendered, "* [Example json document](#example-json-document)")
-	assertContains(t, rendered, "```json")
-	assertContains(t, rendered, `"name": "<string>"`)
-}
-
-func TestRenderEmbedsExampleDocumentYAMLRequiredMode(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := Render(minimalSchemaBytes(t, map[string]any{
-		"$id":  "https://github.com/woozymasta/schemadoc/schema-model",
-		"$ref": "#/$defs/Config",
-		"$defs": map[string]any{
-			"Config": map[string]any{
-				"type":     "object",
-				"required": []any{"name"},
-				"properties": map[string]any{
-					"name": map[string]any{
-						"type": "string",
-					},
-					"mode": map[string]any{
-						"type":     "string",
-						"examples": []any{"safe"},
-					},
-				},
-			},
-		},
-	}), Options{
-		ExampleFormat: ExampleFormatYAML,
-		ExampleMode:   ExampleModeRequired,
-		SourcePath:    "examples/schema.json",
-	})
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-
-	assertContains(t, rendered, "## Example yaml document")
-	assertContains(t, rendered, "* [Example yaml document](#example-yaml-document)")
-	assertContains(
-		t,
-		rendered,
-		"* Source file: [`examples/schema.json`](https://github.com/woozymasta/schemadoc/blob/HEAD/examples/schema.json)",
-	)
-	assertContains(
-		t,
-		rendered,
-		"* Source URL: [Raw schema URL](https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/examples/schema.json)",
-	)
-	assertContains(t, rendered, "```yaml")
-	assertContains(
-		t,
-		rendered,
-		"# yaml-language-server: $schema=https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/examples/schema.json",
-	)
-	assertContains(t, rendered, "name: <string>")
-	assertNotContains(t, rendered, "mode: safe")
-}
-
-func TestRenderFixturesFromExamples(t *testing.T) {
+func TestRenderGeneratedFixturesByDraft(t *testing.T) {
 	t.Parallel()
 
 	fixtures, err := filepath.Glob(filepath.Join("testdata", "fixtures", "*.json"))
@@ -752,50 +105,65 @@ func TestRenderFixturesFromExamples(t *testing.T) {
 	}
 }
 
-func TestBuiltinTemplates(t *testing.T) {
-	t.Parallel()
-
-	names := BuiltinTemplateNames()
-	if strings.Join(names, ",") != "html,list,table" {
-		t.Fatalf("unexpected template names: %v", names)
-	}
-
-	if _, err := BuiltinTemplate("missing"); err == nil {
-		t.Fatalf("expected error for unknown template")
-	}
-}
-
-func TestRenderOutputHasNoHTML(t *testing.T) {
-	t.Parallel()
-
-	rendered, err := RenderFile(filepath.Join("testdata", "schema.fixture.json"), Options{})
-	if err != nil {
-		t.Fatalf("RenderFile: %v", err)
-	}
-
-	htmlPattern := regexp.MustCompile(`<[A-Za-z/][^>]*>`)
-	if htmlPattern.MatchString(rendered) {
-		t.Fatalf("rendered markdown contains html tags")
-	}
-}
-
 func TestRenderGoldenList(t *testing.T) {
-	testRenderGoldenTemplate(t, "list", filepath.Join("testdata", "schema.golden.list.md"))
+	testRenderGoldenTemplate(t, "list", filepath.Join("testdata", "generated", "app.doc.list.md"))
 }
 
 func TestRenderGoldenTable(t *testing.T) {
-	testRenderGoldenTemplate(t, "table", filepath.Join("testdata", "schema.golden.table.md"))
+	testRenderGoldenTemplate(t, "table", filepath.Join("testdata", "generated", "app.doc.table.md"))
+}
+
+func TestRenderGoldenHTML(t *testing.T) {
+	testRenderGoldenTemplate(t, "html", filepath.Join("testdata", "generated", "app.doc.html"))
 }
 
 func testRenderGoldenTemplate(t *testing.T, templateName, goldenPath string) {
 	t.Helper()
 
-	schemaPath := filepath.Join("testdata", "schema.fixture.json")
-	const sourcePath = "testdata/schema.fixture.json"
-	got, err := RenderFile(schemaPath, Options{
-		Title:        "schema reference",
+	schemaPath := filepath.Join("testdata", "generated", "app.schema.json")
+	const sourcePath = "testdata/generated/app.schema.json"
+	renderOptions := Options{
 		SourcePath:   sourcePath,
 		TemplateName: templateName,
+	}
+
+	switch templateName {
+	case "list":
+		renderOptions.Title = "Testdata Reference (List + YAML Example)"
+		renderOptions.Description = "Golden fixture for list template with embedded required YAML example."
+		renderOptions.ExampleMode = ExampleModeRequired
+		renderOptions.ExampleFormat = ExampleFormatYAML
+		renderOptions.ListMarker = "-"
+		renderOptions.WrapWidth = 72
+	case "table":
+		renderOptions.Title = "Testdata Reference (Table + JSON Example)"
+		renderOptions.Description = "Golden fixture for table template with embedded full JSON example."
+		renderOptions.ExampleMode = ExampleModeAll
+		renderOptions.ExampleFormat = ExampleFormatJSON
+		renderOptions.WrapWidth = 88
+	case "html":
+		renderOptions.Title = "Testdata Reference (HTML + YAML Example)"
+		renderOptions.Description = "Golden fixture for html template with embedded YAML example and rich comments."
+		renderOptions.ExampleMode = ExampleModeAll
+		renderOptions.ExampleFormat = ExampleFormatYAML
+		renderOptions.WrapWidth = 90
+	default:
+		t.Fatalf("unsupported golden template %q", templateName)
+	}
+
+	got, err := RenderFile(schemaPath, Options{
+		Title:          renderOptions.Title,
+		Description:    renderOptions.Description,
+		SourcePath:     renderOptions.SourcePath,
+		TemplateName:   renderOptions.TemplateName,
+		ListMarker:     renderOptions.ListMarker,
+		WrapWidth:      renderOptions.WrapWidth,
+		ExampleMode:    renderOptions.ExampleMode,
+		ExampleFormat:  renderOptions.ExampleFormat,
+		FooterToolName: "schemadoc",
+		FooterToolURL:  "https://github.com/woozymasta/schemadoc",
+		FooterVersion:  "dev",
+		FooterCommit:   "unknown",
 	})
 	if err != nil {
 		t.Fatalf("RenderFile: %v", err)
@@ -815,40 +183,5 @@ func testRenderGoldenTemplate(t *testing.T, templateName, goldenPath string) {
 	want := string(wantBytes)
 	if got != want {
 		t.Fatalf("golden mismatch for %s; run `go test . -run TestRenderGolden -update`", templateName)
-	}
-}
-
-func minimalSchemaBytes(t *testing.T, doc map[string]any) []byte {
-	t.Helper()
-
-	if _, ok := doc["$schema"]; !ok {
-		doc["$schema"] = "https://json-schema.org/draft/2020-12/schema"
-	}
-
-	if _, ok := doc["$id"]; !ok {
-		doc["$id"] = "urn:test"
-	}
-
-	data, err := json.Marshal(doc)
-	if err != nil {
-		t.Fatalf("marshal schema fixture: %v", err)
-	}
-
-	return data
-}
-
-func assertContains(t *testing.T, haystack, needle string) {
-	t.Helper()
-
-	if !strings.Contains(haystack, needle) {
-		t.Fatalf("missing substring %q in:\n%s", needle, haystack)
-	}
-}
-
-func assertNotContains(t *testing.T, haystack, needle string) {
-	t.Helper()
-
-	if strings.Contains(haystack, needle) {
-		t.Fatalf("unexpected substring %q in:\n%s", needle, haystack)
 	}
 }

@@ -1,0 +1,33 @@
+schema: cmd/schemadoc/doc/config.schema.json
+mod2schema:
+  module: .
+  package: github.com/woozymasta/schemadoc/cmd/schemadoc/buildcfg
+  type: Config
+schema2json:
+  mode: all
+  output: cmd/schemadoc/doc/config.example.json
+schema2yaml:
+  mode: all
+  output: cmd/schemadoc/doc/config.example.yaml
+schema2doc:
+  title: schemadoc build - config reference
+  template: list
+  mode: all
+  format: yaml
+  output: cmd/schemadoc/doc/config.list.md
+---
+schema: cmd/schemadoc/doc/config.schema.json
+schema2doc:
+  title: schemadoc build - config reference
+  template: table
+  mode: all
+  format: yaml
+  output: cmd/schemadoc/doc/config.table.md
+---
+schema: cmd/schemadoc/doc/config.schema.json
+schema2doc:
+  title: schemadoc build - config reference
+  template: html
+  mode: all
+  format: yaml
+  output: cmd/schemadoc/doc/config.html

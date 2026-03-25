@@ -9,10 +9,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"math"
+	"sort"
 	"strconv"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 const (
@@ -35,6 +37,27 @@ const (
 // ExampleFormat configures output format for generated example payload.
 type ExampleFormat string
 
+const (
+	// ExampleIndentTypeSpace configures space-based JSON indentation.
+	ExampleIndentTypeSpace = "space"
+	// ExampleIndentTypeTab configures tab-based JSON indentation.
+	ExampleIndentTypeTab = "tab"
+)
+
+// ExampleOptions configures example output formatting.
+type ExampleOptions struct {
+	// JSONIndentType sets JSON indentation type: space or tab. Default is space.
+	JSONIndentType string
+	// JSONIndent sets JSON indentation width. Default is 2.
+	JSONIndent int
+	// YAMLIndent sets YAML indentation width. Default is 2.
+	YAMLIndent int
+	// JSONMinify enables minified JSON output.
+	JSONMinify bool
+	// DisableExampleComments disables YAML title/description/default/example comments.
+	DisableExampleComments bool
+}
+
 // exampleScalarPlaceholders provides fallback values for scalar schema types.
 var exampleScalarPlaceholders = map[string]any{
 	"string":  "<string>",
@@ -53,12 +76,21 @@ type exampleBuilder struct {
 
 // GenerateExampleJSON returns generated example payload encoded as pretty JSON.
 func GenerateExampleJSON(schemaBytes []byte, mode ExampleMode) ([]byte, error) {
+	return GenerateExampleJSONWithOptions(schemaBytes, mode, ExampleOptions{})
+}
+
+// GenerateExampleJSONWithOptions returns generated example payload encoded as JSON.
+func GenerateExampleJSONWithOptions(
+	schemaBytes []byte,
+	mode ExampleMode,
+	options ExampleOptions,
+) ([]byte, error) {
 	value, err := generateExampleValue(schemaBytes, mode)
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := marshalExampleJSON(value)
+	data, err := marshalExampleJSON(value, normalizeExampleOptions(options))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrEncodeExampleJSON, err)
 	}
@@ -68,6 +100,15 @@ func GenerateExampleJSON(schemaBytes []byte, mode ExampleMode) ([]byte, error) {
 
 // GenerateExampleYAML returns generated example payload encoded as YAML.
 func GenerateExampleYAML(schemaBytes []byte, mode ExampleMode) ([]byte, error) {
+	return GenerateExampleYAMLWithOptions(schemaBytes, mode, ExampleOptions{})
+}
+
+// GenerateExampleYAMLWithOptions returns generated example payload encoded as YAML.
+func GenerateExampleYAMLWithOptions(
+	schemaBytes []byte,
+	mode ExampleMode,
+	options ExampleOptions,
+) ([]byte, error) {
 	mode, err := normalizeExampleMode(mode)
 	if err != nil {
 		return nil, err
@@ -90,9 +131,12 @@ func GenerateExampleYAML(schemaBytes []byte, mode ExampleMode) ([]byte, error) {
 		return nil, fmt.Errorf("%w: %w", ErrEncodeExampleYAML, err)
 	}
 
-	builder.annotateYAMLNode(rootNode, doc.Root)
+	normalizedOptions := normalizeExampleOptions(options)
+	if !normalizedOptions.DisableExampleComments {
+		builder.annotateYAMLNode(rootNode, doc.Root)
+	}
 
-	data, err := marshalExampleYAMLNode(rootNode)
+	data, err := marshalExampleYAMLNode(rootNode, normalizedOptions.YAMLIndent)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrEncodeExampleYAML, err)
 	}
@@ -102,6 +146,16 @@ func GenerateExampleYAML(schemaBytes []byte, mode ExampleMode) ([]byte, error) {
 
 // GenerateExample returns generated example payload encoded in selected format.
 func GenerateExample(schemaBytes []byte, mode ExampleMode, format ExampleFormat) ([]byte, error) {
+	return GenerateExampleWithOptions(schemaBytes, mode, format, ExampleOptions{})
+}
+
+// GenerateExampleWithOptions returns generated example payload encoded in selected format.
+func GenerateExampleWithOptions(
+	schemaBytes []byte,
+	mode ExampleMode,
+	format ExampleFormat,
+	options ExampleOptions,
+) ([]byte, error) {
 	format, err := normalizeExampleFormat(format)
 	if err != nil {
 		return nil, err
@@ -109,12 +163,34 @@ func GenerateExample(schemaBytes []byte, mode ExampleMode, format ExampleFormat)
 
 	switch format {
 	case ExampleFormatJSON:
-		return GenerateExampleJSON(schemaBytes, mode)
+		return GenerateExampleJSONWithOptions(schemaBytes, mode, options)
 	case ExampleFormatYAML:
-		return GenerateExampleYAML(schemaBytes, mode)
+		return GenerateExampleYAMLWithOptions(schemaBytes, mode, options)
 	default:
 		return nil, fmt.Errorf("%w %q", ErrUnknownExampleFormat, format)
 	}
+}
+
+// normalizeExampleOptions sets default formatting values for example generation.
+func normalizeExampleOptions(options ExampleOptions) ExampleOptions {
+	if options.JSONIndent < 1 {
+		options.JSONIndent = 2
+	}
+
+	switch strings.ToLower(strings.TrimSpace(options.JSONIndentType)) {
+	case "", ExampleIndentTypeSpace:
+		options.JSONIndentType = ExampleIndentTypeSpace
+	case ExampleIndentTypeTab:
+		options.JSONIndentType = ExampleIndentTypeTab
+	default:
+		options.JSONIndentType = ExampleIndentTypeSpace
+	}
+
+	if options.YAMLIndent < 1 {
+		options.YAMLIndent = 2
+	}
+
+	return options
 }
 
 // generateExampleValue parses schema and builds example value for selected mode.
@@ -671,12 +747,21 @@ func cloneJSONValue(value any) any {
 	}
 }
 
-// marshalExampleJSON serializes example payload as pretty JSON.
-func marshalExampleJSON(value any) ([]byte, error) {
+// marshalExampleJSON serializes example payload as JSON.
+func marshalExampleJSON(value any, options ExampleOptions) ([]byte, error) {
+	if options.JSONMinify {
+		return json.Marshal(value)
+	}
+
+	indent := strings.Repeat(" ", options.JSONIndent)
+	if options.JSONIndentType == ExampleIndentTypeTab {
+		indent = strings.Repeat("\t", options.JSONIndent)
+	}
+
 	var out bytes.Buffer
 	encoder := json.NewEncoder(&out)
 	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "  ")
+	encoder.SetIndent("", indent)
 
 	if err := encoder.Encode(value); err != nil {
 		return nil, err
@@ -686,7 +771,7 @@ func marshalExampleJSON(value any) ([]byte, error) {
 }
 
 // marshalExampleYAML serializes example payload as YAML.
-func marshalExampleYAMLNode(node *yaml.Node) ([]byte, error) {
+func marshalExampleYAMLNode(node *yaml.Node, indent int) ([]byte, error) {
 	document := &yaml.Node{
 		Kind:    yaml.DocumentNode,
 		Content: []*yaml.Node{node},
@@ -694,7 +779,7 @@ func marshalExampleYAMLNode(node *yaml.Node) ([]byte, error) {
 
 	var out bytes.Buffer
 	encoder := yaml.NewEncoder(&out)
-	encoder.SetIndent(2)
+	encoder.SetIndent(indent)
 
 	if err := encoder.Encode(document); err != nil {
 		return nil, err
@@ -717,6 +802,8 @@ func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaVa
 	switch node.Kind {
 	case yaml.MappingNode:
 		properties := nodeProperties(resolved)
+		reorderMappingNodeBySchema(node, properties)
+
 		for index := 0; index+1 < len(node.Content); index += 2 {
 			keyNode := node.Content[index]
 			valueNode := node.Content[index+1]
@@ -742,6 +829,100 @@ func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaVa
 			builder.annotateYAMLNode(item, itemSchema)
 		}
 	}
+}
+
+// reorderMappingNodeBySchema reorders mapping keys by schema `x-order`.
+func reorderMappingNodeBySchema(node *yaml.Node, properties map[string]schemaValue) {
+	if node == nil || node.Kind != yaml.MappingNode || len(node.Content) < 4 {
+		return
+	}
+
+	keyPositions := make(map[string]int, len(node.Content)/2)
+	keys := make([]string, 0, len(node.Content)/2)
+	for index := 0; index+1 < len(node.Content); index += 2 {
+		key := node.Content[index].Value
+		keyPositions[key] = index
+		keys = append(keys, key)
+	}
+
+	orderedKeys := sortKeysBySchemaOrder(keys, properties)
+	if len(orderedKeys) != len(keys) {
+		return
+	}
+
+	orderedContent := make([]*yaml.Node, 0, len(node.Content))
+	for _, key := range orderedKeys {
+		pos, ok := keyPositions[key]
+		if !ok || pos+1 >= len(node.Content) {
+			continue
+		}
+
+		orderedContent = append(orderedContent, node.Content[pos], node.Content[pos+1])
+	}
+
+	if len(orderedContent) != len(node.Content) {
+		return
+	}
+
+	node.Content = orderedContent
+}
+
+// sortKeysBySchemaOrder sorts keys by `x-order`, then by key name.
+func sortKeysBySchemaOrder(keys []string, properties map[string]schemaValue) []string {
+	type keyOrder struct {
+		key      string
+		order    float64
+		hasOrder bool
+	}
+
+	list := make([]keyOrder, 0, len(keys))
+	for _, key := range keys {
+		item := keyOrder{
+			key:      key,
+			order:    math.MaxFloat64,
+			hasOrder: false,
+		}
+
+		property, ok := properties[key]
+		if ok && property.Object != nil {
+			if value, ok := asNumber(property.Object["x-order"]); ok {
+				item.order = value
+				item.hasOrder = true
+			}
+		}
+
+		list = append(list, item)
+	}
+
+	sort.SliceStable(list, func(i, j int) bool {
+		left := list[i]
+		right := list[j]
+
+		if left.hasOrder && right.hasOrder {
+			if left.order == right.order {
+				return left.key < right.key
+			}
+
+			return left.order < right.order
+		}
+
+		if left.hasOrder {
+			return true
+		}
+
+		if right.hasOrder {
+			return false
+		}
+
+		return left.key < right.key
+	})
+
+	out := make([]string, 0, len(list))
+	for _, item := range list {
+		out = append(out, item.key)
+	}
+
+	return out
 }
 
 // resolveSchemaValue expands local references for schema node and preserves release callback.
@@ -792,20 +973,113 @@ func schemaKeyComment(schema schemaValue) string {
 	title := strings.TrimSpace(asString(schema.Object["title"]))
 	description := strings.TrimSpace(asString(schema.Object["description"]))
 
+	baseComment := ""
 	switch {
 	case title == "" && description == "":
-		return ""
+		baseComment = ""
 	case title == "":
-		return normalizeYAMLComment(description)
+		baseComment = normalizeYAMLComment(description)
 	case description == "":
-		return normalizeYAMLComment(title)
+		baseComment = normalizeYAMLComment(title)
 	default:
 		if title == description {
-			return normalizeYAMLComment(title)
+			baseComment = normalizeYAMLComment(title)
+			break
 		}
 
-		return normalizeYAMLComment(title + "\n" + description)
+		baseComment = normalizeYAMLComment(title + "\n" + description)
 	}
+
+	lines := make([]string, 0, 6)
+	if baseComment != "" {
+		lines = append(lines, strings.Split(baseComment, "\n")...)
+	}
+
+	if value, ok := schema.Object["default"]; ok {
+		commentValue := normalizeInlineCommentValue(value)
+		if commentValue != "" {
+			lines = append(lines, "Default: "+commentValue)
+		}
+	}
+
+	if value, ok := schemaExampleValue(schema.Object); ok {
+		commentValue := normalizeInlineCommentValue(value)
+		defaultValue := ""
+		if rawDefault, hasDefault := schema.Object["default"]; hasDefault {
+			defaultValue = normalizeInlineCommentValue(rawDefault)
+		}
+
+		if commentValue != "" && commentValue != defaultValue {
+			lines = append(lines, "Example: "+commentValue)
+		}
+	}
+
+	if values := schemaEnumValues(schema.Object); len(values) > 0 {
+		lines = append(lines, "Allowed values: "+strings.Join(values, ", "))
+	}
+
+	return normalizeYAMLComment(strings.Join(lines, "\n"))
+}
+
+// schemaExampleValue returns first explicit schema example value.
+func schemaExampleValue(object map[string]any) (any, bool) {
+	if value, ok := object["example"]; ok {
+		return value, true
+	}
+
+	values := asSlice(object["examples"])
+	if len(values) == 0 {
+		return nil, false
+	}
+
+	return values[0], true
+}
+
+// schemaEnumValues returns normalized one-line enum values for comments.
+func schemaEnumValues(object map[string]any) []string {
+	values := asSlice(object["enum"])
+	if len(values) == 0 {
+		return nil
+	}
+
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		commentValue := normalizeInlineCommentValue(value)
+		if commentValue == "" {
+			continue
+		}
+
+		out = append(out, commentValue)
+	}
+
+	return out
+}
+
+// normalizeInlineCommentValue converts value to one-line safe YAML comment text.
+func normalizeInlineCommentValue(value any) string {
+	if value == nil {
+		return "null"
+	}
+
+	switch typed := value.(type) {
+	case string:
+		return normalizeInlineWhitespace(typed)
+	default:
+		encoded, err := json.Marshal(typed)
+		if err == nil {
+			return normalizeInlineWhitespace(string(encoded))
+		}
+
+		return normalizeInlineWhitespace(fmt.Sprint(typed))
+	}
+}
+
+// normalizeInlineWhitespace removes line breaks and repeated whitespace.
+func normalizeInlineWhitespace(value string) string {
+	value = strings.ReplaceAll(value, "\r", " ")
+	value = strings.ReplaceAll(value, "\n", " ")
+	value = strings.Join(strings.Fields(value), " ")
+	return strings.TrimSpace(value)
 }
 
 // normalizeYAMLComment strips empty leading/trailing lines from comment body.
@@ -894,9 +1168,18 @@ func yamlNodeForValue(value any) (*yaml.Node, error) {
 		return yamlScalarNode("!!int", strconv.FormatUint(typed, 10)), nil
 
 	case float32:
-		return yamlScalarNode("!!float", strconv.FormatFloat(float64(typed), 'g', -1, 64)), nil
+		floatValue := float64(typed)
+		if floatValue == math.Trunc(floatValue) {
+			return yamlScalarNode("!!int", strconv.FormatInt(int64(floatValue), 10)), nil
+		}
+
+		return yamlScalarNode("!!float", strconv.FormatFloat(floatValue, 'g', -1, 64)), nil
 
 	case float64:
+		if typed == math.Trunc(typed) {
+			return yamlScalarNode("!!int", strconv.FormatInt(int64(typed), 10)), nil
+		}
+
 		return yamlScalarNode("!!float", strconv.FormatFloat(typed, 'g', -1, 64)), nil
 
 	case map[string]any:
