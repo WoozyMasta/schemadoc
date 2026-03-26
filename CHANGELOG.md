@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.5.1][] - 2026-03-27
+
+### Changed
+
+* `merge` command now uses `go.yaml.in/yaml/v3` directly for YAML processing.
+* Removed dependency on `github.com/invopop/yaml` and related transitives.
+
+[0.5.1]: https://github.com/WoozyMasta/schemadoc/compare/v0.5.0...v0.5.1
+
 ## [0.5.0][] - 2026-03-26
 
 ### Added
