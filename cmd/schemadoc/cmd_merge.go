@@ -13,8 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/invopop/yaml"
 	"github.com/woozymasta/schemadoc/merge"
+	"go.yaml.in/yaml/v3"
 )
 
 // Execute runs merge subcommand.
