@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	schemadocAssets "github.com/woozymasta/schemadoc/assets"
+	"github.com/woozymasta/schemadoc/templates"
 )
 
 const (
@@ -154,17 +154,17 @@ func applyExampleRenderView(schemaBytes []byte, opt Options, view *renderView) e
 
 // BuiltinTemplateNames returns all available built-in template names.
 func BuiltinTemplateNames() []string {
-	return schemadocAssets.TemplateNames()
+	return templates.TemplateNames()
 }
 
 // BuiltinTemplate returns one built-in template by name.
 func BuiltinTemplate(name string) (string, error) {
 	normalizedName := normalizeTemplateName(name)
-	if !schemadocAssets.HasTemplate(normalizedName) {
+	if !templates.HasTemplate(normalizedName) {
 		return "", fmt.Errorf("%w %q", ErrUnknownBuiltinTemplate, name)
 	}
 
-	data, err := schemadocAssets.ReadTemplate(normalizedName)
+	data, err := templates.ReadTemplate(normalizedName)
 	if err != nil {
 		return "", fmt.Errorf("%w: %w", ErrReadBuiltinTemplate, err)
 	}

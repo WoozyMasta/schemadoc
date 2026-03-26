@@ -2,8 +2,8 @@
 // Copyright (c) 2026 WoozyMasta
 // Source: github.com/woozymasta/schemadoc
 
-// Package assets stores embedded schemadoc templates.
-package assets
+// Package templates stores embedded schemadoc templates.
+package templates
 
 import (
 	"embed"
@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	//go:embed templates/*.gotmpl
+	//go:embed *.gotmpl
 	builtinTemplateFS embed.FS
 )
 
@@ -30,13 +30,13 @@ var templateNames = []string{TemplateHTML, TemplateList, TemplateTable}
 func templatePath(name string) (string, bool) {
 	switch strings.ToLower(strings.TrimSpace(name)) {
 	case TemplateList:
-		return "templates/list.md.gotmpl", true
+		return "list.md.gotmpl", true
 
 	case TemplateTable:
-		return "templates/table.md.gotmpl", true
+		return "table.md.gotmpl", true
 
 	case TemplateHTML:
-		return "templates/html.gotmpl", true
+		return "html.gotmpl", true
 
 	default:
 		return "", false
