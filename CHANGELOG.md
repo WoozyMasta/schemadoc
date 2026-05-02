@@ -16,9 +16,24 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Added
+
+* New CLI flag `--jsonschema-version` for `mod2schema` and `mod2doc` to
+  override helper dependency version for `github.com/invopop/jsonschema`.
+
 ### Changed
 
 * Replaced `github.com/jessevdk/go-flags` with `github.com/woozymasta/flags`
+* `modschema` helper now pins `github.com/invopop/jsonschema`
+  to `v0.14.0` by default.
+* Added default `go >= 1.24` precheck for `modschema` helper
+  when `--jsonschema-version` is not provided.
+
+### Fixed
+
+* `modschema` Go version precheck now probes local toolchain in isolated
+  context and no longer triggers toolchain auto-downloads from unrelated
+  project `go.mod` files.
 
 ## [0.5.1][] - 2026-03-27
 

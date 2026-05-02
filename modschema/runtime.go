@@ -14,17 +14,29 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
 const (
 	moduleSourceLocal  = "local"
 	moduleSourceRemote = "remote"
+
+	// schemaGeneratorJSONSchemaModule is helper dependency module path.
+	schemaGeneratorJSONSchemaModule = "github.com/invopop/jsonschema"
+	// schemaGeneratorJSONSchemaVersion is default pinned helper dependency.
+	schemaGeneratorJSONSchemaVersion = "v0.14.0"
+	// schemaGeneratorMinGoVersion is minimum Go version for pinned dependency.
+	schemaGeneratorMinGoVersion = "1.24"
 )
 
 // Generate reflects JSON Schema for selected module/package/type.
 func Generate(options Options) ([]byte, string, error) {
 	normalizedOptions := NormalizeOptions(options)
+	jsonSchemaVersion, hasCustomJSONSchemaVersion := resolveJSONSchemaVersion(
+		normalizedOptions.JSONSchemaVersion,
+	)
+
 	resolvedTarget, err := resolveTarget(normalizedOptions)
 	if err != nil {
 		return nil, "", err
@@ -32,6 +44,12 @@ func Generate(options Options) ([]byte, string, error) {
 
 	if err := ensureGoToolchain(); err != nil {
 		return nil, "", err
+	}
+
+	if !hasCustomJSONSchemaVersion {
+		if err := ensureGoVersionAtLeast(schemaGeneratorMinGoVersion); err != nil {
+			return nil, "", err
+		}
 	}
 
 	helperDir, err := createSchemaGeneratorDir()
@@ -42,7 +60,11 @@ func Generate(options Options) ([]byte, string, error) {
 		_ = os.RemoveAll(helperDir)
 	}()
 
-	if err := initSchemaGeneratorWorkspace(helperDir, resolvedTarget); err != nil {
+	if err := initSchemaGeneratorWorkspace(
+		helperDir,
+		resolvedTarget,
+		jsonSchemaVersion,
+	); err != nil {
 		return nil, "", err
 	}
 
@@ -151,8 +173,19 @@ func NormalizeOptions(options Options) Options {
 	if options.KeyNamer == "" {
 		options.KeyNamer = "none"
 	}
+	options.JSONSchemaVersion = strings.TrimSpace(options.JSONSchemaVersion)
 
 	return options
+}
+
+// resolveJSONSchemaVersion returns helper JSON Schema dependency version.
+func resolveJSONSchemaVersion(rawVersion string) (string, bool) {
+	version := strings.TrimSpace(rawVersion)
+	if version == "" {
+		return schemaGeneratorJSONSchemaVersion, false
+	}
+
+	return version, true
 }
 
 // resolvedTarget stores normalized execution info for local or remote module.
@@ -406,6 +439,7 @@ func writeSchemaGeneratorProgram(helperDir, source string) error {
 func initSchemaGeneratorWorkspace(
 	helperDir string,
 	target resolvedTarget,
+	jsonSchemaVersion string,
 ) error {
 	helperModulePath := buildHelperModulePath(
 		target.ModulePath,
@@ -438,6 +472,21 @@ func initSchemaGeneratorWorkspace(
 		); err != nil {
 			return err
 		}
+	}
+
+	requireJSONSchemaArg := "-require=" +
+		schemaGeneratorJSONSchemaModule + "@" + strings.TrimSpace(jsonSchemaVersion)
+	if err := runGoCommand(
+		helperDir,
+		"mod",
+		"edit",
+		requireJSONSchemaArg,
+	); err != nil {
+		return fmt.Errorf(
+			"require helper module %q: %w",
+			schemaGeneratorJSONSchemaModule,
+			err,
+		)
 	}
 
 	return nil
@@ -836,6 +885,128 @@ func ensureGoToolchain() error {
 	}
 
 	return nil
+}
+
+// ensureGoVersionAtLeast validates active Go version for helper dependency.
+func ensureGoVersionAtLeast(minVersion string) error {
+	currentVersion, err := currentGoToolchainVersion()
+	if err != nil {
+		return err
+	}
+
+	currentMajor, currentMinor, err := parseGoMajorMinor(currentVersion)
+	if err != nil {
+		return fmt.Errorf("read go toolchain version: %w", err)
+	}
+
+	minMajor, minMinor, err := parseGoMajorMinor(minVersion)
+	if err != nil {
+		return fmt.Errorf("invalid minimum go version %q: %w", minVersion, err)
+	}
+
+	if currentMajor > minMajor || currentMajor == minMajor && currentMinor >= minMinor {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"go toolchain %q is too old for %s@%s; require go >= %s or pass --jsonschema-version to override helper dependency version",
+		currentVersion,
+		schemaGeneratorJSONSchemaModule,
+		schemaGeneratorJSONSchemaVersion,
+		minVersion,
+	)
+}
+
+// currentGoToolchainVersion returns active local Go toolchain version string.
+func currentGoToolchainVersion() (string, error) {
+	tmpDir, err := os.MkdirTemp("", "schemadoc-go-version-")
+	if err != nil {
+		return "", fmt.Errorf("create temporary dir for go version probe: %w", err)
+	}
+	defer func() {
+		_ = os.RemoveAll(tmpDir)
+	}()
+
+	command := exec.Command("go", "env", "GOVERSION")
+	command.Dir = tmpDir
+
+	// Force local toolchain to avoid auto-switch by unrelated go.mod/go.work.
+	command.Env = append(os.Environ(), "GOTOOLCHAIN=local")
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+
+	if err := command.Run(); err != nil {
+		detail := strings.TrimSpace(stderr.String())
+		if detail == "" {
+			detail = err.Error()
+		}
+
+		return "", fmt.Errorf("read go env GOVERSION: %s", detail)
+	}
+
+	version := strings.TrimSpace(stdout.String())
+	if version == "" {
+		return "", errors.New("read go env GOVERSION: empty output")
+	}
+
+	return version, nil
+}
+
+// parseGoMajorMinor extracts numeric major/minor from Go version string.
+func parseGoMajorMinor(version string) (int, int, error) {
+	trimmed := strings.TrimSpace(version)
+	trimmed = strings.TrimPrefix(trimmed, "go")
+	if trimmed == "" {
+		return 0, 0, errors.New("empty version string")
+	}
+
+	parts := strings.Split(trimmed, ".")
+	if len(parts) < 2 {
+		return 0, 0, fmt.Errorf("unsupported version format %q", version)
+	}
+
+	major, err := parseLeadingInt(parts[0])
+	if err != nil {
+		return 0, 0, fmt.Errorf("parse major version from %q: %w", version, err)
+	}
+
+	minor, err := parseLeadingInt(parts[1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("parse minor version from %q: %w", version, err)
+	}
+
+	return major, minor, nil
+}
+
+// parseLeadingInt returns leading decimal integer from input segment.
+func parseLeadingInt(value string) (int, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, errors.New("empty numeric segment")
+	}
+
+	end := 0
+	for end < len(value) {
+		if value[end] < '0' || value[end] > '9' {
+			break
+		}
+
+		end++
+	}
+
+	if end == 0 {
+		return 0, fmt.Errorf("no leading digits in %q", value)
+	}
+
+	parsed, err := strconv.Atoi(value[:end])
+	if err != nil {
+		return 0, err
+	}
+
+	return parsed, nil
 }
 
 // runGoCommand executes one Go command in selected directory.

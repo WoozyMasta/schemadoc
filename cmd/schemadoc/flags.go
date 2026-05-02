@@ -19,9 +19,10 @@ type cliOptions struct {
 
 // moduleReflectFlags groups common module reflection flags.
 type moduleReflectFlags struct {
-	PackagePath string `short:"p" long:"package" description:"Go package import path where type is declared (optional; default: module path)"`
-	TypeName    string `short:"y" long:"type" description:"Go type name (for example: Config)" required:"yes"`
-	KeyNamer    string `long:"key-namer" description:"Field name style for fields without explicit json tags" choices:"none;snake;kebab;lower" default:"none"`
+	PackagePath       string `short:"p" long:"package" description:"Go package import path where type is declared (optional; default: module path)"`
+	TypeName          string `short:"y" long:"type" description:"Go type name (for example: Config)" required:"yes"`
+	KeyNamer          string `long:"key-namer" description:"Field name style for fields without explicit json tags" choices:"none;snake;kebab;lower" default:"none"`
+	JSONSchemaVersion string `long:"jsonschema-version" description:"Override github.com/invopop/jsonschema version for helper module (for example: v0.14.0)"`
 }
 
 // markdownRenderFlags groups markdown rendering flags.

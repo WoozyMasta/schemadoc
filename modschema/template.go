@@ -25,10 +25,11 @@ var (
 
 // Options configures module-to-schema generation.
 type Options struct {
-	Module   string
-	Package  string
-	Type     string
-	KeyNamer string
+	Module            string
+	Package           string
+	Type              string
+	KeyNamer          string
+	JSONSchemaVersion string
 }
 
 // templateData provides values for helper source template.

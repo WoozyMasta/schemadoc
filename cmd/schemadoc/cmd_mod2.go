@@ -11,10 +11,11 @@ import (
 // Execute runs mod2schema subcommand.
 func (command *moduleToSchemaCommand) Execute(_ []string) error {
 	return command.runner.runModuleToSchema(modschema.Options{
-		Module:   command.Args.Module,
-		Type:     command.ModuleFlags.TypeName,
-		Package:  command.ModuleFlags.PackagePath,
-		KeyNamer: command.ModuleFlags.KeyNamer,
+		Module:            command.Args.Module,
+		Type:              command.ModuleFlags.TypeName,
+		Package:           command.ModuleFlags.PackagePath,
+		KeyNamer:          command.ModuleFlags.KeyNamer,
+		JSONSchemaVersion: command.ModuleFlags.JSONSchemaVersion,
 	}, command.Args.Output, jsonOutputOptions{
 		Indent:     command.JSONFlags.Indent,
 		IndentType: command.JSONFlags.IndentType,
@@ -26,10 +27,11 @@ func (command *moduleToSchemaCommand) Execute(_ []string) error {
 func (command *moduleToMarkdownCommand) Execute(_ []string) error {
 	return command.runner.runModuleToMarkdown(
 		modschema.Options{
-			Module:   command.Args.Module,
-			Type:     command.ModuleFlags.TypeName,
-			Package:  command.ModuleFlags.PackagePath,
-			KeyNamer: command.ModuleFlags.KeyNamer,
+			Module:            command.Args.Module,
+			Type:              command.ModuleFlags.TypeName,
+			Package:           command.ModuleFlags.PackagePath,
+			KeyNamer:          command.ModuleFlags.KeyNamer,
+			JSONSchemaVersion: command.ModuleFlags.JSONSchemaVersion,
 		},
 		markdownRenderRequest{
 			TemplateName:      command.TemplateFlags.TemplateName,

@@ -27,6 +27,92 @@ func TestNormalizeOptions_Defaults(t *testing.T) {
 	}
 }
 
+func TestResolveJSONSchemaVersion(t *testing.T) {
+	t.Parallel()
+
+	version, hasCustom := resolveJSONSchemaVersion("")
+	if hasCustom {
+		t.Fatalf("hasCustom=%t, want false", hasCustom)
+	}
+
+	if version != schemaGeneratorJSONSchemaVersion {
+		t.Fatalf(
+			"version=%q, want %q",
+			version,
+			schemaGeneratorJSONSchemaVersion,
+		)
+	}
+
+	version, hasCustom = resolveJSONSchemaVersion("v9.9.9")
+	if !hasCustom {
+		t.Fatalf("hasCustom=%t, want true", hasCustom)
+	}
+
+	if version != "v9.9.9" {
+		t.Fatalf("version=%q, want %q", version, "v9.9.9")
+	}
+}
+
+func TestParseGoMajorMinor(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		input     string
+		wantMajor int
+		wantMinor int
+		wantErr   bool
+	}{
+		{
+			name:      "release patch",
+			input:     "go1.26.1",
+			wantMajor: 1,
+			wantMinor: 26,
+		},
+		{
+			name:      "release candidate",
+			input:     "go1.24rc1",
+			wantMajor: 1,
+			wantMinor: 24,
+		},
+		{
+			name:    "invalid format",
+			input:   "devel",
+			wantErr: true,
+		},
+	}
+
+	for index := range testCases {
+		testCase := testCases[index]
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+			major, minor, err := parseGoMajorMinor(testCase.input)
+			if testCase.wantErr {
+				if err == nil {
+					t.Fatalf("parseGoMajorMinor(%q) error = nil, want error", testCase.input)
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("parseGoMajorMinor(%q) error = %v", testCase.input, err)
+			}
+
+			if major != testCase.wantMajor || minor != testCase.wantMinor {
+				t.Fatalf(
+					"parseGoMajorMinor(%q) = (%d, %d), want (%d, %d)",
+					testCase.input,
+					major,
+					minor,
+					testCase.wantMajor,
+					testCase.wantMinor,
+				)
+			}
+		})
+	}
+}
+
 func TestResolveTarget_Local(t *testing.T) {
 	t.Parallel()
 
