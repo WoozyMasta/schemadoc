@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.5.3][] - 2026-05-02
+
+### Changed
+
+* Updated `github.com/woozymasta/flags`
+
+[0.5.3]: https://github.com/WoozyMasta/schemadoc/compare/v0.5.2...v0.5.3
+
 ## [0.5.2][] - 2026-05-02
 
 ### Added
