@@ -19,10 +19,14 @@ The CLI provides these commands:
 * `build` executes multi-stage pipeline from YAML config documents.
 * `template` prints built-in documentation templates for customization.
 * `config` prints an example build config generated from config schema.
-* `version` prints CLI build/version metadata.
+* `help` prints help for commands and flags.
+* `completion` prints shell completion script (`bash`, `zsh`, `pwsh`).
+* `docs` prints generated CLI docs (`man`, `md`, `html`).
+* `version` and `--version` print CLI build/version metadata.
 
 Use `schemadoc -h` and `schemadoc <command> -h`
 for exact arguments and flags.
+Use `schemadoc --version` for short version output.
 
 ## Quick Usage
 

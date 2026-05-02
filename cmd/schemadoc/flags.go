@@ -6,7 +6,6 @@ package main
 
 // cliOptions describes schemadoc CLI flags and subcommands.
 type cliOptions struct {
-	Version          versionCommand          `command:"version" description:"Print version information"`
 	Config           configCommand           `command:"config" description:"Generate config example"`
 	Template         templateCommand         `command:"template" description:"Print built-in markdown template"`
 	SchemaMerge      schemaMergeCommand      `command:"merge" description:"Merge JSON Schema documents"`
@@ -22,7 +21,7 @@ type cliOptions struct {
 type moduleReflectFlags struct {
 	PackagePath string `short:"p" long:"package" description:"Go package import path where type is declared (optional; default: module path)"`
 	TypeName    string `short:"y" long:"type" description:"Go type name (for example: Config)" required:"yes"`
-	KeyNamer    string `long:"key-namer" description:"Field name style for fields without explicit json tags" choice:"none" choice:"snake" choice:"kebab" choice:"lower" default:"none"`
+	KeyNamer    string `long:"key-namer" description:"Field name style for fields without explicit json tags" choices:"none;snake;kebab;lower" default:"none"`
 }
 
 // markdownRenderFlags groups markdown rendering flags.
@@ -30,38 +29,38 @@ type markdownRenderFlags struct {
 	TemplatePath      string `short:"f" long:"template-file" description:"Path to custom markdown template (.gotmpl)"`
 	Title             string `short:"T" long:"title" description:"Markdown document title" default:"schema reference"`
 	Description       string `short:"d" long:"description" description:"Optional top-level document description under title"`
-	ListMarker        string `short:"l" long:"list-marker" description:"List marker used in generated markdown lists" choice:"-" choice:"*" default:"*"`
-	WrapWidth         int    `short:"w" long:"wrap" description:"Wrap width for plain text descriptions" default:"80"`
+	ListMarker        string `short:"l" long:"list-marker" description:"List marker used in generated markdown lists" choices:"-;*" default:"*"`
+	WrapWidth         int    `short:"w" long:"wrap" description:"Wrap width for plain text descriptions" default:"80" validate-min:"1"`
 	HideExtraKeywords bool   `long:"hide-extra-keywords" description:"Hide non-standard schema keywords in Attributes"`
 }
 
 // templateSelectFlags groups built-in template selection flags.
 type templateSelectFlags struct {
-	TemplateName string `short:"t" long:"template" description:"Built-in template style" choice:"list" choice:"table" choice:"html" default:"list"`
+	TemplateName string `short:"t" long:"template" description:"Built-in template style" choices:"list;table;html" default:"list"`
 }
 
 // exampleModeFlags groups example mode flags.
 type exampleModeFlags struct {
-	Mode string `short:"m" long:"mode" description:"Example generation mode" choice:"all" choice:"required" default:"all"`
+	Mode string `short:"m" long:"mode" description:"Example generation mode" choices:"all;required" default:"all"`
 }
 
 // jsonFormatFlags groups JSON output formatting flags.
 type jsonFormatFlags struct {
-	IndentType string `long:"json-indent-type" description:"JSON indentation type" choice:"space" choice:"tab" default:"space"`
-	Indent     int    `long:"json-indent" description:"JSON indentation width" default:"2"`
+	IndentType string `long:"json-indent-type" description:"JSON indentation type" choices:"space;tab" default:"space"`
+	Indent     int    `long:"json-indent" description:"JSON indentation width" default:"2" validate-min:"1"`
 	Minify     bool   `long:"json-minify" description:"Write compact minified JSON output"`
 }
 
 // yamlExampleFlags groups YAML example output flags.
 type yamlExampleFlags struct {
-	Indent                 int  `long:"yaml-indent" description:"YAML indentation width" default:"2"`
+	Indent                 int  `long:"yaml-indent" description:"YAML indentation width" default:"2" validate-min:"1"`
 	DisableExampleComments bool `long:"disable-example-comments" description:"Disable YAML key comments from schema metadata"`
 }
 
 // markdownExampleFlags groups embedded example mode and format flags.
 type markdownExampleFlags struct {
-	Mode   string `short:"m" long:"mode" description:"Embedded example mode for markdown output" choice:"all" choice:"required" default:"all"`
-	Format string `short:"F" long:"format" description:"Embedded example format (omit to disable embedding)" choice:"json" choice:"yaml"`
+	Mode   string `short:"m" long:"mode" description:"Embedded example mode for markdown output" choices:"all;required" default:"all"`
+	Format string `short:"F" long:"format" description:"Embedded example format (omit to disable embedding)" choices:"json;yaml"`
 }
 
 // moduleToMarkdownCommand wraps module-to-schema and schema-to-markdown flows.
@@ -139,7 +138,7 @@ type configCommand struct {
 		Output string `positional-arg-name:"output" description:"Output file path (optional; stdout when omitted)"`
 	} `positional-args:"yes"`
 
-	Mode string `short:"m" long:"mode" description:"Example generation mode" choice:"all" choice:"required" default:"all"`
+	Mode string `short:"m" long:"mode" description:"Example generation mode" choices:"all;required" default:"all"`
 }
 
 // templateCommand exports built-in markdown template.
@@ -172,9 +171,9 @@ type schemaMergeFlags struct {
 	Merge                schemaMergeMap `long:"merge" description:"Deep-merge object node: <target-pointer>=<source-file[#/pointer]>" value-name:"<target=source>"`
 	MergeDefs            schemaMergeMap `long:"merge-defs" description:"Merge source object fields into target object: <target-pointer>=<source-file[#/pointer]>" value-name:"<target=source>"`
 	ConfigPath           string         `long:"config" description:"Merge config file path (yaml/json)"`
-	Format               string         `short:"f" long:"format" description:"Output format (inferred from output extension when omitted)" choice:"json" choice:"yaml"`
-	ArrayOp              string         `long:"array-op" description:"Array mode for CLI map operations" choice:"replace" choice:"append" choice:"append-unique"`
-	ObjectOp             string         `long:"object-op" description:"Object mode for CLI map operations" choice:"merge" choice:"replace"`
+	Format               string         `short:"f" long:"format" description:"Output format (inferred from output extension when omitted)" choices:"json;yaml"`
+	ArrayOp              string         `long:"array-op" description:"Array mode for CLI map operations" choices:"replace;append;append-unique"`
+	ObjectOp             string         `long:"object-op" description:"Object mode for CLI map operations" choices:"merge;replace"`
 	Check                bool           `short:"c" long:"check" description:"Check rendered output against output file and exit non-zero on diff"`
 	InPlace              bool           `long:"inplace" description:"Write result to source schema path when output path is not provided"`
 	PruneUnreachableDefs bool           `long:"prune-unreachable-defs" description:"Remove unreachable entries from $defs after merge"`
@@ -187,8 +186,5 @@ type buildCommand struct {
 		ConfigPath string `positional-arg-name:"config" description:"Config path (optional; default: ./schemadoc.build.yaml)"`
 	} `positional-args:"yes"`
 
-	ConfigIndex int `short:"i" long:"index" description:"Config document index: 0 runs all documents, 1..N runs one document" default:"0"`
+	ConfigIndex int `short:"i" long:"index" description:"Config document index: 0 runs all documents, 1..N runs one document" default:"0" validate-min:"0"`
 }
-
-// versionCommand prints version information.
-type versionCommand struct{}

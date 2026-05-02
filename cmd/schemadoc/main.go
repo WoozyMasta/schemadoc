@@ -11,8 +11,17 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
-	"github.com/jessevdk/go-flags"
+	"github.com/woozymasta/flags"
+)
+
+var (
+	Version    = "dev"
+	Commit     = "unknown"
+	BuildTime  time.Time
+	URL        = "https://github.com/woozymasta/schemadoc"
+	_buildTime string
 )
 
 // cliRunner executes CLI operations with custom IO streams.
@@ -21,6 +30,19 @@ type cliRunner struct {
 	stdout      io.Writer
 	stderr      io.Writer
 	programName string
+}
+
+func init() {
+	if _buildTime == "" {
+		return
+	}
+
+	parsed, err := time.Parse(time.RFC3339, _buildTime)
+	if err != nil {
+		return
+	}
+
+	BuildTime = parsed.UTC()
 }
 
 func main() {
@@ -53,11 +75,42 @@ func runWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		Build:            buildCommand{runner: &runner},
 	}
 
-	parser := flags.NewParser(options, flags.HelpFlag)
+	parser := flags.NewParser(
+		options,
+		flags.HelpFlag|
+			flags.HelpCommand|
+			flags.VersionCommand|
+			flags.CompletionCommand|
+			flags.DocsCommand|
+			flags.KeepDescriptionWhitespace|
+			flags.PrintHelpOnInputErrors|
+			flags.ShowRepeatableInHelp|
+			flags.DetectShellFlagStyle|
+			flags.DetectShellEnvStyle,
+	)
 	parser.Name = runner.programName
 	parser.LongDescription = "schemadoc helps you build JSON Schema, docs, and example configs." +
 		"You can generate docs from schema files, reflect Go types into schema," +
 		"merge schema fragments, and run multi-step jobs from config."
+
+	fields := flags.VersionFieldsCore
+	if BuildTime.IsZero() {
+		fields &^= flags.VersionFieldBuilt
+	}
+
+	parser.SetVersionFields(fields)
+	parser.SetVersionInfo(flags.VersionInfo{
+		File:         os.Args[0],
+		Version:      Version,
+		Revision:     Commit,
+		RevisionTime: BuildTime,
+		URL:          URL,
+	})
+
+	if err := parser.EnsureBuiltinCommands(); err != nil {
+		writeCLIError(runner.stderr, err)
+		return 1
+	}
 
 	applyCommandLongDescriptions(parser, runner.programName)
 
@@ -68,7 +121,7 @@ func runWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 
 	var flagErr *flags.Error
 	if errors.As(err, &flagErr) {
-		if flagErr.Type == flags.ErrHelp {
+		if flagErr.Type == flags.ErrHelp || flagErr.Type == flags.ErrVersion {
 			writeCLIError(runner.stdout, err)
 			return 0
 		}

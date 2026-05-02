@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD024 -->
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -12,6 +13,12 @@ and this project adheres to [Semantic Versioning][].
 ### Changed
 ### Removed
 -->
+
+## Unreleased
+
+### Changed
+
+* Replaced `github.com/jessevdk/go-flags` with `github.com/woozymasta/flags`
 
 ## [0.5.1][] - 2026-03-27
 
