@@ -24,6 +24,8 @@ The CLI provides these commands:
 * `docs` prints generated CLI docs (`man`, `md`, `html`).
 * `version` and `--version` print CLI build/version metadata.
 
+You can read about all the commands and options in detail in the [CLI docs][]
+
 Use `schemadoc -h` and `schemadoc <command> -h`
 for exact arguments and flags.
 Use `schemadoc --version` for short version output.
@@ -122,6 +124,7 @@ Generated config docs and examples:
 
 <!-- links -->
 
+[CLI docs]: CLI.md
 [config.html]: config.html
 [preview]: https://html-preview.github.io/?url=https://github.com/WoozyMasta/schemadoc/blob/master/cmd/schemadoc/doc/config.html
 [config.example.json]: config.example.json

@@ -45,7 +45,7 @@ endif
 .PHONY: test test-race test-short bench bench-fast bench-reset verify vet check ci \
 	fmt fmt-check lint lint-fix align align-fix tidy tidy-check download deps-update \
 	tools tools-ci tool-golangci-lint tool-betteralign tool-govulncheck tool-benchstat tool-cyclonedx \
-	release-notes example sbom sbom-app sbom-bin
+	release-notes example sbom sbom-app sbom-bin cli-doc
 
 check: verify vulncheck tidy fmt vet lint-fix align-fix test example
 ci: download tools-ci verify vulncheck tidy-check fmt-check vet lint align test
@@ -209,6 +209,11 @@ _sbom_bin_one:
 	fi
 
 example:
-	@mkdir -p cmd/schemadoc/doc
-	$(GO) run ./cmd/schemadoc build schemadoc.build.yaml
-	$(GO) run ./cmd/schemadoc build testdata/fixtures.build.yaml
+	@mkdir -p $(PKG)/doc
+	$(GO) run $(PKG) build schemadoc.build.yaml
+	$(GO) run $(PKG) build testdata/fixtures.build.yaml
+
+cli-doc:
+	$(OUTPUT_DIR)/$(BINARY)$(NATIVE_EXTENSION) docs md \
+	--template=table --toc --trim-descriptions --program-name=$(BINARY) \
+	$(PKG)/doc/CLI.md
