@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.5.2][] - 2026-05-02
 
 ### Added
 
@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning][].
 * `modschema` Go version precheck now probes local toolchain in isolated
   context and no longer triggers toolchain auto-downloads from unrelated
   project `go.mod` files.
+
+[0.5.2]: https://github.com/WoozyMasta/schemadoc/compare/v0.5.1...v0.5.2
 
 ## [0.5.1][] - 2026-03-27
 
