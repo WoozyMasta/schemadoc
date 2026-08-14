@@ -5,6 +5,7 @@ BENCHSTAT   ?= benchstat
 CYCLONEDX   ?= cyclonedx-gomod
 BENCH_COUNT ?= 6
 BENCH_REF   ?= bench_baseline.txt
+FUZZ_TIME   ?= 20s
 
 BINARY           ?= schemadoc
 CMD_PKG          ?= ./cmd/schemadoc
@@ -63,16 +64,19 @@ release: clean
 
 .PHONY: check ci ci-release
 
-check: verify tidy fmt vet lint-fix align-fix test test-race docs-schema docs-cli release-notes
-ci: download tools-ci verify tidy-check fmt-check vet lint align test docs-check
+check: verify tidy fmt vet lint-fix align-fix test test-race fuzz docs-schema docs-cli release-notes
+ci: download tools-ci verify tidy-check fmt-check vet lint align test fuzz docs-check
 
-.PHONY: test test-race
+.PHONY: test test-race fuzz
 
 test:
 	$(GO) test ./...
 
 test-race:
 	$(GO) test -race ./...
+
+fuzz:
+	$(GO) test -run='^$$' -fuzz='^FuzzFormatDescriptionMarkdown$$' -fuzztime=$(FUZZ_TIME) .
 
 .PHONY: bench bench-fast bench-reset
 

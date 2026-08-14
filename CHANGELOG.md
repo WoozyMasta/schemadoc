@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Changed
 
+* Improved Markdown documentation generation for Go doc comments,
+  including lists and preformatted blocks.
 * Generated documents no longer include schemadoc version metadata by default.
 * Generated CLI and schema documentation now use a canonical program name
   and include generator metadata.
