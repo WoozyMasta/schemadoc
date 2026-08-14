@@ -16,8 +16,15 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Added
+
+* `--footer` for `schema2doc` and `mod2doc`,
+  plus `schema2doc.footer` in build configuration,
+  to include schemadoc version metadata.
+
 ### Changed
 
+* Generated documents no longer include schemadoc version metadata by default.
 * Generated CLI and schema documentation now use a canonical program name
   and include generator metadata.
 

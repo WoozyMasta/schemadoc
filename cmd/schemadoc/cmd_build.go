@@ -158,6 +158,7 @@ func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Co
 			ListMarker:        strings.TrimSpace(stage.ListMarker),
 			WrapWidth:         stage.Wrap,
 			HideExtraKeywords: stage.HideExtraKeywords,
+			Footer:            stage.Footer,
 			ExampleMode:       strings.TrimSpace(stage.Mode),
 			ExampleFmt:        strings.TrimSpace(stage.Format),
 			OutputPath:        outputPath,

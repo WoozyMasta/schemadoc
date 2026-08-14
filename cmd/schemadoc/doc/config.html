@@ -790,7 +790,7 @@
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 12</li>
+<li><strong>Properties:</strong> 13</li>
 <li><strong>Additional properties:</strong> boolean schema=false</li>
 </ul>
       </div>
@@ -920,6 +920,18 @@
 <li><strong>Type:</strong> <code>boolean</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Other keywords:</strong> x-order=10</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagefooter">Schema2DocStage.footer</h3>
+        <p><strong>Key:</strong> <code>footer</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>footer</code></p>
+<p>Footer includes schemadoc version metadata in rendered documentation.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>false</code></li>
+<li><strong>Other keywords:</strong> x-order=11</li>
 </ul>
 </article>
 <article class="card">
@@ -1300,6 +1312,9 @@ schema2doc:
   # When false, non-standard schema keywords (for example `x-order`) are
   # shown in attributes.
   hide_extra_keywords: false
+  # Footer includes schemadoc version metadata in rendered documentation.
+  # Default: false
+  footer: false
   # JSON configures embedded JSON example formatting.
   # Used when `format: json`.
   json:
@@ -1345,12 +1360,6 @@ schema2yaml:
     # default, example, enum).
     disable_example_comments: false</code></pre>
     </section>
-<footer>
-      Generated with
-      <a href="https://github.com/woozymasta/schemadoc">schemadoc</a>
-      version <code>dev</code>
-      commit <code>unknown</code>
-    </footer>
 <script>
     (function () {
       const code = document.getElementById("example-code");

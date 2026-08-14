@@ -195,6 +195,9 @@ schema2doc:
   # When false, non-standard schema keywords (for example `x-order`) are
   # shown in attributes.
   hide_extra_keywords: false
+  # Footer includes schemadoc version metadata in rendered documentation.
+  # Default: false
+  footer: false
   # JSON configures embedded JSON example formatting.
   # Used when `format: json`.
   json:

@@ -43,10 +43,17 @@ func TestCLI_Schema2Doc(t *testing.T) {
 		fileNoHas   []string
 	}{
 		{
-			name:      "default to stdout",
-			args:      []string{"schema2doc", schemaPath},
+			name:        "default to stdout",
+			args:        []string{"schema2doc", schemaPath},
+			code:        0,
+			stdoutHas:   []string{"# schema reference"},
+			stdoutNoHas: []string{"Generated with"},
+		},
+		{
+			name:      "include footer",
+			args:      []string{"schema2doc", "--footer", schemaPath},
 			code:      0,
-			stdoutHas: []string{"# schema reference"},
+			stdoutHas: []string{"Generated with", "version `dev`", "commit `unknown`"},
 		},
 		{
 			name:      "table template",

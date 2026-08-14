@@ -266,6 +266,9 @@ type Schema2DocStage struct {
 	// When false, non-standard schema keywords (for example `x-order`) are
 	// shown in attributes.
 	HideExtraKeywords bool `json:"hide_extra_keywords,omitempty" yaml:"hide_extra_keywords,omitempty" jsonschema_extras:"x-order=10"`
+
+	// Footer includes schemadoc version metadata in rendered documentation.
+	Footer bool `json:"footer,omitempty" yaml:"footer,omitempty" jsonschema:"default=false" jsonschema_extras:"x-order=11"`
 }
 
 // Schema2JSONStage describes schema2json stage.

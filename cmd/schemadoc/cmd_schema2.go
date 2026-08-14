@@ -18,6 +18,7 @@ func (command *schemaToDocCommand) Execute(_ []string) error {
 		WrapWidth:         command.RenderFlags.WrapWidth,
 		ListMarker:        command.RenderFlags.ListMarker,
 		HideExtraKeywords: command.RenderFlags.HideExtraKeywords,
+		Footer:            command.RenderFlags.Footer,
 		ExampleMode:       command.ExampleFlags.Mode,
 		ExampleFmt:        command.ExampleFlags.Format,
 		OutputPath:        command.Args.Output,

@@ -30,6 +30,7 @@ type markdownRenderRequest struct {
 	ExampleOut        exampleOutputOptions
 	WrapWidth         int
 	HideExtraKeywords bool
+	Footer            bool
 }
 
 // jsonOutputOptions stores JSON formatting options for CLI output.
@@ -333,10 +334,12 @@ func (runner *cliRunner) renderSchemaToDoc(
 		ExampleFormat:     format,
 		ExampleOptions:    toExampleOptions(request.ExampleOut),
 		WrapWidth:         request.WrapWidth,
-		FooterToolName:    "schemadoc",
-		FooterToolURL:     URL,
-		FooterVersion:     Version,
-		FooterCommit:      Commit,
+	}
+	if request.Footer {
+		options.FooterToolName = "schemadoc"
+		options.FooterToolURL = URL
+		options.FooterVersion = Version
+		options.FooterCommit = Commit
 	}
 
 	if request.TemplatePath != "" {

@@ -656,7 +656,7 @@ Schema2DocStage describes documentation generation from working schema.
 | Attribute | Value |
 | --- | --- |
 | Type | `object` |
-| Properties | 12 |
+| Properties | 13 |
 | Additional properties | boolean schema=false |
 
 ### Schema2DocStage.output
@@ -824,6 +824,21 @@ attributes.
 | Type | `boolean` |
 | Required | no |
 | Other keywords | x-order=10 |
+
+### Schema2DocStage.footer
+
+Key: `footer`
+
+Path: [`schema2doc`](#configschema2docstage).`footer`
+
+Footer includes schemadoc version metadata in rendered documentation.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+| Default | `false` |
+| Other keywords | x-order=11 |
 
 ### Schema2DocStage.JSONOutputOptions
 
@@ -1224,6 +1239,9 @@ schema2doc:
   # When false, non-standard schema keywords (for example `x-order`) are
   # shown in attributes.
   hide_extra_keywords: false
+  # Footer includes schemadoc version metadata in rendered documentation.
+  # Default: false
+  footer: false
   # JSON configures embedded JSON example formatting.
   # Used when `format: json`.
   json:
@@ -1269,12 +1287,4 @@ schema2yaml:
     # default, example, enum).
     disable_example_comments: false
 ```
-
----
-
-> Generated with
-> [schemadoc](https://github.com/woozymasta/schemadoc)
-> version `dev`
-> commit `unknown`
-
 <!-- Automatically generated file, do not modify! -->

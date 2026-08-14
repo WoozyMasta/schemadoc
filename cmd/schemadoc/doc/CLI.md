@@ -226,6 +226,7 @@ Examples:
 |`-l`, `--list-marker`|List marker used in generated markdown lists; choices: `-, *`|`*`|no|
 |`-w`, `--wrap`|Wrap width for plain text descriptions|`80`|no|
 |`--hide-extra-keywords`|Hide non-standard schema keywords in Attributes||no|
+|`--footer`|Include schemadoc version footer in generated output||no|
 
 #### JSON Output
 
@@ -330,6 +331,7 @@ Examples:
 |`-l`, `--list-marker`|List marker used in generated markdown lists; choices: `-, *`|`*`|no|
 |`-w`, `--wrap`|Wrap width for plain text descriptions|`80`|no|
 |`--hide-extra-keywords`|Hide non-standard schema keywords in Attributes||no|
+|`--footer`|Include schemadoc version footer in generated output||no|
 
 #### JSON Output
 

@@ -337,6 +337,12 @@
           "type": "string",
           "x-order": "5"
         },
+        "footer": {
+          "default": false,
+          "description": "Footer includes schemadoc version metadata in rendered documentation.",
+          "type": "boolean",
+          "x-order": "11"
+        },
         "format": {
           "default": "json",
           "description": "Format selects embedded example format for doc template.\n\nEmpty value disables embedded example block.",
