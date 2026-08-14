@@ -17,8 +17,13 @@ jobs:
         with:
           go-version: '1.26'
 
+      - uses: rvben/rumdl@v0
+
       - name: Run CI
-        run: make ci release
+        run: make ci
+
+      - name: Build release
+        run: make tool-cyclonedx release
 
       - name: Extract changelog
         run: make release-notes > release.md
@@ -30,3 +35,11 @@ jobs:
           name: Release ${{ github.ref_name }}
           bodyFile: release.md
           artifacts: ./build/*
+
+      - name: Request pkg.go.dev reindex
+        env:
+          MODULE: github.com/woozymasta/schemadoc
+          VERSION: ${{ github.ref_name }}
+        run: >-
+          curl -sSfX POST --retry 3 --retry-delay 2
+          "https://pkg.go.dev/fetch/${MODULE}@${VERSION}"

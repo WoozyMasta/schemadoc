@@ -112,7 +112,7 @@ func runWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return 1
 	}
 
-	applyCommandLongDescriptions(parser, runner.programName)
+	applyCommandLongDescriptions(parser)
 
 	_, err := parser.ParseArgs(args)
 	if err == nil {

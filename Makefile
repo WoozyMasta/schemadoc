@@ -1,65 +1,48 @@
 GO          ?= go
 LINTER      ?= golangci-lint
 ALIGNER     ?= betteralign
-VULNCHECK   ?= govulncheck
 BENCHSTAT   ?= benchstat
-CYCLO       ?= cyclonedx-gomod
-
-CGO_ENABLED ?= 0
-GOFLAGS     ?= -buildvcs=auto -trimpath
-LDFLAGS     ?= -s -w
-GOWORK      ?= off
-GOFTAGS     ?= forceposix
-
+CYCLONEDX   ?= cyclonedx-gomod
 BENCH_COUNT ?= 6
 BENCH_REF   ?= bench_baseline.txt
-MODULE_PATH ?= $(shell GOWORK=off $(GO) list -m -f '{{.Path}}')
 
-BINARY      ?= schemadoc
-PKG         ?= ./cmd/schemadoc
-OUTPUT_DIR  ?= build
-
-RELEASE_MATRIX ?= linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
-
+BINARY           ?= schemadoc
+CMD_PKG          ?= ./cmd/schemadoc
+OUTPUT_DIR       ?= build
+CGO_ENABLED      ?= 0
+GOFLAGS          ?= -buildvcs=auto -trimpath
+LDFLAGS          ?= -s -w
+GOWORK           ?= off
+GOFTAGS          ?= forceposix
+MODULE_PATH      ?= $(shell GOWORK=off $(GO) list -m -f '{{.Path}}')
+RELEASE_MATRIX   ?= linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
 NATIVE_GOOS      := $(shell go env GOOS)
 NATIVE_GOARCH    := $(shell go env GOARCH)
 NATIVE_EXTENSION := $(if $(filter $(NATIVE_GOOS),windows),.exe,)
-
-VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null || echo v0.0.0)
-VERSION_NO_V := $(patsubst v%,%,$(VERSION))
-COMMIT  := $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
-DATE    := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-URL     ?= https://$(MODULE_PATH)
-
-LDFLAGS_X := \
-	-X 'main.Version=$(VERSION)' \
-	-X 'main.Commit=$(COMMIT)' \
-	-X 'main._buildTime=$(DATE)' \
-	-X 'main.URL=$(URL)'
+VERSION          := $(shell git describe --tags --abbrev=0 2>/dev/null || echo v0.0.0)
+COMMIT           := $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
+DATE             := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+URL              ?= https://$(MODULE_PATH)
+LDFLAGS_X        := -X 'main.Version=$(VERSION)' -X 'main.Commit=$(COMMIT)' -X 'main._buildTime=$(DATE)' -X 'main.URL=$(URL)'
+CLI_DOCS         ?= $(CMD_PKG)/doc
 
 RACE ?= 0
 ifeq ($(RACE),1)
 	EXTRA_BUILD_FLAGS := -race
 endif
 
-.PHONY: test test-race test-short bench bench-fast bench-reset verify vet check ci \
-	fmt fmt-check lint lint-fix align align-fix tidy tidy-check download deps-update \
-	tools tools-ci tool-golangci-lint tool-betteralign tool-govulncheck tool-benchstat tool-cyclonedx \
-	release-notes example sbom sbom-app sbom-bin cli-doc
-
-check: verify vulncheck tidy fmt vet lint-fix align-fix test example
-ci: download tools-ci verify vulncheck tidy-check fmt-check vet lint align test
+.PHONY: clean build release
 
 clean:
 	rm -rf $(OUTPUT_DIR)
 
-build: clean example
+build: clean
 	@mkdir -p $(OUTPUT_DIR)
 	@echo ">> building native: $(BINARY)$(NATIVE_EXTENSION)"
 	GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) \
 	GOWORK=$(GOWORK) CGO_ENABLED=$(CGO_ENABLED) \
 	$(GO) build $(GOFLAGS) -ldflags="$(LDFLAGS) $(LDFLAGS_X)" -tags "$(GOFTAGS)" $(EXTRA_BUILD_FLAGS) \
-	-o $(OUTPUT_DIR)/$(BINARY)$(NATIVE_EXTENSION) $(PKG)
+	-o $(OUTPUT_DIR)/$(BINARY)$(NATIVE_EXTENSION) $(CMD_PKG)
 	@$(MAKE) _sbom_bin_one GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) BIN=$(BINARY) OUTEXT="$(NATIVE_EXTENSION)"
 
 release: clean
@@ -73,24 +56,17 @@ release: clean
 		GOOS=$$goos GOARCH=$$goarch \
 		GOWORK=$(GOWORK) CGO_ENABLED=$(CGO_ENABLED) \
 		$(GO) build $(GOFLAGS) -ldflags="$(LDFLAGS) $(LDFLAGS_X)" -tags "$(GOFTAGS)" \
-		-o $$out $(PKG); \
+		-o $$out $(CMD_PKG); \
 		$(MAKE) --no-print-directory _sbom_bin_one GOOS=$$goos GOARCH=$$goarch BIN=$(BINARY)-$${goos}-$${goarch} OUTEXT="$$ext"; \
 	done
 	@$(MAKE) sbom-app
 
-fmt:
-	gofmt -w .
+.PHONY: check ci ci-release
 
-fmt-check:
-	@files=$$(gofmt -l .); \
-	if [ -n "$$files" ]; then \
-		echo "$$files" 1>&2; \
-		echo "gofmt: files need formatting" 1>&2; \
-		exit 1; \
-	fi
+check: verify tidy fmt vet lint-fix align-fix test test-race docs-cli release-notes
+ci: download tools-ci verify tidy-check fmt-check vet lint align test docs-check
 
-vet:
-	$(GO) vet ./...
+.PHONY: test test-race
 
 test:
 	$(GO) test ./...
@@ -98,8 +74,7 @@ test:
 test-race:
 	$(GO) test -race ./...
 
-test-short:
-	$(GO) test -short ./...
+.PHONY: bench bench-fast bench-reset
 
 bench:
 	@tmp=$$(mktemp); \
@@ -117,8 +92,19 @@ bench-fast:
 bench-reset:
 	rm -f "$(BENCH_REF)"
 
+.PHONY: download verify vet tidy tidy-check fmt fmt-check lint lint-fix align align-fix
+
+download:
+	$(GO) mod download
+
 verify:
 	$(GO) mod verify
+
+vet:
+	$(GO) vet ./...
+
+tidy:
+	$(GO) mod tidy
 
 tidy-check:
 	@$(GO) mod tidy
@@ -127,15 +113,16 @@ tidy-check:
 		exit 1; \
 	)
 
-tidy:
-	$(GO) mod tidy
+fmt:
+	gofmt -w .
 
-download:
-	$(GO) mod download
-
-deps-update:
-	$(GO) get -u ./...
-	$(GO) mod tidy
+fmt-check:
+	@files="$$(gofmt -l .)"; \
+	if [ -n "$$files" ]; then \
+		echo "$$files"; \
+		echo "gofmt: files need formatting"; \
+		exit 1; \
+	fi
 
 lint:
 	$(LINTER) run ./...
@@ -150,11 +137,10 @@ align-fix:
 	-$(ALIGNER) -apply ./...
 	$(ALIGNER) ./...
 
-vulncheck:
-	$(VULNCHECK) ./...
+.PHONY: tools tools-ci tool-golangci-lint tool-betteralign tool-benchstat tool-cyclonedx
 
-tools: tool-golangci-lint tool-betteralign tool-govulncheck tool-benchstat tool-cyclonedx
-tools-ci: tool-golangci-lint tool-betteralign tool-govulncheck tool-cyclonedx
+tools: tool-golangci-lint tool-betteralign tool-benchstat tool-cyclonedx
+tools-ci: tool-golangci-lint tool-betteralign
 
 tool-golangci-lint:
 	$(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
@@ -162,14 +148,28 @@ tool-golangci-lint:
 tool-betteralign:
 	$(GO) install github.com/dkorunic/betteralign/cmd/betteralign@latest
 
-tool-govulncheck:
-	$(GO) install golang.org/x/vuln/cmd/govulncheck@latest
-
 tool-benchstat:
 	$(GO) install golang.org/x/perf/cmd/benchstat@latest
 
 tool-cyclonedx:
 	$(GO) install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
+
+.PHONY: docs-check docs-schema docs-cli release-notes
+
+docs-check: docs-schema docs-cli
+	@git diff --stat --exit-code -- $(CLI_DOCS) || ( \
+	 echo "$(CLI_DOCS) are out of date; run 'make docs-schema docs-cli' and commit changes"; \
+	 exit 1; \
+	)
+
+docs-schema:
+		GOWORK=$(GOWORK) $(GO) run $(GOFLAGS) -ldflags="$(LDFLAGS)" ./cmd/$(BINARY) \
+			build $(SCHEMADOC_CONFIG)
+
+docs-cli:
+	GOWORK=$(GOWORK) $(GO) run $(GOFLAGS) -ldflags="$(LDFLAGS)" ./cmd/$(BINARY) \
+		docs md --program-name "$(BINARY)" --style posix --template=table \
+		--toc --dash-lists --trim-descriptions "$(CLI_DOCS)/CLI.md"
 
 release-notes:
 	@awk '\
@@ -188,32 +188,24 @@ release-notes:
 	END { flush() } \
 	' CHANGELOG.md
 
+.PHONY: sbom sbom-app sbom-bin
+
 sbom: sbom-app sbom-bin
 
 sbom-app:
 	@echo ">> SBOM (app)"
-	$(CYCLO) app -json -packages -files -licenses \
-		-output "$(OUTPUT_DIR)/$(BINARY).sbom.json" -main "$(PKG)"
+	$(CYCLONEDX) app -json -packages -files -licenses \
+		-output "$(OUTPUT_DIR)/$(BINARY).sbom.json" -main "$(CMD_PKG)"
 
 sbom-bin:
 	@echo ">> SBOM (bin native if exists)"
 	@[ -f "$(OUTPUT_DIR)/$(BINARY)$(NATIVE_EXTENSION)" ] && \
-		$(CYCLO) bin -json -output "$(OUTPUT_DIR)/$(BINARY)$(NATIVE_EXTENSION).sbom.json" \
+		$(CYCLONEDX) bin -json -output "$(OUTPUT_DIR)/$(BINARY)$(NATIVE_EXTENSION).sbom.json" \
 			"$(OUTPUT_DIR)/$(BINARY)$(NATIVE_EXTENSION)" || true
 
 _sbom_bin_one:
 	@bin="$(OUTPUT_DIR)/$(BIN)$(OUTEXT)"; \
 	if [ -f "$$bin" ]; then \
 		echo ">> SBOM (bin) $$bin"; \
-		$(CYCLO) bin -json -output "$$bin.sbom.json" "$$bin"; \
+		$(CYCLONEDX) bin -json -output "$$bin.sbom.json" "$$bin"; \
 	fi
-
-example:
-	@mkdir -p $(PKG)/doc
-	$(GO) run $(PKG) build schemadoc.build.yaml
-	$(GO) run $(PKG) build testdata/fixtures.build.yaml
-
-cli-doc:
-	$(OUTPUT_DIR)/$(BINARY)$(NATIVE_EXTENSION) docs md \
-	--template=table --toc --trim-descriptions --program-name=$(BINARY) \
-	$(PKG)/doc/CLI.md

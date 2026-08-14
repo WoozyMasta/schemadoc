@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Changed
+
+* Generated CLI and schema documentation now use a canonical program name
+  and include generator metadata.
+
 ## [0.5.3][] - 2026-05-02
 
 ### Changed
