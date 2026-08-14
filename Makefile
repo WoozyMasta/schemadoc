@@ -63,7 +63,7 @@ release: clean
 
 .PHONY: check ci ci-release
 
-check: verify tidy fmt vet lint-fix align-fix test test-race docs-cli release-notes
+check: verify tidy fmt vet lint-fix align-fix test test-race docs-schema docs-cli release-notes
 ci: download tools-ci verify tidy-check fmt-check vet lint align test docs-check
 
 .PHONY: test test-race
