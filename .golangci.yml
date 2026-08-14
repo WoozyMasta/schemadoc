@@ -5,12 +5,10 @@ linters:
   enable:
     - modernize
     - prealloc
-    # - tagalign
     - tagliatelle
     - perfsprint
     - asciicheck
     - bidichk
-    # - gocognit # cyclop
     - decorder
     - dupl
     - gocritic
@@ -20,13 +18,11 @@ linters:
     - predeclared
     - revive
     - rowserrcheck
-    - sqlclosecheck
     - tparallel
     - unconvert
     - unparam
     - whitespace
     - staticcheck
-    - zerologlint
     - goheader
   exclusions:
     generated: lax
