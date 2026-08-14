@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.6.0][] - 2026-08-14
 
 ### Added
 
@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning][].
 * Generated documents no longer include schemadoc version metadata by default.
 * Generated CLI and schema documentation now use a canonical program name
   and include generator metadata.
+
+[0.6.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.5.3...v0.6.0
 
 ## [0.5.3][] - 2026-05-02
 
