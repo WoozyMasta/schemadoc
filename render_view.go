@@ -81,7 +81,7 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 		definition := definitionView{
 			Name:        escapeInline(defName),
 			Description: formatDescriptionMarkdown(nodeDescription(node), wrapWidth, listMarker),
-			Attributes:  schemaAttributes(node, nil, opt.HideExtraKeywords),
+			Attributes:  schemaAttributes(node, nil, opt.HideExtraKeywords, opt.ShowInternalKeywords),
 		}
 
 		properties := nodeProperties(node)
@@ -109,7 +109,7 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 				Name:        escapeInline(propName),
 				Paths:       paths,
 				Description: formatDescriptionMarkdown(nodeDescription(prop), wrapWidth, listMarker),
-				Attributes:  schemaAttributes(prop, &propRequired, opt.HideExtraKeywords),
+				Attributes:  schemaAttributes(prop, &propRequired, opt.HideExtraKeywords, opt.ShowInternalKeywords),
 			})
 		}
 
@@ -145,6 +145,16 @@ func buildSourceFileURL(sourcePath, schemaID string) string {
 // buildSchemaSourceURL builds raw GitHub URL for source schema file when possible.
 func buildSchemaSourceURL(schemaID, sourcePath string) string {
 	return buildGitHubFileURL(schemaID, sourcePath, true)
+}
+
+// SchemaSourceURL returns a raw source URL for a file-backed schema when possible.
+func SchemaSourceURL(schemaBytes []byte, sourcePath string) string {
+	doc, err := parseDocument(schemaBytes)
+	if err != nil {
+		return ""
+	}
+
+	return buildSchemaSourceURL(doc.ID, sourcePath)
 }
 
 // buildSchemaBrowserURL builds browser-friendly GitHub file URL when possible.
@@ -269,7 +279,6 @@ func buildContents(definitions map[string]schemaValue, rootDefinition string, de
 			targets = append(targets, target)
 		}
 
-		sort.Strings(targets)
 		adjacency[name] = targets
 	}
 
@@ -574,17 +583,35 @@ func definitionEdges(node schemaValue) []definitionEdge {
 		return nil
 	}
 
-	keys := make([]string, 0, len(edgeMap))
-	for key := range edgeMap {
-		keys = append(keys, key)
+	out := make([]definitionEdge, 0, len(edgeMap))
+	for _, edge := range edgeMap {
+		out = append(out, edge)
 	}
 
-	sort.Strings(keys)
-
-	out := make([]definitionEdge, 0, len(keys))
-	for _, key := range keys {
-		out = append(out, edgeMap[key])
+	orderedProperties := propertyOrder(nodeRequired(node), properties)
+	propertyRank := make(map[string]int, len(orderedProperties))
+	for index, name := range orderedProperties {
+		propertyRank[name] = index
 	}
+
+	sort.SliceStable(out, func(left, right int) bool {
+		leftProperty, _, _ := strings.Cut(out[left].Path, ".")
+		rightProperty, _, _ := strings.Cut(out[right].Path, ".")
+		leftRank, leftOK := propertyRank[leftProperty]
+		rightRank, rightOK := propertyRank[rightProperty]
+
+		if leftOK && rightOK && leftRank != rightRank {
+			return leftRank < rightRank
+		}
+		if leftOK != rightOK {
+			return leftOK
+		}
+		if out[left].Path != out[right].Path {
+			return out[left].Path < out[right].Path
+		}
+
+		return out[left].Target < out[right].Target
+	})
 
 	return out
 }
@@ -739,13 +766,26 @@ func definitionOrder(defs map[string]schemaValue, rootName string) []string {
 	}
 
 	out := make([]string, 0, len(keys))
-	out = append(out, root)
-	for _, name := range keys {
-		if name == root {
-			continue
+	visited := make(map[string]struct{}, len(keys))
+	var walk func(string)
+	walk = func(name string) {
+		if _, ok := visited[name]; ok {
+			return
+		}
+		if _, ok := defs[name]; !ok {
+			return
 		}
 
+		visited[name] = struct{}{}
 		out = append(out, name)
+		for _, edge := range definitionEdges(defs[name]) {
+			walk(edge.Target)
+		}
+	}
+
+	walk(root)
+	for _, name := range keys {
+		walk(name)
 	}
 
 	return out

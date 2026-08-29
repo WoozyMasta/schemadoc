@@ -11,17 +11,18 @@ import (
 // Execute runs schema2doc subcommand.
 func (command *schemaToDocCommand) Execute(_ []string) error {
 	return command.runner.runSchemaToDoc(command.Args.Input, markdownRenderRequest{
-		TemplateName:      command.TemplateFlags.TemplateName,
-		Title:             command.RenderFlags.Title,
-		Description:       command.RenderFlags.Description,
-		TemplatePath:      command.RenderFlags.TemplatePath,
-		WrapWidth:         command.RenderFlags.WrapWidth,
-		ListMarker:        command.RenderFlags.ListMarker,
-		HideExtraKeywords: command.RenderFlags.HideExtraKeywords,
-		Footer:            command.RenderFlags.Footer,
-		ExampleMode:       command.ExampleFlags.Mode,
-		ExampleFmt:        command.ExampleFlags.Format,
-		OutputPath:        command.Args.Output,
+		TemplateName:         command.TemplateFlags.TemplateName,
+		Title:                command.RenderFlags.Title,
+		Description:          command.RenderFlags.Description,
+		TemplatePath:         command.RenderFlags.TemplatePath,
+		WrapWidth:            command.RenderFlags.WrapWidth,
+		ListMarker:           command.RenderFlags.ListMarker,
+		HideExtraKeywords:    command.RenderFlags.HideExtraKeywords,
+		ShowInternalKeywords: command.RenderFlags.ShowInternalKeywords,
+		Footer:               command.RenderFlags.Footer,
+		ExampleMode:          command.ExampleFlags.Mode,
+		ExampleFmt:           command.ExampleFlags.Format,
+		OutputPath:           command.Args.Output,
 		ExampleOut: exampleOutputOptions{
 			JSON: jsonOutputOptions{
 				Indent:     command.JSONFlags.Indent,

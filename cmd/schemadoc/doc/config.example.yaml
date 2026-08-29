@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/cmd/schemadoc/doc/config.schema.json
+
 # Schema is working schema path for the whole document pipeline.
 # `build` writes mod2schema output to this file, `merge` mutates this
 # file in place, and schema2* stages read from this file as input.
@@ -190,14 +192,9 @@ schema2doc:
   # Wrap sets wrap width for plain-text description blocks.
   # Default: 80
   wrap: 80
-  # HideExtraKeywords disables "Other keywords" attribute row in rendered
-  # docs.
-  # When false, non-standard schema keywords (for example `x-order`) are
-  # shown in attributes.
+  # HideExtraKeywords disables "Other keywords" attribute row in rendered docs.
+  # Internal keywords such as `x-order` are hidden regardless of this option.
   hide_extra_keywords: false
-  # Footer includes schemadoc version metadata in rendered documentation.
-  # Default: false
-  footer: false
   # JSON configures embedded JSON example formatting.
   # Used when `format: json`.
   json:
@@ -212,6 +209,11 @@ schema2doc:
     indent_type: space
     # Minify enables compact one-line JSON output without indentation.
     minify: false
+  # ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.
+  show_internal_keywords: false
+  # Footer includes schemadoc version metadata in rendered documentation.
+  # Default: false
+  footer: false
   # YAML configures embedded YAML example formatting.
   # Used when `format: yaml`.
   yaml:

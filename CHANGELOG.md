@@ -14,6 +14,22 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* `--show-internal-keywords` and `show_internal_keywords`
+  to include renderer-specific schema keywords in generated documentation.
+
+### Changed
+
+* `x-order` is now applied consistently to YAML examples,
+  definition headings, and Markdown/HTML table of contents entries.
+* Internal schema keywords such as `x-order`
+  are hidden from documentation by default.
+* File-backed YAML examples now include a `yaml-language-server` schema hint;
+  GitHub-backed schemas use their Raw URL when available.
+
 ## [0.6.0][] - 2026-08-14
 
 ### Added

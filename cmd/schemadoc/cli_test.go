@@ -235,6 +235,7 @@ func TestCLI_Schema2ExamplesAndTemplateAndConfig(t *testing.T) {
 	}
 
 	checkContainsAll(t, string(requiredYAML), []string{
+		"# yaml-language-server: $schema=" + filepath.ToSlash(schemaPath),
 		"# Service Name",
 		"# Human-readable service name.",
 		"name: demo-service",

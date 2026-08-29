@@ -220,8 +220,22 @@
       <h2>Contents</h2>
       <ul>
 <li><a href="#serviceconfig">ServiceConfig</a><ul>
-<li><a href="#advancedoptions">AdvancedOptions</a></li>
-<li><a href="#alerttarget">AlertTarget</a></li>
+<li><a href="#model_sharedoptions">model_SharedOptions</a><ul>
+<li><a href="#sharedendpoints">SharedEndpoints</a><ul>
+<li><a href="#endpointmeta">EndpointMeta</a></li>
+</ul>
+</li>
+<li><a href="#sharedtls">SharedTLS</a></li>
+<li><a href="#sharedendpointbinding">SharedEndpointBinding</a></li>
+<li><a href="#sharedtoggle">SharedToggle</a></li>
+<li><a href="#sharedwindow">SharedWindow</a></li>
+</ul>
+</li>
+<li><a href="#retrypolicy">RetryPolicy</a></li>
+<li><a href="#window">Window</a></li>
+<li><a href="#tlsoverride">TLSOverride</a></li>
+<li><a href="#model_sharedtoggle">model_SharedToggle</a></li>
+<li><a href="#model_sharedendpointbinding">model_SharedEndpointBinding</a></li>
 <li><a href="#deepprobe">DeepProbe</a></li>
 <li><a href="#level1">Level1</a><ul>
 <li><a href="#level2">Level2</a><ul>
@@ -239,24 +253,10 @@
 </li>
 </ul>
 </li>
+<li><a href="#advancedoptions">AdvancedOptions</a></li>
 <li><a href="#queueoptions">QueueOptions</a></li>
-<li><a href="#retrypolicy">RetryPolicy</a></li>
 <li><a href="#storagebucket">StorageBucket</a></li>
-<li><a href="#tlsoverride">TLSOverride</a></li>
-<li><a href="#window">Window</a></li>
-<li><a href="#model_sharedendpointbinding">model_SharedEndpointBinding</a><ul>
-<li><a href="#endpointmeta">EndpointMeta</a></li>
-</ul>
-</li>
-<li><a href="#model_sharedoptions">model_SharedOptions</a><ul>
-<li><a href="#sharedendpointbinding">SharedEndpointBinding</a></li>
-<li><a href="#sharedendpoints">SharedEndpoints</a></li>
-<li><a href="#sharedtls">SharedTLS</a></li>
-<li><a href="#sharedtoggle">SharedToggle</a></li>
-<li><a href="#sharedwindow">SharedWindow</a></li>
-</ul>
-</li>
-<li><a href="#model_sharedtoggle">model_SharedToggle</a></li>
+<li><a href="#alerttarget">AlertTarget</a></li>
 <li><a href="#model_sharedwindow">model_SharedWindow</a></li>
 </ul>
 </li>
@@ -284,7 +284,6 @@
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#model_sharedoptions"><code>model_SharedOptions</code></a> (<code>#/$defs/model_SharedOptions</code>)</li>
 <li><strong>Title:</strong> <code>Shared Options</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
 </ul>
 </article>
 <article class="card">
@@ -297,7 +296,6 @@
 <li><strong>Title:</strong> <code>Service Name</code></li>
 <li><strong>Default:</strong> <code>demo-service</code></li>
 <li><strong>Constraints:</strong> <code>minLength=3</code></li>
-<li><strong>Other keywords:</strong> x-order=10</li>
 </ul>
 </article>
 <article class="card">
@@ -308,7 +306,6 @@
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#retrypolicy"><code>RetryPolicy</code></a> (<code>#/$defs/RetryPolicy</code>)</li>
 <li><strong>Title:</strong> <code>Retry Policy</code></li>
-<li><strong>Other keywords:</strong> x-order=11</li>
 </ul>
 </article>
 <article class="card">
@@ -320,7 +317,6 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Items reference:</strong> <a href="#window"><code>Window</code></a> (<code>#/$defs/Window</code>)</li>
 <li><strong>Constraints:</strong> <code>minItems=7</code>; <code>maxItems=7</code></li>
-<li><strong>Other keywords:</strong> x-order=13</li>
 </ul>
 </article>
 <article class="card">
@@ -331,7 +327,6 @@
 <li><strong>Type:</strong> <code>object</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Additional properties reference:</strong> <a href="#tlsoverride"><code>TLSOverride</code></a> (<code>#/$defs/TLSOverride</code>)</li>
-<li><strong>Other keywords:</strong> x-order=14</li>
 </ul>
 </article>
 <article class="card">
@@ -341,7 +336,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#retrypolicy"><code>RetryPolicy</code></a> (<code>#/$defs/RetryPolicy</code>)</li>
-<li><strong>Other keywords:</strong> x-order=15</li>
 </ul>
 </article>
 <article class="card">
@@ -351,7 +345,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#model_sharedtoggle"><code>model_SharedToggle</code></a> (<code>#/$defs/model_SharedToggle</code>)</li>
-<li><strong>Other keywords:</strong> x-order=16</li>
 </ul>
 </article>
 <article class="card">
@@ -361,7 +354,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#model_sharedendpointbinding"><code>model_SharedEndpointBinding</code></a> (<code>#/$defs/model_SharedEndpointBinding</code>)</li>
-<li><strong>Other keywords:</strong> x-order=17</li>
 </ul>
 </article>
 <article class="card">
@@ -371,7 +363,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
-<li><strong>Other keywords:</strong> x-order=18</li>
 </ul>
 </article>
 <article class="card">
@@ -381,7 +372,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#level1"><code>Level1</code></a> (<code>#/$defs/Level1</code>)</li>
-<li><strong>Other keywords:</strong> x-order=19</li>
 </ul>
 </article>
 <article class="card">
@@ -391,7 +381,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#level1"><code>Level1</code></a> (<code>#/$defs/Level1</code>)</li>
-<li><strong>Other keywords:</strong> x-order=20</li>
 </ul>
 </article>
 <article class="card">
@@ -402,7 +391,6 @@
 <li><strong>Type:</strong> <code>object</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Additional properties reference:</strong> <a href="#level1"><code>Level1</code></a> (<code>#/$defs/Level1</code>)</li>
-<li><strong>Other keywords:</strong> x-order=21</li>
 </ul>
 </article>
 <article class="card">
@@ -412,7 +400,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#advancedoptions"><code>AdvancedOptions</code></a> (<code>#/$defs/AdvancedOptions</code>)</li>
-<li><strong>Other keywords:</strong> x-order=22</li>
 </ul>
 </article>
 <article class="card">
@@ -423,7 +410,6 @@
 <li><strong>Type:</strong> <code>object</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Additional properties reference:</strong> <a href="#queueoptions"><code>QueueOptions</code></a> (<code>#/$defs/QueueOptions</code>)</li>
-<li><strong>Other keywords:</strong> x-order=150</li>
 </ul>
 </article>
 <article class="card">
@@ -434,7 +420,6 @@
 <li><strong>Type:</strong> <code>object</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Additional properties reference:</strong> <a href="#storagebucket"><code>StorageBucket</code></a> (<code>#/$defs/StorageBucket</code>)</li>
-<li><strong>Other keywords:</strong> x-order=151</li>
 </ul>
 </article>
 <article class="card">
@@ -446,7 +431,6 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Pattern properties:</strong> 1</li>
 <li><strong>Additional properties:</strong> boolean schema=false</li>
-<li><strong>Other keywords:</strong> x-order=152</li>
 </ul>
 </article>
 <article class="card">
@@ -457,7 +441,6 @@
 <li><strong>Type:</strong> <code>object</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Additional properties type:</strong> <code>array</code></li>
-<li><strong>Other keywords:</strong> x-order=153</li>
 </ul>
 </article>
 <article class="card">
@@ -468,7 +451,6 @@
 <li><strong>Type:</strong> <code>object</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Additional properties type:</strong> <code>object</code></li>
-<li><strong>Other keywords:</strong> x-order=154</li>
 </ul>
 </article>
 <article class="card">
@@ -479,7 +461,6 @@
 <li><strong>Type:</strong> <code>object</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Additional properties type:</strong> <code>array</code></li>
-<li><strong>Other keywords:</strong> x-order=155</li>
 </ul>
 </article>
 <article class="card">
@@ -491,7 +472,6 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>safe</code></li>
 <li><strong>Enum:</strong> <code>safe</code>, <code>fast</code></li>
-<li><strong>Other keywords:</strong> x-order=400</li>
 </ul>
 </article>
 <article class="card">
@@ -502,7 +482,6 @@
 <li><strong>Type:</strong> <code>array</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Items type:</strong> <code>string</code></li>
-<li><strong>Other keywords:</strong> x-order=900</li>
 </ul>
 </article>
 <article class="card">
@@ -520,7 +499,6 @@
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=1000</li>
 </ul>
 </article>
 <article class="card">
@@ -530,7 +508,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#model_sharedwindow"><code>model_SharedWindow</code></a> (<code>#/$defs/model_SharedWindow</code>)</li>
-<li><strong>Other keywords:</strong> x-order=1200</li>
 </ul>
 </article>
 </div>
@@ -538,9 +515,159 @@
     </section>
 <section>
       <details class="definition">
-        <summary>AdvancedOptions</summary>
-        <div class="def-body" id="advancedoptions">
-<p>AdvancedOptions groups additional optional controls.</p>
+        <summary>model_SharedOptions</summary>
+        <div class="def-body" id="model_sharedoptions">
+<p>SharedOptions is reusable part expected to be merged into app schema.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 12</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="model_sharedoptionssharedendpoints">model_SharedOptions.SharedEndpoints</h3>
+        <p><strong>Key:</strong> <code>endpoints</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoints</code></p>
+<p>Endpoints are network endpoints shared across components.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#sharedendpoints"><code>SharedEndpoints</code></a> (<code>#/$defs/SharedEndpoints</code>)</li>
+<li><strong>Title:</strong> <code>Endpoint Options</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionslevel_by_subsystem">model_SharedOptions.level_by_subsystem</h3>
+        <p><strong>Key:</strong> <code>level_by_subsystem</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>level_by_subsystem</code></p>
+<p>LevelBySubsystem maps subsystem name to log level.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>string</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionsendpoint_groups">model_SharedOptions.endpoint_groups</h3>
+        <p><strong>Key:</strong> <code>endpoint_groups</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoint_groups</code></p>
+<p>EndpointGroups stores endpoint names grouped by key.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>array</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionssharedtls">model_SharedOptions.SharedTLS</h3>
+        <p><strong>Key:</strong> <code>tls</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>tls</code></p>
+<p>TLS is TLS configuration shared across components.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#sharedtls"><code>SharedTLS</code></a> (<code>#/$defs/SharedTLS</code>)</li>
+<li><strong>Title:</strong> <code>TLS Options</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionslabels">model_SharedOptions.labels</h3>
+        <p><strong>Key:</strong> <code>labels</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>labels</code></p>
+<p>Labels maps short numeric label IDs to values.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Pattern properties:</strong> 1</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionsfeature_matrix">model_SharedOptions.feature_matrix</h3>
+        <p><strong>Key:</strong> <code>feature_matrix</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>feature_matrix</code></p>
+<p>FeatureMatrix stores feature flags as nested map.</p>
+<p>**Matrix semantics**</p>
+<ul><li>First key: feature group name.</li><li>Second key: feature flag name.</li><li>Value: desired on/off state.</li></ul>
+<p>Example:</p>
+<ul><li><code>auth.mfa_required = true</code></li><li><code>billing.v2_invoice = false</code></li></ul>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>object</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionssharedendpointbinding">model_SharedOptions.SharedEndpointBinding</h3>
+        <p><strong>Key:</strong> <code>endpoint_binding</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoint_binding</code></p>
+<p>EndpointBinding links endpoint identity and metadata.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#sharedendpointbinding"><code>SharedEndpointBinding</code></a> (<code>#/$defs/SharedEndpointBinding</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionssharedtoggle">model_SharedOptions.SharedToggle</h3>
+        <p><strong>Key:</strong> <code>feature_toggle</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>feature_toggle</code></p>
+<p>FeatureToggle is a small reusable boolean options block.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#sharedtoggle"><code>SharedToggle</code></a> (<code>#/$defs/SharedToggle</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionssharedwindow">model_SharedOptions.SharedWindow</h3>
+        <p><strong>Key:</strong> <code>maintenance_window</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>maintenance_window</code></p>
+<p>MaintenanceWindow stores shared maintenance timing.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#sharedwindow"><code>SharedWindow</code></a> (<code>#/$defs/SharedWindow</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionsports">model_SharedOptions.ports</h3>
+        <p><strong>Key:</strong> <code>ports</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>ports</code></p>
+<p>Ports maps external service names to exposed port.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>integer</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionsendpoint_ports">model_SharedOptions.endpoint_ports</h3>
+        <p><strong>Key:</strong> <code>endpoint_ports</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoint_ports</code></p>
+<p>EndpointPorts stores ports by endpoint and protocol name.</p>
+<p>This field is useful when one logical endpoint exposes multiple listener protocols (for example <code>http</code>, <code>grpc</code>, <code>admin</code>). Consumers can resolve exact port by <code>(endpoint, protocol)</code> pair without hardcoding transport assumptions.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>object</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedoptionstimeout_by_endpoint">model_SharedOptions.timeout_by_endpoint</h3>
+        <p><strong>Key:</strong> <code>timeout_by_endpoint</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>timeout_by_endpoint</code></p>
+<p>TimeoutByEndpoint stores timeout per endpoint name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>integer</code></li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>SharedEndpoints</summary>
+        <div class="def-body" id="sharedendpoints">
+<p>SharedEndpoints describes common endpoint set used by services.</p>
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
@@ -549,49 +676,51 @@
 </ul>
       </div>
 <article class="card">
-        <h3 id="advancedoptionsmetadata">AdvancedOptions.metadata</h3>
-        <p><strong>Key:</strong> <code>metadata</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>metadata</code></p>
-<p>Metadata keeps arbitrary nested metadata.</p>
+        <h3 id="sharedendpointsapi">SharedEndpoints.api</h3>
+        <p><strong>Key:</strong> <code>api</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>api</code></p>
+<p>API is primary API base URL.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Title:</strong> <code>API Endpoint</code></li>
+<li><strong>Examples:</strong> <code>https://api.acme.local</code></li>
+<li><strong>Format:</strong> <code>uri</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedendpointsinternal">SharedEndpoints.internal</h3>
+        <p><strong>Key:</strong> <code>internal</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>internal</code></p>
+<p>Internal is internal service endpoint URL.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>http://internal:8080</code></li>
+<li><strong>Format:</strong> <code>uri</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedendpointsmetrics">SharedEndpoints.metrics</h3>
+        <p><strong>Key:</strong> <code>metrics</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>metrics</code></p>
+<p>Metrics is optional metrics endpoint URL.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>https://metrics.acme.local</code></li>
+<li><strong>Format:</strong> <code>uri</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedendpointsmeta">SharedEndpoints.meta</h3>
+        <p><strong>Key:</strong> <code>meta</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>meta</code></p>
+<p>Meta stores endpoint metadata by endpoint name.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Additional properties type:</strong> <code>object</code></li>
-<li><strong>Other keywords:</strong> x-order=6</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="advancedoptionscooldown">AdvancedOptions.cooldown</h3>
-        <p><strong>Key:</strong> <code>cooldown</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>cooldown</code></p>
-<p>Cooldown sets cooldown duration after errors.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>integer</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=7</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="advancedoptionscircuit_breaker">AdvancedOptions.circuit_breaker</h3>
-        <p><strong>Key:</strong> <code>circuit_breaker</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>circuit_breaker</code></p>
-<p>CircuitBreaker enables circuit breaker behavior.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=100</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="advancedoptionstags">AdvancedOptions.tags</h3>
-        <p><strong>Key:</strong> <code>tags</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>tags</code></p>
-<p>Tags adds free-form tags.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>array</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Items type:</strong> <code>string</code></li>
-<li><strong>Other keywords:</strong> x-order=101</li>
+<li><strong>Additional properties reference:</strong> <a href="#endpointmeta"><code>EndpointMeta</code></a> (<code>#/$defs/EndpointMeta</code>)</li>
 </ul>
 </article>
 </div>
@@ -599,9 +728,9 @@
     </section>
 <section>
       <details class="definition">
-        <summary>AlertTarget</summary>
-        <div class="def-body" id="alerttarget">
-<p>AlertTarget describes one alerting destination.</p>
+        <summary>EndpointMeta</summary>
+        <div class="def-body" id="endpointmeta">
+<p>EndpointMeta describes metadata for one endpoint target.</p>
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
@@ -610,39 +739,419 @@
 </ul>
       </div>
 <article class="card">
-        <h3 id="alerttargetchannel">AlertTarget.channel</h3>
-        <p><strong>Key:</strong> <code>channel</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigalert_targets"><code>alert_targets</code></a>.<code>[]</code>.<code>[]</code>.<code>channel</code></p>
-<p>Channel is target channel name.</p>
+        <h3 id="endpointmetaweight">EndpointMeta.weight</h3>
+        <p><strong>Key:</strong> <code>weight</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<a href="#model_sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>weight</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<a href="#sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>weight</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<a href="#sharedendpointsmeta"><code>meta</code></a>.<code>[]</code>.<code>weight</code></li>
+</ul>
+<p>Weight is load balancing weight.</p>
 <ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> yes</li>
-<li><strong>Examples:</strong> <code>slack</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=100</code></li>
 </ul>
 </article>
 <article class="card">
-        <h3 id="alerttargetseverity">AlertTarget.severity</h3>
-        <p><strong>Key:</strong> <code>severity</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigalert_targets"><code>alert_targets</code></a>.<code>[]</code>.<code>[]</code>.<code>severity</code></p>
-<p>Severity is optional minimum severity.</p>
+        <h3 id="endpointmetaregion">EndpointMeta.region</h3>
+        <p><strong>Key:</strong> <code>region</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<a href="#model_sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>region</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<a href="#sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>region</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<a href="#sharedendpointsmeta"><code>meta</code></a>.<code>[]</code>.<code>region</code></li>
+</ul>
+<p>Region is deployment region code.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Enum:</strong> <code>info</code>, <code>warn</code>, <code>error</code></li>
-<li><strong>Other keywords:</strong> x-order=3</li>
+<li><strong>Examples:</strong> <code>eu-central-1</code></li>
 </ul>
 </article>
 <article class="card">
-        <h3 id="alerttargetaddress">AlertTarget.address</h3>
-        <p><strong>Key:</strong> <code>address</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigalert_targets"><code>alert_targets</code></a>.<code>[]</code>.<code>[]</code>.<code>address</code></p>
-<p>Address is destination address.</p>
+        <h3 id="endpointmetaread_only">EndpointMeta.read_only</h3>
+        <p><strong>Key:</strong> <code>read_only</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<a href="#model_sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>read_only</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<a href="#sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>read_only</code></li>
+<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<a href="#sharedendpointsmeta"><code>meta</code></a>.<code>[]</code>.<code>read_only</code></li>
+</ul>
+<p>ReadOnly marks endpoint as read-only.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>SharedTLS</summary>
+        <div class="def-body" id="sharedtls">
+<p>SharedTLS describes shared transport security settings.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 4</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="sharedtlsenabled">SharedTLS.enabled</h3>
+        <p><strong>Key:</strong> <code>enabled</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>enabled</code></p>
+<p>Enable TLS for outbound connections.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Title:</strong> <code>TLS Enabled</code></li>
+<li><strong>Default:</strong> <code>true</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedtlscipher_suites">SharedTLS.cipher_suites</h3>
+        <p><strong>Key:</strong> <code>cipher_suites</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>cipher_suites</code></p>
+<p>CipherSuites lists explicitly allowed cipher suites.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>array</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Items type:</strong> <code>string</code></li>
+<li><strong>Items examples:</strong> <code>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedtlsmin_version">SharedTLS.min_version</h3>
+        <p><strong>Key:</strong> <code>min_version</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>min_version</code></p>
+<p>MinVersion is lowest allowed TLS protocol version.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> yes</li>
-<li><strong>Examples:</strong> <code>https://hooks.slack.com/...</code></li>
-<li><strong>Other keywords:</strong> x-order=200</li>
+<li><strong>Default:</strong> <code>1.2</code></li>
+<li><strong>Enum:</strong> <code>1.2</code>, <code>1.3</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedtlshandshake_timeout">SharedTLS.handshake_timeout</h3>
+        <p><strong>Key:</strong> <code>handshake_timeout</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>handshake_timeout</code></p>
+<p>HandshakeTimeout sets TLS handshake timeout.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>SharedEndpointBinding</summary>
+        <div class="def-body" id="sharedendpointbinding">
+<p>SharedEndpointBinding nests existing endpoint metadata into a binding.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="sharedendpointbindingendpointmeta">SharedEndpointBinding.EndpointMeta</h3>
+        <p><strong>Key:</strong> <code>meta</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<code>meta</code></p>
+<p>Meta reuses existing endpoint metadata schema.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#endpointmeta"><code>EndpointMeta</code></a> (<code>#/$defs/EndpointMeta</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedendpointbindingname">SharedEndpointBinding.name</h3>
+        <p><strong>Key:</strong> <code>name</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<code>name</code></p>
+<p>Name is logical binding name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Examples:</strong> <code>primary</code></li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>SharedToggle</summary>
+        <div class="def-body" id="sharedtoggle">
+<p>SharedToggle is a tiny reusable on/off configuration block.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 1</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="sharedtoggleenabled">SharedToggle.enabled</h3>
+        <p><strong>Key:</strong> <code>enabled</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtoggle"><code>feature_toggle</code></a>.<code>enabled</code></p>
+<p>Enabled toggles one optional feature branch.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>true</code></li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>SharedWindow</summary>
+        <div class="def-body" id="sharedwindow">
+<p>SharedWindow is a nested window with retry-aware timing.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 3</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="sharedwindowstart">SharedWindow.start</h3>
+        <p><strong>Key:</strong> <code>start</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedwindow"><code>maintenance_window</code></a>.<code>start</code></p>
+<p>Start is start minute in a one-hour window.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=59</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedwindowretry_delay">SharedWindow.retry_delay</h3>
+        <p><strong>Key:</strong> <code>retry_delay</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedwindow"><code>maintenance_window</code></a>.<code>retry_delay</code></p>
+<p>Retry uses existing base retry-like duration style.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="sharedwindowend">SharedWindow.end</h3>
+        <p><strong>Key:</strong> <code>end</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedwindow"><code>maintenance_window</code></a>.<code>end</code></p>
+<p>End is end minute in a one-hour window.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=59</code></li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>RetryPolicy</summary>
+        <div class="def-body" id="retrypolicy">
+<p>RetryPolicy controls retry behavior for transient failures.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 3</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="retrypolicybackoff_ms">RetryPolicy.backoff_ms</h3>
+        <p><strong>Key:</strong> <code>backoff_ms</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigretrypolicy"><code>optional_retry</code></a>.<code>backoff_ms</code></li>
+<li><a href="#serviceconfigretrypolicy"><code>retry</code></a>.<code>backoff_ms</code></li>
+</ul>
+<p>Backoff is delay between attempts in milliseconds.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>250</code></li>
+<li><strong>Constraints:</strong> <code>minimum=10</code>; <code>maximum=30000</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="retrypolicymax_jitter_ms">RetryPolicy.max_jitter_ms</h3>
+        <p><strong>Key:</strong> <code>max_jitter_ms</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigretrypolicy"><code>optional_retry</code></a>.<code>max_jitter_ms</code></li>
+<li><a href="#serviceconfigretrypolicy"><code>retry</code></a>.<code>max_jitter_ms</code></li>
+</ul>
+<p>MaxJitter is random jitter upper bound in milliseconds.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>100</code></li>
+<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=10000</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="retrypolicyattempts">RetryPolicy.attempts</h3>
+        <p><strong>Key:</strong> <code>attempts</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#serviceconfigretrypolicy"><code>optional_retry</code></a>.<code>attempts</code></li>
+<li><a href="#serviceconfigretrypolicy"><code>retry</code></a>.<code>attempts</code></li>
+</ul>
+<p>Maximum number of retry attempts for one operation.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Title:</strong> <code>Retry Attempts</code></li>
+<li><strong>Default:</strong> <code>3</code></li>
+<li><strong>Constraints:</strong> <code>minimum=1</code>; <code>maximum=10</code></li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Window</summary>
+        <div class="def-body" id="window">
+<p>Window describes daily maintenance time window.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="windowend">Window.end</h3>
+        <p><strong>Key:</strong> <code>end</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigschedule"><code>schedule</code></a>.<code>[]</code>.<code>end</code></p>
+<p>End is end time (HH:MM).</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Constraints:</strong> <code>pattern=^[0-2][0-9]:[0-5][0-9]$</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="windowstart">Window.start</h3>
+        <p><strong>Key:</strong> <code>start</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigschedule"><code>schedule</code></a>.<code>[]</code>.<code>start</code></p>
+<p>Start is start time (HH:MM).</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Constraints:</strong> <code>pattern=^[0-2][0-9]:[0-5][0-9]$</code></li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>TLSOverride</summary>
+        <div class="def-body" id="tlsoverride">
+<p>TLSOverride describes TLS override for one endpoint.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="tlsoverridemin_version">TLSOverride.min_version</h3>
+        <p><strong>Key:</strong> <code>min_version</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigendpoint_tls_overrides"><code>endpoint_tls_overrides</code></a>.<code>[]</code>.<code>min_version</code></p>
+<p>MinVersion overrides minimal TLS version.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Enum:</strong> <code>1.2</code>, <code>1.3</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="tlsoverrideenabled">TLSOverride.enabled</h3>
+        <p><strong>Key:</strong> <code>enabled</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigendpoint_tls_overrides"><code>endpoint_tls_overrides</code></a>.<code>[]</code>.<code>enabled</code></p>
+<p>Enabled overrides TLS state.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>model_SharedToggle</summary>
+        <div class="def-body" id="model_sharedtoggle">
+<p>SharedToggle is a tiny reusable on/off configuration block.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 1</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="model_sharedtoggleenabled">model_SharedToggle.enabled</h3>
+        <p><strong>Key:</strong> <code>enabled</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedtoggle"><code>base_toggle</code></a>.<code>enabled</code></p>
+<p>Enabled toggles one optional feature branch.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>true</code></li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>model_SharedEndpointBinding</summary>
+        <div class="def-body" id="model_sharedendpointbinding">
+<p>SharedEndpointBinding nests existing endpoint metadata into a binding.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="model_sharedendpointbindingendpointmeta">model_SharedEndpointBinding.EndpointMeta</h3>
+        <p><strong>Key:</strong> <code>meta</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<code>meta</code></p>
+<p>Meta reuses existing endpoint metadata schema.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#endpointmeta"><code>EndpointMeta</code></a> (<code>#/$defs/EndpointMeta</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="model_sharedendpointbindingname">model_SharedEndpointBinding.name</h3>
+        <p><strong>Key:</strong> <code>name</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<code>name</code></p>
+<p>Name is logical binding name.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Examples:</strong> <code>primary</code></li>
 </ul>
 </article>
 </div>
@@ -690,7 +1199,6 @@
 <li><strong>Type:</strong> <code>boolean</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>true</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
 </ul>
 </article>
 <article class="card">
@@ -723,72 +1231,6 @@
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> yes</li>
 <li><strong>Default:</strong> <code>probe</code></li>
-<li><strong>Other keywords:</strong> x-order=12</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>EndpointMeta</summary>
-        <div class="def-body" id="endpointmeta">
-<p>EndpointMeta describes metadata for one endpoint target.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 3</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="endpointmetaweight">EndpointMeta.weight</h3>
-        <p><strong>Key:</strong> <code>weight</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<a href="#model_sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>weight</code></li>
-<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<a href="#sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>weight</code></li>
-<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<a href="#sharedendpointsmeta"><code>meta</code></a>.<code>[]</code>.<code>weight</code></li>
-</ul>
-<p>Weight is load balancing weight.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>integer</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=100</code></li>
-<li><strong>Other keywords:</strong> x-order=7</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="endpointmetaregion">EndpointMeta.region</h3>
-        <p><strong>Key:</strong> <code>region</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<a href="#model_sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>region</code></li>
-<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<a href="#sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>region</code></li>
-<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<a href="#sharedendpointsmeta"><code>meta</code></a>.<code>[]</code>.<code>region</code></li>
-</ul>
-<p>Region is deployment region code.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Examples:</strong> <code>eu-central-1</code></li>
-<li><strong>Other keywords:</strong> x-order=91</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="endpointmetaread_only">EndpointMeta.read_only</h3>
-        <p><strong>Key:</strong> <code>read_only</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<a href="#model_sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>read_only</code></li>
-<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<a href="#sharedendpointbindingendpointmeta"><code>meta</code></a>.<code>read_only</code></li>
-<li><a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<a href="#sharedendpointsmeta"><code>meta</code></a>.<code>[]</code>.<code>read_only</code></li>
-</ul>
-<p>ReadOnly marks endpoint as read-only.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=250</li>
 </ul>
 </article>
 </div>
@@ -819,7 +1261,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
-<li><strong>Other keywords:</strong> x-order=2</li>
 </ul>
 </article>
 <article class="card">
@@ -835,7 +1276,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#level2"><code>Level2</code></a> (<code>#/$defs/Level2</code>)</li>
-<li><strong>Other keywords:</strong> x-order=200</li>
 </ul>
 </article>
 </div>
@@ -866,7 +1306,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
-<li><strong>Other keywords:</strong> x-order=9</li>
 </ul>
 </article>
 <article class="card">
@@ -882,7 +1321,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#level3"><code>Level3</code></a> (<code>#/$defs/Level3</code>)</li>
-<li><strong>Other keywords:</strong> x-order=10</li>
 </ul>
 </article>
 </div>
@@ -913,7 +1351,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#level4"><code>Level4</code></a> (<code>#/$defs/Level4</code>)</li>
-<li><strong>Other keywords:</strong> x-order=1</li>
 </ul>
 </article>
 <article class="card">
@@ -929,7 +1366,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
-<li><strong>Other keywords:</strong> x-order=42</li>
 </ul>
 </article>
 </div>
@@ -960,7 +1396,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#level5"><code>Level5</code></a> (<code>#/$defs/Level5</code>)</li>
-<li><strong>Other keywords:</strong> x-order=4</li>
 </ul>
 </article>
 <article class="card">
@@ -976,7 +1411,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
-<li><strong>Other keywords:</strong> x-order=41</li>
 </ul>
 </article>
 </div>
@@ -1007,7 +1441,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#level6"><code>Level6</code></a> (<code>#/$defs/Level6</code>)</li>
-<li><strong>Other keywords:</strong> x-order=3</li>
 </ul>
 </article>
 <article class="card">
@@ -1023,7 +1456,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
-<li><strong>Other keywords:</strong> x-order=77</li>
 </ul>
 </article>
 </div>
@@ -1055,7 +1487,6 @@
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Examples:</strong> <code>done</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
 </ul>
 </article>
 <article class="card">
@@ -1071,7 +1502,63 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> yes</li>
 <li><strong>Reference:</strong> <a href="#deepprobe"><code>DeepProbe</code></a> (<code>#/$defs/DeepProbe</code>)</li>
-<li><strong>Other keywords:</strong> x-order=20</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>AdvancedOptions</summary>
+        <div class="def-body" id="advancedoptions">
+<p>AdvancedOptions groups additional optional controls.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 4</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="advancedoptionsmetadata">AdvancedOptions.metadata</h3>
+        <p><strong>Key:</strong> <code>metadata</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>metadata</code></p>
+<p>Metadata keeps arbitrary nested metadata.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Additional properties type:</strong> <code>object</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="advancedoptionscooldown">AdvancedOptions.cooldown</h3>
+        <p><strong>Key:</strong> <code>cooldown</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>cooldown</code></p>
+<p>Cooldown sets cooldown duration after errors.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="advancedoptionscircuit_breaker">AdvancedOptions.circuit_breaker</h3>
+        <p><strong>Key:</strong> <code>circuit_breaker</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>circuit_breaker</code></p>
+<p>CircuitBreaker enables circuit breaker behavior.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="advancedoptionstags">AdvancedOptions.tags</h3>
+        <p><strong>Key:</strong> <code>tags</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigadvancedoptions"><code>advanced</code></a>.<code>tags</code></p>
+<p>Tags adds free-form tags.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>array</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Items type:</strong> <code>string</code></li>
 </ul>
 </article>
 </div>
@@ -1099,7 +1586,6 @@
 <li><strong>Required:</strong> yes</li>
 <li><strong>Default:</strong> <code>4</code></li>
 <li><strong>Constraints:</strong> <code>minimum=1</code>; <code>maximum=128</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
 </ul>
 </article>
 <article class="card">
@@ -1110,7 +1596,6 @@
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>integer</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=2</li>
 </ul>
 </article>
 <article class="card">
@@ -1123,321 +1608,6 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>100</code></li>
 <li><strong>Constraints:</strong> <code>minimum=1</code>; <code>maximum=10000</code></li>
-<li><strong>Other keywords:</strong> x-order=80</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>RetryPolicy</summary>
-        <div class="def-body" id="retrypolicy">
-<p>RetryPolicy controls retry behavior for transient failures.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 3</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="retrypolicybackoff_ms">RetryPolicy.backoff_ms</h3>
-        <p><strong>Key:</strong> <code>backoff_ms</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#serviceconfigretrypolicy"><code>optional_retry</code></a>.<code>backoff_ms</code></li>
-<li><a href="#serviceconfigretrypolicy"><code>retry</code></a>.<code>backoff_ms</code></li>
-</ul>
-<p>Backoff is delay between attempts in milliseconds.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>integer</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>250</code></li>
-<li><strong>Constraints:</strong> <code>minimum=10</code>; <code>maximum=30000</code></li>
-<li><strong>Other keywords:</strong> x-order=4</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="retrypolicymax_jitter_ms">RetryPolicy.max_jitter_ms</h3>
-        <p><strong>Key:</strong> <code>max_jitter_ms</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#serviceconfigretrypolicy"><code>optional_retry</code></a>.<code>max_jitter_ms</code></li>
-<li><a href="#serviceconfigretrypolicy"><code>retry</code></a>.<code>max_jitter_ms</code></li>
-</ul>
-<p>MaxJitter is random jitter upper bound in milliseconds.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>integer</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>100</code></li>
-<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=10000</code></li>
-<li><strong>Other keywords:</strong> x-order=40</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="retrypolicyattempts">RetryPolicy.attempts</h3>
-        <p><strong>Key:</strong> <code>attempts</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#serviceconfigretrypolicy"><code>optional_retry</code></a>.<code>attempts</code></li>
-<li><a href="#serviceconfigretrypolicy"><code>retry</code></a>.<code>attempts</code></li>
-</ul>
-<p>Maximum number of retry attempts for one operation.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>integer</code></li>
-<li><strong>Required:</strong> yes</li>
-<li><strong>Title:</strong> <code>Retry Attempts</code></li>
-<li><strong>Default:</strong> <code>3</code></li>
-<li><strong>Constraints:</strong> <code>minimum=1</code>; <code>maximum=10</code></li>
-<li><strong>Other keywords:</strong> x-order=500</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>SharedEndpointBinding</summary>
-        <div class="def-body" id="sharedendpointbinding">
-<p>SharedEndpointBinding nests existing endpoint metadata into a binding.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 2</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="sharedendpointbindingendpointmeta">SharedEndpointBinding.EndpointMeta</h3>
-        <p><strong>Key:</strong> <code>meta</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<code>meta</code></p>
-<p>Meta reuses existing endpoint metadata schema.</p>
-<ul class="attr-list">
-<li><strong>Required:</strong> yes</li>
-<li><strong>Reference:</strong> <a href="#endpointmeta"><code>EndpointMeta</code></a> (<code>#/$defs/EndpointMeta</code>)</li>
-<li><strong>Other keywords:</strong> x-order=3</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="sharedendpointbindingname">SharedEndpointBinding.name</h3>
-        <p><strong>Key:</strong> <code>name</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpointbinding"><code>endpoint_binding</code></a>.<code>name</code></p>
-<p>Name is logical binding name.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> yes</li>
-<li><strong>Examples:</strong> <code>primary</code></li>
-<li><strong>Other keywords:</strong> x-order=14</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>SharedEndpoints</summary>
-        <div class="def-body" id="sharedendpoints">
-<p>SharedEndpoints describes common endpoint set used by services.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 4</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="sharedendpointsapi">SharedEndpoints.api</h3>
-        <p><strong>Key:</strong> <code>api</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>api</code></p>
-<p>API is primary API base URL.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> yes</li>
-<li><strong>Title:</strong> <code>API Endpoint</code></li>
-<li><strong>Examples:</strong> <code>https://api.acme.local</code></li>
-<li><strong>Format:</strong> <code>uri</code></li>
-<li><strong>Other keywords:</strong> x-order=5</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="sharedendpointsinternal">SharedEndpoints.internal</h3>
-        <p><strong>Key:</strong> <code>internal</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>internal</code></p>
-<p>Internal is internal service endpoint URL.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Examples:</strong> <code>http://internal:8080</code></li>
-<li><strong>Format:</strong> <code>uri</code></li>
-<li><strong>Other keywords:</strong> x-order=6</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="sharedendpointsmetrics">SharedEndpoints.metrics</h3>
-        <p><strong>Key:</strong> <code>metrics</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>metrics</code></p>
-<p>Metrics is optional metrics endpoint URL.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Examples:</strong> <code>https://metrics.acme.local</code></li>
-<li><strong>Format:</strong> <code>uri</code></li>
-<li><strong>Other keywords:</strong> x-order=111</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="sharedendpointsmeta">SharedEndpoints.meta</h3>
-        <p><strong>Key:</strong> <code>meta</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedendpoints"><code>endpoints</code></a>.<code>meta</code></p>
-<p>Meta stores endpoint metadata by endpoint name.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Additional properties reference:</strong> <a href="#endpointmeta"><code>EndpointMeta</code></a> (<code>#/$defs/EndpointMeta</code>)</li>
-<li><strong>Other keywords:</strong> x-order=204</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>SharedTLS</summary>
-        <div class="def-body" id="sharedtls">
-<p>SharedTLS describes shared transport security settings.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 4</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="sharedtlsenabled">SharedTLS.enabled</h3>
-        <p><strong>Key:</strong> <code>enabled</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>enabled</code></p>
-<p>Enable TLS for outbound connections.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> yes</li>
-<li><strong>Title:</strong> <code>TLS Enabled</code></li>
-<li><strong>Default:</strong> <code>true</code></li>
-<li><strong>Other keywords:</strong> x-order=12</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="sharedtlscipher_suites">SharedTLS.cipher_suites</h3>
-        <p><strong>Key:</strong> <code>cipher_suites</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>cipher_suites</code></p>
-<p>CipherSuites lists explicitly allowed cipher suites.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>array</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Items type:</strong> <code>string</code></li>
-<li><strong>Items examples:</strong> <code>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</code></li>
-<li><strong>Other keywords:</strong> x-order=13</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="sharedtlsmin_version">SharedTLS.min_version</h3>
-        <p><strong>Key:</strong> <code>min_version</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>min_version</code></p>
-<p>MinVersion is lowest allowed TLS protocol version.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> yes</li>
-<li><strong>Default:</strong> <code>1.2</code></li>
-<li><strong>Enum:</strong> <code>1.2</code>, <code>1.3</code></li>
-<li><strong>Other keywords:</strong> x-order=88</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="sharedtlshandshake_timeout">SharedTLS.handshake_timeout</h3>
-        <p><strong>Key:</strong> <code>handshake_timeout</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtls"><code>tls</code></a>.<code>handshake_timeout</code></p>
-<p>HandshakeTimeout sets TLS handshake timeout.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>integer</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=377</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>SharedToggle</summary>
-        <div class="def-body" id="sharedtoggle">
-<p>SharedToggle is a tiny reusable on/off configuration block.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 1</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="sharedtoggleenabled">SharedToggle.enabled</h3>
-        <p><strong>Key:</strong> <code>enabled</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedtoggle"><code>feature_toggle</code></a>.<code>enabled</code></p>
-<p>Enabled toggles one optional feature branch.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>true</code></li>
-<li><strong>Other keywords:</strong> x-order=42</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>SharedWindow</summary>
-        <div class="def-body" id="sharedwindow">
-<p>SharedWindow is a nested window with retry-aware timing.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 3</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="sharedwindowstart">SharedWindow.start</h3>
-        <p><strong>Key:</strong> <code>start</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedwindow"><code>maintenance_window</code></a>.<code>start</code></p>
-<p>Start is start minute in a one-hour window.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>integer</code></li>
-<li><strong>Required:</strong> yes</li>
-<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=59</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="sharedwindowretry_delay">SharedWindow.retry_delay</h3>
-        <p><strong>Key:</strong> <code>retry_delay</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedwindow"><code>maintenance_window</code></a>.<code>retry_delay</code></p>
-<p>Retry uses existing base retry-like duration style.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>integer</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=17</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="sharedwindowend">SharedWindow.end</h3>
-        <p><strong>Key:</strong> <code>end</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<a href="#model_sharedoptionssharedwindow"><code>maintenance_window</code></a>.<code>end</code></p>
-<p>End is end minute in a one-hour window.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>integer</code></li>
-<li><strong>Required:</strong> yes</li>
-<li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=59</code></li>
-<li><strong>Other keywords:</strong> x-order=999</li>
 </ul>
 </article>
 </div>
@@ -1469,7 +1639,6 @@
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Examples:</strong> <code>us-east-1</code></li>
-<li><strong>Other keywords:</strong> x-order=3</li>
 </ul>
 </article>
 <article class="card">
@@ -1487,7 +1656,6 @@
 <li><strong>Required:</strong> yes</li>
 <li><strong>Examples:</strong> <code>artifacts-main</code></li>
 <li><strong>Constraints:</strong> <code>minLength=3</code></li>
-<li><strong>Other keywords:</strong> x-order=70</li>
 </ul>
 </article>
 <article class="card">
@@ -1503,7 +1671,6 @@
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>boolean</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=71</li>
 </ul>
 </article>
 </div>
@@ -1511,303 +1678,47 @@
     </section>
 <section>
       <details class="definition">
-        <summary>TLSOverride</summary>
-        <div class="def-body" id="tlsoverride">
-<p>TLSOverride describes TLS override for one endpoint.</p>
+        <summary>AlertTarget</summary>
+        <div class="def-body" id="alerttarget">
+<p>AlertTarget describes one alerting destination.</p>
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 2</li>
+<li><strong>Properties:</strong> 3</li>
 <li><strong>Additional properties:</strong> boolean schema=false</li>
 </ul>
       </div>
 <article class="card">
-        <h3 id="tlsoverridemin_version">TLSOverride.min_version</h3>
-        <p><strong>Key:</strong> <code>min_version</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigendpoint_tls_overrides"><code>endpoint_tls_overrides</code></a>.<code>[]</code>.<code>min_version</code></p>
-<p>MinVersion overrides minimal TLS version.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Enum:</strong> <code>1.2</code>, <code>1.3</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="tlsoverrideenabled">TLSOverride.enabled</h3>
-        <p><strong>Key:</strong> <code>enabled</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigendpoint_tls_overrides"><code>endpoint_tls_overrides</code></a>.<code>[]</code>.<code>enabled</code></p>
-<p>Enabled overrides TLS state.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=9</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>Window</summary>
-        <div class="def-body" id="window">
-<p>Window describes daily maintenance time window.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 2</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="windowend">Window.end</h3>
-        <p><strong>Key:</strong> <code>end</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigschedule"><code>schedule</code></a>.<code>[]</code>.<code>end</code></p>
-<p>End is end time (HH:MM).</p>
+        <h3 id="alerttargetchannel">AlertTarget.channel</h3>
+        <p><strong>Key:</strong> <code>channel</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigalert_targets"><code>alert_targets</code></a>.<code>[]</code>.<code>[]</code>.<code>channel</code></p>
+<p>Channel is target channel name.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> yes</li>
-<li><strong>Constraints:</strong> <code>pattern=^[0-2][0-9]:[0-5][0-9]$</code></li>
-<li><strong>Other keywords:</strong> x-order=5</li>
+<li><strong>Examples:</strong> <code>slack</code></li>
 </ul>
 </article>
 <article class="card">
-        <h3 id="windowstart">Window.start</h3>
-        <p><strong>Key:</strong> <code>start</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigschedule"><code>schedule</code></a>.<code>[]</code>.<code>start</code></p>
-<p>Start is start time (HH:MM).</p>
+        <h3 id="alerttargetseverity">AlertTarget.severity</h3>
+        <p><strong>Key:</strong> <code>severity</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigalert_targets"><code>alert_targets</code></a>.<code>[]</code>.<code>[]</code>.<code>severity</code></p>
+<p>Severity is optional minimum severity.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Enum:</strong> <code>info</code>, <code>warn</code>, <code>error</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="alerttargetaddress">AlertTarget.address</h3>
+        <p><strong>Key:</strong> <code>address</code></p>
+<p><strong>Path:</strong> <a href="#serviceconfigalert_targets"><code>alert_targets</code></a>.<code>[]</code>.<code>[]</code>.<code>address</code></p>
+<p>Address is destination address.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> yes</li>
-<li><strong>Constraints:</strong> <code>pattern=^[0-2][0-9]:[0-5][0-9]$</code></li>
-<li><strong>Other keywords:</strong> x-order=44</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>model_SharedEndpointBinding</summary>
-        <div class="def-body" id="model_sharedendpointbinding">
-<p>SharedEndpointBinding nests existing endpoint metadata into a binding.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 2</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="model_sharedendpointbindingendpointmeta">model_SharedEndpointBinding.EndpointMeta</h3>
-        <p><strong>Key:</strong> <code>meta</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<code>meta</code></p>
-<p>Meta reuses existing endpoint metadata schema.</p>
-<ul class="attr-list">
-<li><strong>Required:</strong> yes</li>
-<li><strong>Reference:</strong> <a href="#endpointmeta"><code>EndpointMeta</code></a> (<code>#/$defs/EndpointMeta</code>)</li>
-<li><strong>Other keywords:</strong> x-order=3</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedendpointbindingname">model_SharedEndpointBinding.name</h3>
-        <p><strong>Key:</strong> <code>name</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedendpointbinding"><code>base_binding</code></a>.<code>name</code></p>
-<p>Name is logical binding name.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> yes</li>
-<li><strong>Examples:</strong> <code>primary</code></li>
-<li><strong>Other keywords:</strong> x-order=14</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>model_SharedOptions</summary>
-        <div class="def-body" id="model_sharedoptions">
-<p>SharedOptions is reusable part expected to be merged into app schema.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 12</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="model_sharedoptionssharedendpoints">model_SharedOptions.SharedEndpoints</h3>
-        <p><strong>Key:</strong> <code>endpoints</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoints</code></p>
-<p>Endpoints are network endpoints shared across components.</p>
-<ul class="attr-list">
-<li><strong>Required:</strong> yes</li>
-<li><strong>Reference:</strong> <a href="#sharedendpoints"><code>SharedEndpoints</code></a> (<code>#/$defs/SharedEndpoints</code>)</li>
-<li><strong>Title:</strong> <code>Endpoint Options</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedoptionslevel_by_subsystem">model_SharedOptions.level_by_subsystem</h3>
-        <p><strong>Key:</strong> <code>level_by_subsystem</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>level_by_subsystem</code></p>
-<p>LevelBySubsystem maps subsystem name to log level.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Additional properties type:</strong> <code>string</code></li>
-<li><strong>Other keywords:</strong> x-order=4</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedoptionsendpoint_groups">model_SharedOptions.endpoint_groups</h3>
-        <p><strong>Key:</strong> <code>endpoint_groups</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoint_groups</code></p>
-<p>EndpointGroups stores endpoint names grouped by key.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Additional properties type:</strong> <code>array</code></li>
-<li><strong>Other keywords:</strong> x-order=8</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedoptionssharedtls">model_SharedOptions.SharedTLS</h3>
-        <p><strong>Key:</strong> <code>tls</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>tls</code></p>
-<p>TLS is TLS configuration shared across components.</p>
-<ul class="attr-list">
-<li><strong>Required:</strong> yes</li>
-<li><strong>Reference:</strong> <a href="#sharedtls"><code>SharedTLS</code></a> (<code>#/$defs/SharedTLS</code>)</li>
-<li><strong>Title:</strong> <code>TLS Options</code></li>
-<li><strong>Other keywords:</strong> x-order=10</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedoptionslabels">model_SharedOptions.labels</h3>
-        <p><strong>Key:</strong> <code>labels</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>labels</code></p>
-<p>Labels maps short numeric label IDs to values.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Pattern properties:</strong> 1</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-<li><strong>Other keywords:</strong> x-order=21</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedoptionsfeature_matrix">model_SharedOptions.feature_matrix</h3>
-        <p><strong>Key:</strong> <code>feature_matrix</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>feature_matrix</code></p>
-<p>FeatureMatrix stores feature flags as nested map.</p>
-<p>**Matrix semantics**</p>
-<ul><li>First key: feature group name.</li><li>Second key: feature flag name.</li><li>Value: desired on/off state.</li></ul>
-<p>Example:</p>
-<ul><li><code>auth.mfa_required = true</code></li><li><code>billing.v2_invoice = false</code></li></ul>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Additional properties type:</strong> <code>object</code></li>
-<li><strong>Other keywords:</strong> x-order=41</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedoptionssharedendpointbinding">model_SharedOptions.SharedEndpointBinding</h3>
-        <p><strong>Key:</strong> <code>endpoint_binding</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoint_binding</code></p>
-<p>EndpointBinding links endpoint identity and metadata.</p>
-<ul class="attr-list">
-<li><strong>Required:</strong> no</li>
-<li><strong>Reference:</strong> <a href="#sharedendpointbinding"><code>SharedEndpointBinding</code></a> (<code>#/$defs/SharedEndpointBinding</code>)</li>
-<li><strong>Other keywords:</strong> x-order=65</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedoptionssharedtoggle">model_SharedOptions.SharedToggle</h3>
-        <p><strong>Key:</strong> <code>feature_toggle</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>feature_toggle</code></p>
-<p>FeatureToggle is a small reusable boolean options block.</p>
-<ul class="attr-list">
-<li><strong>Required:</strong> no</li>
-<li><strong>Reference:</strong> <a href="#sharedtoggle"><code>SharedToggle</code></a> (<code>#/$defs/SharedToggle</code>)</li>
-<li><strong>Other keywords:</strong> x-order=66</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedoptionssharedwindow">model_SharedOptions.SharedWindow</h3>
-        <p><strong>Key:</strong> <code>maintenance_window</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>maintenance_window</code></p>
-<p>MaintenanceWindow stores shared maintenance timing.</p>
-<ul class="attr-list">
-<li><strong>Required:</strong> no</li>
-<li><strong>Reference:</strong> <a href="#sharedwindow"><code>SharedWindow</code></a> (<code>#/$defs/SharedWindow</code>)</li>
-<li><strong>Other keywords:</strong> x-order=67</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedoptionsports">model_SharedOptions.ports</h3>
-        <p><strong>Key:</strong> <code>ports</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>ports</code></p>
-<p>Ports maps external service names to exposed port.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Additional properties type:</strong> <code>integer</code></li>
-<li><strong>Other keywords:</strong> x-order=300</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedoptionsendpoint_ports">model_SharedOptions.endpoint_ports</h3>
-        <p><strong>Key:</strong> <code>endpoint_ports</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>endpoint_ports</code></p>
-<p>EndpointPorts stores ports by endpoint and protocol name.</p>
-<p>This field is useful when one logical endpoint exposes multiple listener protocols (for example <code>http</code>, <code>grpc</code>, <code>admin</code>). Consumers can resolve exact port by <code>(endpoint, protocol)</code> pair without hardcoding transport assumptions.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Additional properties type:</strong> <code>object</code></li>
-<li><strong>Other keywords:</strong> x-order=305</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="model_sharedoptionstimeout_by_endpoint">model_SharedOptions.timeout_by_endpoint</h3>
-        <p><strong>Key:</strong> <code>timeout_by_endpoint</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedoptions"><code>shared</code></a>.<code>timeout_by_endpoint</code></p>
-<p>TimeoutByEndpoint stores timeout per endpoint name.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Additional properties type:</strong> <code>integer</code></li>
-<li><strong>Other keywords:</strong> x-order=700</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>model_SharedToggle</summary>
-        <div class="def-body" id="model_sharedtoggle">
-<p>SharedToggle is a tiny reusable on/off configuration block.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 1</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="model_sharedtoggleenabled">model_SharedToggle.enabled</h3>
-        <p><strong>Key:</strong> <code>enabled</code></p>
-<p><strong>Path:</strong> <a href="#serviceconfigmodel_sharedtoggle"><code>base_toggle</code></a>.<code>enabled</code></p>
-<p>Enabled toggles one optional feature branch.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>true</code></li>
-<li><strong>Other keywords:</strong> x-order=42</li>
+<li><strong>Examples:</strong> <code>https://hooks.slack.com/...</code></li>
 </ul>
 </article>
 </div>
@@ -1834,7 +1745,6 @@
 <li><strong>Type:</strong> <code>integer</code></li>
 <li><strong>Required:</strong> yes</li>
 <li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=59</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
 </ul>
 </article>
 <article class="card">
@@ -1845,7 +1755,6 @@
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>integer</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=17</li>
 </ul>
 </article>
 <article class="card">
@@ -1857,7 +1766,6 @@
 <li><strong>Type:</strong> <code>integer</code></li>
 <li><strong>Required:</strong> yes</li>
 <li><strong>Constraints:</strong> <code>minimum=0</code>; <code>maximum=59</code></li>
-<li><strong>Other keywords:</strong> x-order=999</li>
 </ul>
 </article>
 </div>

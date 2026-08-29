@@ -15,8 +15,18 @@ Golden fixture for list template with embedded required YAML example.
 ## Contents
 
 - [ServiceConfig](#serviceconfig)
-  - [AdvancedOptions](#advancedoptions)
-  - [AlertTarget](#alerttarget)
+  - [model_SharedOptions](#model_sharedoptions)
+    - [SharedEndpoints](#sharedendpoints)
+      - [EndpointMeta](#endpointmeta)
+    - [SharedTLS](#sharedtls)
+    - [SharedEndpointBinding](#sharedendpointbinding)
+    - [SharedToggle](#sharedtoggle)
+    - [SharedWindow](#sharedwindow)
+  - [RetryPolicy](#retrypolicy)
+  - [Window](#window)
+  - [TLSOverride](#tlsoverride)
+  - [model_SharedToggle](#model_sharedtoggle)
+  - [model_SharedEndpointBinding](#model_sharedendpointbinding)
   - [DeepProbe](#deepprobe)
   - [Level1](#level1)
     - [Level2](#level2)
@@ -24,20 +34,10 @@ Golden fixture for list template with embedded required YAML example.
         - [Level4](#level4)
           - [Level5](#level5)
             - [Level6](#level6)
+  - [AdvancedOptions](#advancedoptions)
   - [QueueOptions](#queueoptions)
-  - [RetryPolicy](#retrypolicy)
   - [StorageBucket](#storagebucket)
-  - [TLSOverride](#tlsoverride)
-  - [Window](#window)
-  - [model_SharedEndpointBinding](#model_sharedendpointbinding)
-    - [EndpointMeta](#endpointmeta)
-  - [model_SharedOptions](#model_sharedoptions)
-    - [SharedEndpointBinding](#sharedendpointbinding)
-    - [SharedEndpoints](#sharedendpoints)
-    - [SharedTLS](#sharedtls)
-    - [SharedToggle](#sharedtoggle)
-    - [SharedWindow](#sharedwindow)
-  - [model_SharedToggle](#model_sharedtoggle)
+  - [AlertTarget](#alerttarget)
   - [model_SharedWindow](#model_sharedwindow)
 - [Example yaml document](#example-yaml-document)
 
@@ -62,7 +62,6 @@ Attributes:
 - Required: yes
 - Reference: [`model_SharedOptions`](#model_sharedoptions) (`#/$defs/model_SharedOptions`)
 - Title: `Shared Options`
-- Other keywords: x-order=1
 
 ### ServiceConfig.name
 
@@ -77,7 +76,6 @@ Attributes:
 - Title: `Service Name`
 - Default: `demo-service`
 - Constraints: `minLength=3`
-- Other keywords: x-order=10
 
 ### ServiceConfig.RetryPolicy
 
@@ -90,7 +88,6 @@ Attributes:
 - Required: yes
 - Reference: [`RetryPolicy`](#retrypolicy) (`#/$defs/RetryPolicy`)
 - Title: `Retry Policy`
-- Other keywords: x-order=11
 
 ### ServiceConfig.schedule
 
@@ -104,7 +101,6 @@ Attributes:
 - Required: no
 - Items reference: [`Window`](#window) (`#/$defs/Window`)
 - Constraints: `minItems=7`; `maxItems=7`
-- Other keywords: x-order=13
 
 ### ServiceConfig.endpoint_tls_overrides
 
@@ -117,7 +113,6 @@ Attributes:
 - Type: `object`
 - Required: no
 - Additional properties reference: [`TLSOverride`](#tlsoverride) (`#/$defs/TLSOverride`)
-- Other keywords: x-order=14
 
 ### ServiceConfig.RetryPolicy
 
@@ -129,7 +124,6 @@ Attributes:
 
 - Required: no
 - Reference: [`RetryPolicy`](#retrypolicy) (`#/$defs/RetryPolicy`)
-- Other keywords: x-order=15
 
 ### ServiceConfig.model_SharedToggle
 
@@ -141,7 +135,6 @@ Attributes:
 
 - Required: no
 - Reference: [`model_SharedToggle`](#model_sharedtoggle) (`#/$defs/model_SharedToggle`)
-- Other keywords: x-order=16
 
 ### ServiceConfig.model_SharedEndpointBinding
 
@@ -153,7 +146,6 @@ Attributes:
 
 - Required: no
 - Reference: [`model_SharedEndpointBinding`](#model_sharedendpointbinding) (`#/$defs/model_SharedEndpointBinding`)
-- Other keywords: x-order=17
 
 ### ServiceConfig.DeepProbe
 
@@ -165,7 +157,6 @@ Attributes:
 
 - Required: no
 - Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
-- Other keywords: x-order=18
 
 ### ServiceConfig.Level1
 
@@ -177,7 +168,6 @@ Attributes:
 
 - Required: no
 - Reference: [`Level1`](#level1) (`#/$defs/Level1`)
-- Other keywords: x-order=19
 
 ### ServiceConfig.Level1
 
@@ -189,7 +179,6 @@ Attributes:
 
 - Required: no
 - Reference: [`Level1`](#level1) (`#/$defs/Level1`)
-- Other keywords: x-order=20
 
 ### ServiceConfig.deep_by_env
 
@@ -202,7 +191,6 @@ Attributes:
 - Type: `object`
 - Required: no
 - Additional properties reference: [`Level1`](#level1) (`#/$defs/Level1`)
-- Other keywords: x-order=21
 
 ### ServiceConfig.AdvancedOptions
 
@@ -214,7 +202,6 @@ Attributes:
 
 - Required: no
 - Reference: [`AdvancedOptions`](#advancedoptions) (`#/$defs/AdvancedOptions`)
-- Other keywords: x-order=22
 
 ### ServiceConfig.queues
 
@@ -227,7 +214,6 @@ Attributes:
 - Type: `object`
 - Required: no
 - Additional properties reference: [`QueueOptions`](#queueoptions) (`#/$defs/QueueOptions`)
-- Other keywords: x-order=150
 
 ### ServiceConfig.named_buckets
 
@@ -240,7 +226,6 @@ Attributes:
 - Type: `object`
 - Required: no
 - Additional properties reference: [`StorageBucket`](#storagebucket) (`#/$defs/StorageBucket`)
-- Other keywords: x-order=151
 
 ### ServiceConfig.buckets_by_priority
 
@@ -254,7 +239,6 @@ Attributes:
 - Required: no
 - Pattern properties: 1
 - Additional properties: boolean schema=false
-- Other keywords: x-order=152
 
 ### ServiceConfig.bucket_groups
 
@@ -267,7 +251,6 @@ Attributes:
 - Type: `object`
 - Required: no
 - Additional properties type: `array`
-- Other keywords: x-order=153
 
 ### ServiceConfig.queue_workers_by_zone
 
@@ -280,7 +263,6 @@ Attributes:
 - Type: `object`
 - Required: no
 - Additional properties type: `object`
-- Other keywords: x-order=154
 
 ### ServiceConfig.alert_targets
 
@@ -293,7 +275,6 @@ Attributes:
 - Type: `object`
 - Required: no
 - Additional properties type: `array`
-- Other keywords: x-order=155
 
 ### ServiceConfig.mode
 
@@ -307,7 +288,6 @@ Attributes:
 - Required: no
 - Default: `safe`
 - Enum: `safe`, `fast`
-- Other keywords: x-order=400
 
 ### ServiceConfig.mirror_endpoints
 
@@ -320,7 +300,6 @@ Attributes:
 - Type: `array`
 - Required: no
 - Items type: `string`
-- Other keywords: x-order=900
 
 ### ServiceConfig.extensions
 
@@ -360,7 +339,6 @@ Attributes:
 
 - Type: `object`
 - Required: no
-- Other keywords: x-order=1000
 
 ### ServiceConfig.model_SharedWindow
 
@@ -372,11 +350,202 @@ Attributes:
 
 - Required: no
 - Reference: [`model_SharedWindow`](#model_sharedwindow) (`#/$defs/model_SharedWindow`)
-- Other keywords: x-order=1200
 
-## AdvancedOptions
+## model_SharedOptions
 
-AdvancedOptions groups additional optional controls.
+SharedOptions is reusable part expected to be merged into app schema.
+
+Attributes:
+
+- Type: `object`
+- Properties: 12
+- Additional properties: boolean schema=false
+
+### model_SharedOptions.SharedEndpoints
+
+Key: `endpoints`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoints`
+
+Endpoints are network endpoints shared across components.
+
+Attributes:
+
+- Required: yes
+- Reference: [`SharedEndpoints`](#sharedendpoints) (`#/$defs/SharedEndpoints`)
+- Title: `Endpoint Options`
+
+### model_SharedOptions.level_by_subsystem
+
+Key: `level_by_subsystem`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`level_by_subsystem`
+
+LevelBySubsystem maps subsystem name to log level.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `string`
+
+### model_SharedOptions.endpoint_groups
+
+Key: `endpoint_groups`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoint_groups`
+
+EndpointGroups stores endpoint names grouped by key.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `array`
+
+### model_SharedOptions.SharedTLS
+
+Key: `tls`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`tls`
+
+TLS is TLS configuration shared across components.
+
+Attributes:
+
+- Required: yes
+- Reference: [`SharedTLS`](#sharedtls) (`#/$defs/SharedTLS`)
+- Title: `TLS Options`
+
+### model_SharedOptions.labels
+
+Key: `labels`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`labels`
+
+Labels maps short numeric label IDs to values.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Pattern properties: 1
+- Additional properties: boolean schema=false
+
+### model_SharedOptions.feature_matrix
+
+Key: `feature_matrix`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`feature_matrix`
+
+FeatureMatrix stores feature flags as nested map.
+
+**Matrix semantics**
+
+- First key: feature group name.
+- Second key: feature flag name.
+- Value: desired on/off state.
+
+Example:
+
+- `auth.mfa_required = true`
+- `billing.v2_invoice = false`
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `object`
+
+### model_SharedOptions.SharedEndpointBinding
+
+Key: `endpoint_binding`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoint_binding`
+
+EndpointBinding links endpoint identity and metadata.
+
+Attributes:
+
+- Required: no
+- Reference: [`SharedEndpointBinding`](#sharedendpointbinding) (`#/$defs/SharedEndpointBinding`)
+
+### model_SharedOptions.SharedToggle
+
+Key: `feature_toggle`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`feature_toggle`
+
+FeatureToggle is a small reusable boolean options block.
+
+Attributes:
+
+- Required: no
+- Reference: [`SharedToggle`](#sharedtoggle) (`#/$defs/SharedToggle`)
+
+### model_SharedOptions.SharedWindow
+
+Key: `maintenance_window`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`maintenance_window`
+
+MaintenanceWindow stores shared maintenance timing.
+
+Attributes:
+
+- Required: no
+- Reference: [`SharedWindow`](#sharedwindow) (`#/$defs/SharedWindow`)
+
+### model_SharedOptions.ports
+
+Key: `ports`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`ports`
+
+Ports maps external service names to exposed port.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `integer`
+
+### model_SharedOptions.endpoint_ports
+
+Key: `endpoint_ports`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoint_ports`
+
+EndpointPorts stores ports by endpoint and protocol name.
+
+This field is useful when one logical endpoint exposes multiple listener
+protocols (for example `http`, `grpc`, `admin`). Consumers can resolve
+exact port by `(endpoint, protocol)` pair without hardcoding transport
+assumptions.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `object`
+
+### model_SharedOptions.timeout_by_endpoint
+
+Key: `timeout_by_endpoint`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).`timeout_by_endpoint`
+
+TimeoutByEndpoint stores timeout per endpoint name.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `integer`
+
+## SharedEndpoints
+
+SharedEndpoints describes common endpoint set used by services.
 
 Attributes:
 
@@ -384,67 +553,69 @@ Attributes:
 - Properties: 4
 - Additional properties: boolean schema=false
 
-### AdvancedOptions.metadata
+### SharedEndpoints.api
 
-Key: `metadata`
+Key: `api`
 
-Path: [`advanced`](#serviceconfigadvancedoptions).`metadata`
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`api`
 
-Metadata keeps arbitrary nested metadata.
+API is primary API base URL.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Title: `API Endpoint`
+- Examples: `https://api.acme.local`
+- Format: `uri`
+
+### SharedEndpoints.internal
+
+Key: `internal`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`internal`
+
+Internal is internal service endpoint URL.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Examples: `http://internal:8080`
+- Format: `uri`
+
+### SharedEndpoints.metrics
+
+Key: `metrics`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`metrics`
+
+Metrics is optional metrics endpoint URL.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Examples: `https://metrics.acme.local`
+- Format: `uri`
+
+### SharedEndpoints.meta
+
+Key: `meta`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`meta`
+
+Meta stores endpoint metadata by endpoint name.
 
 Attributes:
 
 - Type: `object`
 - Required: no
-- Additional properties type: `object`
-- Other keywords: x-order=6
+- Additional properties reference: [`EndpointMeta`](#endpointmeta) (`#/$defs/EndpointMeta`)
 
-### AdvancedOptions.cooldown
+## EndpointMeta
 
-Key: `cooldown`
-
-Path: [`advanced`](#serviceconfigadvancedoptions).`cooldown`
-
-Cooldown sets cooldown duration after errors.
-
-Attributes:
-
-- Type: `integer`
-- Required: no
-- Other keywords: x-order=7
-
-### AdvancedOptions.circuit_breaker
-
-Key: `circuit_breaker`
-
-Path: [`advanced`](#serviceconfigadvancedoptions).`circuit_breaker`
-
-CircuitBreaker enables circuit breaker behavior.
-
-Attributes:
-
-- Type: `boolean`
-- Required: no
-- Other keywords: x-order=100
-
-### AdvancedOptions.tags
-
-Key: `tags`
-
-Path: [`advanced`](#serviceconfigadvancedoptions).`tags`
-
-Tags adds free-form tags.
-
-Attributes:
-
-- Type: `array`
-- Required: no
-- Items type: `string`
-- Other keywords: x-order=101
-
-## AlertTarget
-
-AlertTarget describes one alerting destination.
+EndpointMeta describes metadata for one endpoint target.
 
 Attributes:
 
@@ -452,50 +623,448 @@ Attributes:
 - Properties: 3
 - Additional properties: boolean schema=false
 
-### AlertTarget.channel
+### EndpointMeta.weight
 
-Key: `channel`
+Key: `weight`
 
-Path: [`alert_targets`](#serviceconfigalert_targets).`[]`.`[]`.`channel`
+Paths:
 
-Channel is target channel name.
+- [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`weight`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`weight`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`weight`
+
+Weight is load balancing weight.
 
 Attributes:
 
-- Type: `string`
-- Required: yes
-- Examples: `slack`
-- Other keywords: x-order=2
+- Type: `integer`
+- Required: no
+- Constraints: `minimum=0`; `maximum=100`
 
-### AlertTarget.severity
+### EndpointMeta.region
 
-Key: `severity`
+Key: `region`
 
-Path: [`alert_targets`](#serviceconfigalert_targets).`[]`.`[]`.`severity`
+Paths:
 
-Severity is optional minimum severity.
+- [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`region`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`region`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`region`
+
+Region is deployment region code.
 
 Attributes:
 
 - Type: `string`
 - Required: no
-- Enum: `info`, `warn`, `error`
-- Other keywords: x-order=3
+- Examples: `eu-central-1`
 
-### AlertTarget.address
+### EndpointMeta.read_only
 
-Key: `address`
+Key: `read_only`
 
-Path: [`alert_targets`](#serviceconfigalert_targets).`[]`.`[]`.`address`
+Paths:
 
-Address is destination address.
+- [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`read_only`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`read_only`
+
+- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`read_only`
+
+ReadOnly marks endpoint as read-only.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+
+## SharedTLS
+
+SharedTLS describes shared transport security settings.
+
+Attributes:
+
+- Type: `object`
+- Properties: 4
+- Additional properties: boolean schema=false
+
+### SharedTLS.enabled
+
+Key: `enabled`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`enabled`
+
+Enable TLS for outbound connections.
+
+Attributes:
+
+- Type: `boolean`
+- Required: yes
+- Title: `TLS Enabled`
+- Default: `true`
+
+### SharedTLS.cipher_suites
+
+Key: `cipher_suites`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`cipher_suites`
+
+CipherSuites lists explicitly allowed cipher suites.
+
+Attributes:
+
+- Type: `array`
+- Required: no
+- Items type: `string`
+- Items examples: `TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`
+
+### SharedTLS.min_version
+
+Key: `min_version`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`min_version`
+
+MinVersion is lowest allowed TLS protocol version.
 
 Attributes:
 
 - Type: `string`
 - Required: yes
-- Examples: `https://hooks.slack.com/...`
-- Other keywords: x-order=200
+- Default: `1.2`
+- Enum: `1.2`, `1.3`
+
+### SharedTLS.handshake_timeout
+
+Key: `handshake_timeout`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`handshake_timeout`
+
+HandshakeTimeout sets TLS handshake timeout.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+
+## SharedEndpointBinding
+
+SharedEndpointBinding nests existing endpoint metadata into a binding.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### SharedEndpointBinding.EndpointMeta
+
+Key: `meta`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).`meta`
+
+Meta reuses existing endpoint metadata schema.
+
+Attributes:
+
+- Required: yes
+- Reference: [`EndpointMeta`](#endpointmeta) (`#/$defs/EndpointMeta`)
+
+### SharedEndpointBinding.name
+
+Key: `name`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).`name`
+
+Name is logical binding name.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Examples: `primary`
+
+## SharedToggle
+
+SharedToggle is a tiny reusable on/off configuration block.
+
+Attributes:
+
+- Type: `object`
+- Properties: 1
+- Additional properties: boolean schema=false
+
+### SharedToggle.enabled
+
+Key: `enabled`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`feature_toggle`](#model_sharedoptionssharedtoggle).`enabled`
+
+Enabled toggles one optional feature branch.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+- Default: `true`
+
+## SharedWindow
+
+SharedWindow is a nested window with retry-aware timing.
+
+Attributes:
+
+- Type: `object`
+- Properties: 3
+- Additional properties: boolean schema=false
+
+### SharedWindow.start
+
+Key: `start`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`maintenance_window`](#model_sharedoptionssharedwindow).`start`
+
+Start is start minute in a one-hour window.
+
+Attributes:
+
+- Type: `integer`
+- Required: yes
+- Constraints: `minimum=0`; `maximum=59`
+
+### SharedWindow.retry_delay
+
+Key: `retry_delay`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`maintenance_window`](#model_sharedoptionssharedwindow).`retry_delay`
+
+Retry uses existing base retry-like duration style.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+
+### SharedWindow.end
+
+Key: `end`
+
+Path: [`shared`](#serviceconfigmodel_sharedoptions).[`maintenance_window`](#model_sharedoptionssharedwindow).`end`
+
+End is end minute in a one-hour window.
+
+Attributes:
+
+- Type: `integer`
+- Required: yes
+- Constraints: `minimum=0`; `maximum=59`
+
+## RetryPolicy
+
+RetryPolicy controls retry behavior for transient failures.
+
+Attributes:
+
+- Type: `object`
+- Properties: 3
+- Additional properties: boolean schema=false
+
+### RetryPolicy.backoff_ms
+
+Key: `backoff_ms`
+
+Paths:
+
+- [`optional_retry`](#serviceconfigretrypolicy).`backoff_ms`
+
+- [`retry`](#serviceconfigretrypolicy).`backoff_ms`
+
+Backoff is delay between attempts in milliseconds.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+- Default: `250`
+- Constraints: `minimum=10`; `maximum=30000`
+
+### RetryPolicy.max_jitter_ms
+
+Key: `max_jitter_ms`
+
+Paths:
+
+- [`optional_retry`](#serviceconfigretrypolicy).`max_jitter_ms`
+
+- [`retry`](#serviceconfigretrypolicy).`max_jitter_ms`
+
+MaxJitter is random jitter upper bound in milliseconds.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+- Default: `100`
+- Constraints: `minimum=0`; `maximum=10000`
+
+### RetryPolicy.attempts
+
+Key: `attempts`
+
+Paths:
+
+- [`optional_retry`](#serviceconfigretrypolicy).`attempts`
+
+- [`retry`](#serviceconfigretrypolicy).`attempts`
+
+Maximum number of retry attempts for one operation.
+
+Attributes:
+
+- Type: `integer`
+- Required: yes
+- Title: `Retry Attempts`
+- Default: `3`
+- Constraints: `minimum=1`; `maximum=10`
+
+## Window
+
+Window describes daily maintenance time window.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### Window.end
+
+Key: `end`
+
+Path: [`schedule`](#serviceconfigschedule).`[]`.`end`
+
+End is end time (HH:MM).
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Constraints: `pattern=^[0-2][0-9]:[0-5][0-9]$`
+
+### Window.start
+
+Key: `start`
+
+Path: [`schedule`](#serviceconfigschedule).`[]`.`start`
+
+Start is start time (HH:MM).
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Constraints: `pattern=^[0-2][0-9]:[0-5][0-9]$`
+
+## TLSOverride
+
+TLSOverride describes TLS override for one endpoint.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### TLSOverride.min_version
+
+Key: `min_version`
+
+Path: [`endpoint_tls_overrides`](#serviceconfigendpoint_tls_overrides).`[]`.`min_version`
+
+MinVersion overrides minimal TLS version.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Enum: `1.2`, `1.3`
+
+### TLSOverride.enabled
+
+Key: `enabled`
+
+Path: [`endpoint_tls_overrides`](#serviceconfigendpoint_tls_overrides).`[]`.`enabled`
+
+Enabled overrides TLS state.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+
+## model_SharedToggle
+
+SharedToggle is a tiny reusable on/off configuration block.
+
+Attributes:
+
+- Type: `object`
+- Properties: 1
+- Additional properties: boolean schema=false
+
+### model_SharedToggle.enabled
+
+Key: `enabled`
+
+Path: [`base_toggle`](#serviceconfigmodel_sharedtoggle).`enabled`
+
+Enabled toggles one optional feature branch.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+- Default: `true`
+
+## model_SharedEndpointBinding
+
+SharedEndpointBinding nests existing endpoint metadata into a binding.
+
+Attributes:
+
+- Type: `object`
+- Properties: 2
+- Additional properties: boolean schema=false
+
+### model_SharedEndpointBinding.EndpointMeta
+
+Key: `meta`
+
+Path: [`base_binding`](#serviceconfigmodel_sharedendpointbinding).`meta`
+
+Meta reuses existing endpoint metadata schema.
+
+Attributes:
+
+- Required: yes
+- Reference: [`EndpointMeta`](#endpointmeta) (`#/$defs/EndpointMeta`)
+
+### model_SharedEndpointBinding.name
+
+Key: `name`
+
+Path: [`base_binding`](#serviceconfigmodel_sharedendpointbinding).`name`
+
+Name is logical binding name.
+
+Attributes:
+
+- Type: `string`
+- Required: yes
+- Examples: `primary`
 
 ## DeepProbe
 
@@ -558,7 +1127,6 @@ Attributes:
 - Type: `boolean`
 - Required: no
 - Default: `true`
-- Other keywords: x-order=1
 
 ### DeepProbe.token
 
@@ -611,79 +1179,6 @@ Attributes:
 - Type: `string`
 - Required: yes
 - Default: `probe`
-- Other keywords: x-order=12
-
-## EndpointMeta
-
-EndpointMeta describes metadata for one endpoint target.
-
-Attributes:
-
-- Type: `object`
-- Properties: 3
-- Additional properties: boolean schema=false
-
-### EndpointMeta.weight
-
-Key: `weight`
-
-Paths:
-
-- [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`weight`
-
-- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`weight`
-
-- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`weight`
-
-Weight is load balancing weight.
-
-Attributes:
-
-- Type: `integer`
-- Required: no
-- Constraints: `minimum=0`; `maximum=100`
-- Other keywords: x-order=7
-
-### EndpointMeta.region
-
-Key: `region`
-
-Paths:
-
-- [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`region`
-
-- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`region`
-
-- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`region`
-
-Region is deployment region code.
-
-Attributes:
-
-- Type: `string`
-- Required: no
-- Examples: `eu-central-1`
-- Other keywords: x-order=91
-
-### EndpointMeta.read_only
-
-Key: `read_only`
-
-Paths:
-
-- [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`read_only`
-
-- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`read_only`
-
-- [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`read_only`
-
-ReadOnly marks endpoint as read-only.
-
-Attributes:
-
-- Type: `boolean`
-- Required: no
-- Other keywords: x-order=250
 
 ## Level1
 
@@ -713,7 +1208,6 @@ Attributes:
 
 - Required: yes
 - Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
-- Other keywords: x-order=2
 
 ### Level1.Level2
 
@@ -733,7 +1227,6 @@ Attributes:
 
 - Required: yes
 - Reference: [`Level2`](#level2) (`#/$defs/Level2`)
-- Other keywords: x-order=200
 
 ## Level2
 
@@ -763,7 +1256,6 @@ Attributes:
 
 - Required: yes
 - Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
-- Other keywords: x-order=9
 
 ### Level2.Level3
 
@@ -783,7 +1275,6 @@ Attributes:
 
 - Required: yes
 - Reference: [`Level3`](#level3) (`#/$defs/Level3`)
-- Other keywords: x-order=10
 
 ## Level3
 
@@ -813,7 +1304,6 @@ Attributes:
 
 - Required: yes
 - Reference: [`Level4`](#level4) (`#/$defs/Level4`)
-- Other keywords: x-order=1
 
 ### Level3.DeepProbe
 
@@ -833,7 +1323,6 @@ Attributes:
 
 - Required: yes
 - Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
-- Other keywords: x-order=42
 
 ## Level4
 
@@ -863,7 +1352,6 @@ Attributes:
 
 - Required: yes
 - Reference: [`Level5`](#level5) (`#/$defs/Level5`)
-- Other keywords: x-order=4
 
 ### Level4.DeepProbe
 
@@ -883,7 +1371,6 @@ Attributes:
 
 - Required: yes
 - Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
-- Other keywords: x-order=41
 
 ## Level5
 
@@ -913,7 +1400,6 @@ Attributes:
 
 - Required: yes
 - Reference: [`Level6`](#level6) (`#/$defs/Level6`)
-- Other keywords: x-order=3
 
 ### Level5.DeepProbe
 
@@ -933,7 +1419,6 @@ Attributes:
 
 - Required: yes
 - Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
-- Other keywords: x-order=77
 
 ## Level6
 
@@ -964,7 +1449,6 @@ Attributes:
 - Type: `string`
 - Required: no
 - Examples: `done`
-- Other keywords: x-order=2
 
 ### Level6.DeepProbe
 
@@ -984,7 +1468,70 @@ Attributes:
 
 - Required: yes
 - Reference: [`DeepProbe`](#deepprobe) (`#/$defs/DeepProbe`)
-- Other keywords: x-order=20
+
+## AdvancedOptions
+
+AdvancedOptions groups additional optional controls.
+
+Attributes:
+
+- Type: `object`
+- Properties: 4
+- Additional properties: boolean schema=false
+
+### AdvancedOptions.metadata
+
+Key: `metadata`
+
+Path: [`advanced`](#serviceconfigadvancedoptions).`metadata`
+
+Metadata keeps arbitrary nested metadata.
+
+Attributes:
+
+- Type: `object`
+- Required: no
+- Additional properties type: `object`
+
+### AdvancedOptions.cooldown
+
+Key: `cooldown`
+
+Path: [`advanced`](#serviceconfigadvancedoptions).`cooldown`
+
+Cooldown sets cooldown duration after errors.
+
+Attributes:
+
+- Type: `integer`
+- Required: no
+
+### AdvancedOptions.circuit_breaker
+
+Key: `circuit_breaker`
+
+Path: [`advanced`](#serviceconfigadvancedoptions).`circuit_breaker`
+
+CircuitBreaker enables circuit breaker behavior.
+
+Attributes:
+
+- Type: `boolean`
+- Required: no
+
+### AdvancedOptions.tags
+
+Key: `tags`
+
+Path: [`advanced`](#serviceconfigadvancedoptions).`tags`
+
+Tags adds free-form tags.
+
+Attributes:
+
+- Type: `array`
+- Required: no
+- Items type: `string`
 
 ## QueueOptions
 
@@ -1010,7 +1557,6 @@ Attributes:
 - Required: yes
 - Default: `4`
 - Constraints: `minimum=1`; `maximum=128`
-- Other keywords: x-order=1
 
 ### QueueOptions.visibility_timeout
 
@@ -1024,7 +1570,6 @@ Attributes:
 
 - Type: `integer`
 - Required: no
-- Other keywords: x-order=2
 
 ### QueueOptions.batch_size
 
@@ -1040,342 +1585,6 @@ Attributes:
 - Required: no
 - Default: `100`
 - Constraints: `minimum=1`; `maximum=10000`
-- Other keywords: x-order=80
-
-## RetryPolicy
-
-RetryPolicy controls retry behavior for transient failures.
-
-Attributes:
-
-- Type: `object`
-- Properties: 3
-- Additional properties: boolean schema=false
-
-### RetryPolicy.backoff_ms
-
-Key: `backoff_ms`
-
-Paths:
-
-- [`optional_retry`](#serviceconfigretrypolicy).`backoff_ms`
-
-- [`retry`](#serviceconfigretrypolicy).`backoff_ms`
-
-Backoff is delay between attempts in milliseconds.
-
-Attributes:
-
-- Type: `integer`
-- Required: no
-- Default: `250`
-- Constraints: `minimum=10`; `maximum=30000`
-- Other keywords: x-order=4
-
-### RetryPolicy.max_jitter_ms
-
-Key: `max_jitter_ms`
-
-Paths:
-
-- [`optional_retry`](#serviceconfigretrypolicy).`max_jitter_ms`
-
-- [`retry`](#serviceconfigretrypolicy).`max_jitter_ms`
-
-MaxJitter is random jitter upper bound in milliseconds.
-
-Attributes:
-
-- Type: `integer`
-- Required: no
-- Default: `100`
-- Constraints: `minimum=0`; `maximum=10000`
-- Other keywords: x-order=40
-
-### RetryPolicy.attempts
-
-Key: `attempts`
-
-Paths:
-
-- [`optional_retry`](#serviceconfigretrypolicy).`attempts`
-
-- [`retry`](#serviceconfigretrypolicy).`attempts`
-
-Maximum number of retry attempts for one operation.
-
-Attributes:
-
-- Type: `integer`
-- Required: yes
-- Title: `Retry Attempts`
-- Default: `3`
-- Constraints: `minimum=1`; `maximum=10`
-- Other keywords: x-order=500
-
-## SharedEndpointBinding
-
-SharedEndpointBinding nests existing endpoint metadata into a binding.
-
-Attributes:
-
-- Type: `object`
-- Properties: 2
-- Additional properties: boolean schema=false
-
-### SharedEndpointBinding.EndpointMeta
-
-Key: `meta`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).`meta`
-
-Meta reuses existing endpoint metadata schema.
-
-Attributes:
-
-- Required: yes
-- Reference: [`EndpointMeta`](#endpointmeta) (`#/$defs/EndpointMeta`)
-- Other keywords: x-order=3
-
-### SharedEndpointBinding.name
-
-Key: `name`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).`name`
-
-Name is logical binding name.
-
-Attributes:
-
-- Type: `string`
-- Required: yes
-- Examples: `primary`
-- Other keywords: x-order=14
-
-## SharedEndpoints
-
-SharedEndpoints describes common endpoint set used by services.
-
-Attributes:
-
-- Type: `object`
-- Properties: 4
-- Additional properties: boolean schema=false
-
-### SharedEndpoints.api
-
-Key: `api`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`api`
-
-API is primary API base URL.
-
-Attributes:
-
-- Type: `string`
-- Required: yes
-- Title: `API Endpoint`
-- Examples: `https://api.acme.local`
-- Format: `uri`
-- Other keywords: x-order=5
-
-### SharedEndpoints.internal
-
-Key: `internal`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`internal`
-
-Internal is internal service endpoint URL.
-
-Attributes:
-
-- Type: `string`
-- Required: no
-- Examples: `http://internal:8080`
-- Format: `uri`
-- Other keywords: x-order=6
-
-### SharedEndpoints.metrics
-
-Key: `metrics`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`metrics`
-
-Metrics is optional metrics endpoint URL.
-
-Attributes:
-
-- Type: `string`
-- Required: no
-- Examples: `https://metrics.acme.local`
-- Format: `uri`
-- Other keywords: x-order=111
-
-### SharedEndpoints.meta
-
-Key: `meta`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).`meta`
-
-Meta stores endpoint metadata by endpoint name.
-
-Attributes:
-
-- Type: `object`
-- Required: no
-- Additional properties reference: [`EndpointMeta`](#endpointmeta) (`#/$defs/EndpointMeta`)
-- Other keywords: x-order=204
-
-## SharedTLS
-
-SharedTLS describes shared transport security settings.
-
-Attributes:
-
-- Type: `object`
-- Properties: 4
-- Additional properties: boolean schema=false
-
-### SharedTLS.enabled
-
-Key: `enabled`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`enabled`
-
-Enable TLS for outbound connections.
-
-Attributes:
-
-- Type: `boolean`
-- Required: yes
-- Title: `TLS Enabled`
-- Default: `true`
-- Other keywords: x-order=12
-
-### SharedTLS.cipher_suites
-
-Key: `cipher_suites`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`cipher_suites`
-
-CipherSuites lists explicitly allowed cipher suites.
-
-Attributes:
-
-- Type: `array`
-- Required: no
-- Items type: `string`
-- Items examples: `TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`
-- Other keywords: x-order=13
-
-### SharedTLS.min_version
-
-Key: `min_version`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`min_version`
-
-MinVersion is lowest allowed TLS protocol version.
-
-Attributes:
-
-- Type: `string`
-- Required: yes
-- Default: `1.2`
-- Enum: `1.2`, `1.3`
-- Other keywords: x-order=88
-
-### SharedTLS.handshake_timeout
-
-Key: `handshake_timeout`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`tls`](#model_sharedoptionssharedtls).`handshake_timeout`
-
-HandshakeTimeout sets TLS handshake timeout.
-
-Attributes:
-
-- Type: `integer`
-- Required: no
-- Other keywords: x-order=377
-
-## SharedToggle
-
-SharedToggle is a tiny reusable on/off configuration block.
-
-Attributes:
-
-- Type: `object`
-- Properties: 1
-- Additional properties: boolean schema=false
-
-### SharedToggle.enabled
-
-Key: `enabled`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`feature_toggle`](#model_sharedoptionssharedtoggle).`enabled`
-
-Enabled toggles one optional feature branch.
-
-Attributes:
-
-- Type: `boolean`
-- Required: no
-- Default: `true`
-- Other keywords: x-order=42
-
-## SharedWindow
-
-SharedWindow is a nested window with retry-aware timing.
-
-Attributes:
-
-- Type: `object`
-- Properties: 3
-- Additional properties: boolean schema=false
-
-### SharedWindow.start
-
-Key: `start`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`maintenance_window`](#model_sharedoptionssharedwindow).`start`
-
-Start is start minute in a one-hour window.
-
-Attributes:
-
-- Type: `integer`
-- Required: yes
-- Constraints: `minimum=0`; `maximum=59`
-- Other keywords: x-order=2
-
-### SharedWindow.retry_delay
-
-Key: `retry_delay`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`maintenance_window`](#model_sharedoptionssharedwindow).`retry_delay`
-
-Retry uses existing base retry-like duration style.
-
-Attributes:
-
-- Type: `integer`
-- Required: no
-- Other keywords: x-order=17
-
-### SharedWindow.end
-
-Key: `end`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).[`maintenance_window`](#model_sharedoptionssharedwindow).`end`
-
-End is end minute in a one-hour window.
-
-Attributes:
-
-- Type: `integer`
-- Required: yes
-- Constraints: `minimum=0`; `maximum=59`
-- Other keywords: x-order=999
 
 ## StorageBucket
 
@@ -1406,7 +1615,6 @@ Attributes:
 - Type: `string`
 - Required: no
 - Examples: `us-east-1`
-- Other keywords: x-order=3
 
 ### StorageBucket.name
 
@@ -1428,7 +1636,6 @@ Attributes:
 - Required: yes
 - Examples: `artifacts-main`
 - Constraints: `minLength=3`
-- Other keywords: x-order=70
 
 ### StorageBucket.read_only
 
@@ -1448,354 +1655,58 @@ Attributes:
 
 - Type: `boolean`
 - Required: no
-- Other keywords: x-order=71
 
-## TLSOverride
+## AlertTarget
 
-TLSOverride describes TLS override for one endpoint.
-
-Attributes:
-
-- Type: `object`
-- Properties: 2
-- Additional properties: boolean schema=false
-
-### TLSOverride.min_version
-
-Key: `min_version`
-
-Path: [`endpoint_tls_overrides`](#serviceconfigendpoint_tls_overrides).`[]`.`min_version`
-
-MinVersion overrides minimal TLS version.
-
-Attributes:
-
-- Type: `string`
-- Required: no
-- Enum: `1.2`, `1.3`
-- Other keywords: x-order=1
-
-### TLSOverride.enabled
-
-Key: `enabled`
-
-Path: [`endpoint_tls_overrides`](#serviceconfigendpoint_tls_overrides).`[]`.`enabled`
-
-Enabled overrides TLS state.
-
-Attributes:
-
-- Type: `boolean`
-- Required: no
-- Other keywords: x-order=9
-
-## Window
-
-Window describes daily maintenance time window.
+AlertTarget describes one alerting destination.
 
 Attributes:
 
 - Type: `object`
-- Properties: 2
+- Properties: 3
 - Additional properties: boolean schema=false
 
-### Window.end
+### AlertTarget.channel
 
-Key: `end`
+Key: `channel`
 
-Path: [`schedule`](#serviceconfigschedule).`[]`.`end`
+Path: [`alert_targets`](#serviceconfigalert_targets).`[]`.`[]`.`channel`
 
-End is end time (HH:MM).
+Channel is target channel name.
 
 Attributes:
 
 - Type: `string`
 - Required: yes
-- Constraints: `pattern=^[0-2][0-9]:[0-5][0-9]$`
-- Other keywords: x-order=5
+- Examples: `slack`
 
-### Window.start
+### AlertTarget.severity
 
-Key: `start`
+Key: `severity`
 
-Path: [`schedule`](#serviceconfigschedule).`[]`.`start`
+Path: [`alert_targets`](#serviceconfigalert_targets).`[]`.`[]`.`severity`
 
-Start is start time (HH:MM).
+Severity is optional minimum severity.
+
+Attributes:
+
+- Type: `string`
+- Required: no
+- Enum: `info`, `warn`, `error`
+
+### AlertTarget.address
+
+Key: `address`
+
+Path: [`alert_targets`](#serviceconfigalert_targets).`[]`.`[]`.`address`
+
+Address is destination address.
 
 Attributes:
 
 - Type: `string`
 - Required: yes
-- Constraints: `pattern=^[0-2][0-9]:[0-5][0-9]$`
-- Other keywords: x-order=44
-
-## model_SharedEndpointBinding
-
-SharedEndpointBinding nests existing endpoint metadata into a binding.
-
-Attributes:
-
-- Type: `object`
-- Properties: 2
-- Additional properties: boolean schema=false
-
-### model_SharedEndpointBinding.EndpointMeta
-
-Key: `meta`
-
-Path: [`base_binding`](#serviceconfigmodel_sharedendpointbinding).`meta`
-
-Meta reuses existing endpoint metadata schema.
-
-Attributes:
-
-- Required: yes
-- Reference: [`EndpointMeta`](#endpointmeta) (`#/$defs/EndpointMeta`)
-- Other keywords: x-order=3
-
-### model_SharedEndpointBinding.name
-
-Key: `name`
-
-Path: [`base_binding`](#serviceconfigmodel_sharedendpointbinding).`name`
-
-Name is logical binding name.
-
-Attributes:
-
-- Type: `string`
-- Required: yes
-- Examples: `primary`
-- Other keywords: x-order=14
-
-## model_SharedOptions
-
-SharedOptions is reusable part expected to be merged into app schema.
-
-Attributes:
-
-- Type: `object`
-- Properties: 12
-- Additional properties: boolean schema=false
-
-### model_SharedOptions.SharedEndpoints
-
-Key: `endpoints`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoints`
-
-Endpoints are network endpoints shared across components.
-
-Attributes:
-
-- Required: yes
-- Reference: [`SharedEndpoints`](#sharedendpoints) (`#/$defs/SharedEndpoints`)
-- Title: `Endpoint Options`
-- Other keywords: x-order=1
-
-### model_SharedOptions.level_by_subsystem
-
-Key: `level_by_subsystem`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`level_by_subsystem`
-
-LevelBySubsystem maps subsystem name to log level.
-
-Attributes:
-
-- Type: `object`
-- Required: no
-- Additional properties type: `string`
-- Other keywords: x-order=4
-
-### model_SharedOptions.endpoint_groups
-
-Key: `endpoint_groups`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoint_groups`
-
-EndpointGroups stores endpoint names grouped by key.
-
-Attributes:
-
-- Type: `object`
-- Required: no
-- Additional properties type: `array`
-- Other keywords: x-order=8
-
-### model_SharedOptions.SharedTLS
-
-Key: `tls`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`tls`
-
-TLS is TLS configuration shared across components.
-
-Attributes:
-
-- Required: yes
-- Reference: [`SharedTLS`](#sharedtls) (`#/$defs/SharedTLS`)
-- Title: `TLS Options`
-- Other keywords: x-order=10
-
-### model_SharedOptions.labels
-
-Key: `labels`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`labels`
-
-Labels maps short numeric label IDs to values.
-
-Attributes:
-
-- Type: `object`
-- Required: no
-- Pattern properties: 1
-- Additional properties: boolean schema=false
-- Other keywords: x-order=21
-
-### model_SharedOptions.feature_matrix
-
-Key: `feature_matrix`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`feature_matrix`
-
-FeatureMatrix stores feature flags as nested map.
-
-**Matrix semantics**
-
-- First key: feature group name.
-- Second key: feature flag name.
-- Value: desired on/off state.
-
-Example:
-
-- `auth.mfa_required = true`
-- `billing.v2_invoice = false`
-
-Attributes:
-
-- Type: `object`
-- Required: no
-- Additional properties type: `object`
-- Other keywords: x-order=41
-
-### model_SharedOptions.SharedEndpointBinding
-
-Key: `endpoint_binding`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoint_binding`
-
-EndpointBinding links endpoint identity and metadata.
-
-Attributes:
-
-- Required: no
-- Reference: [`SharedEndpointBinding`](#sharedendpointbinding) (`#/$defs/SharedEndpointBinding`)
-- Other keywords: x-order=65
-
-### model_SharedOptions.SharedToggle
-
-Key: `feature_toggle`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`feature_toggle`
-
-FeatureToggle is a small reusable boolean options block.
-
-Attributes:
-
-- Required: no
-- Reference: [`SharedToggle`](#sharedtoggle) (`#/$defs/SharedToggle`)
-- Other keywords: x-order=66
-
-### model_SharedOptions.SharedWindow
-
-Key: `maintenance_window`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`maintenance_window`
-
-MaintenanceWindow stores shared maintenance timing.
-
-Attributes:
-
-- Required: no
-- Reference: [`SharedWindow`](#sharedwindow) (`#/$defs/SharedWindow`)
-- Other keywords: x-order=67
-
-### model_SharedOptions.ports
-
-Key: `ports`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`ports`
-
-Ports maps external service names to exposed port.
-
-Attributes:
-
-- Type: `object`
-- Required: no
-- Additional properties type: `integer`
-- Other keywords: x-order=300
-
-### model_SharedOptions.endpoint_ports
-
-Key: `endpoint_ports`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`endpoint_ports`
-
-EndpointPorts stores ports by endpoint and protocol name.
-
-This field is useful when one logical endpoint exposes multiple listener
-protocols (for example `http`, `grpc`, `admin`). Consumers can resolve
-exact port by `(endpoint, protocol)` pair without hardcoding transport
-assumptions.
-
-Attributes:
-
-- Type: `object`
-- Required: no
-- Additional properties type: `object`
-- Other keywords: x-order=305
-
-### model_SharedOptions.timeout_by_endpoint
-
-Key: `timeout_by_endpoint`
-
-Path: [`shared`](#serviceconfigmodel_sharedoptions).`timeout_by_endpoint`
-
-TimeoutByEndpoint stores timeout per endpoint name.
-
-Attributes:
-
-- Type: `object`
-- Required: no
-- Additional properties type: `integer`
-- Other keywords: x-order=700
-
-## model_SharedToggle
-
-SharedToggle is a tiny reusable on/off configuration block.
-
-Attributes:
-
-- Type: `object`
-- Properties: 1
-- Additional properties: boolean schema=false
-
-### model_SharedToggle.enabled
-
-Key: `enabled`
-
-Path: [`base_toggle`](#serviceconfigmodel_sharedtoggle).`enabled`
-
-Enabled toggles one optional feature branch.
-
-Attributes:
-
-- Type: `boolean`
-- Required: no
-- Default: `true`
-- Other keywords: x-order=42
+- Examples: `https://hooks.slack.com/...`
 
 ## model_SharedWindow
 
@@ -1820,7 +1731,6 @@ Attributes:
 - Type: `integer`
 - Required: yes
 - Constraints: `minimum=0`; `maximum=59`
-- Other keywords: x-order=2
 
 ### model_SharedWindow.retry_delay
 
@@ -1834,7 +1744,6 @@ Attributes:
 
 - Type: `integer`
 - Required: no
-- Other keywords: x-order=17
 
 ### model_SharedWindow.end
 
@@ -1849,7 +1758,6 @@ Attributes:
 - Type: `integer`
 - Required: yes
 - Constraints: `minimum=0`; `maximum=59`
-- Other keywords: x-order=999
 
 ## Example yaml document
 

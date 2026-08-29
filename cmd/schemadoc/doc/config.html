@@ -219,26 +219,26 @@
       <h2>Contents</h2>
       <ul>
 <li><a href="#config">Config</a><ul>
-<li><a href="#mergestage">MergeStage</a><ul>
-<li><a href="#mergeimport">MergeImport</a><ul>
-<li><a href="#mergeimportrename">MergeImportRename</a></li>
-</ul>
-</li>
-<li><a href="#mergepatch">MergePatch</a><ul>
-<li><a href="#mergeop">MergeOp</a></li>
-</ul>
-</li>
-</ul>
-</li>
 <li><a href="#mod2schemastage">Mod2SchemaStage</a><ul>
 <li><a href="#jsonoutputoptions">JSONOutputOptions</a></li>
 </ul>
 </li>
+<li><a href="#mergestage">MergeStage</a><ul>
+<li><a href="#mergepatch">MergePatch</a><ul>
+<li><a href="#mergeop">MergeOp</a></li>
+</ul>
+</li>
+<li><a href="#mergeimport">MergeImport</a><ul>
+<li><a href="#mergeimportrename">MergeImportRename</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#schema2jsonstage">Schema2JSONStage</a></li>
 <li><a href="#schema2docstage">Schema2DocStage</a><ul>
 <li><a href="#yamloutputoptions">YAMLOutputOptions</a></li>
 </ul>
 </li>
-<li><a href="#schema2jsonstage">Schema2JSONStage</a></li>
 <li><a href="#schema2yamlstage">Schema2YAMLStage</a></li>
 </ul>
 </li>
@@ -268,7 +268,6 @@
 <li><strong>Required:</strong> yes</li>
 <li><strong>Examples:</strong> <code>schema.json</code>, <code>build/schema/config.schema.json</code></li>
 <li><strong>Constraints:</strong> <code>minLength=1</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
 </ul>
 </article>
 <article class="card">
@@ -279,7 +278,6 @@
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>boolean</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=2</li>
 </ul>
 </article>
 <article class="card">
@@ -290,7 +288,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#mod2schemastage"><code>Mod2SchemaStage</code></a> (<code>#/$defs/Mod2SchemaStage</code>)</li>
-<li><strong>Other keywords:</strong> x-order=10</li>
 </ul>
 </article>
 <article class="card">
@@ -301,7 +298,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#mergestage"><code>MergeStage</code></a> (<code>#/$defs/MergeStage</code>)</li>
-<li><strong>Other keywords:</strong> x-order=20</li>
 </ul>
 </article>
 <article class="card">
@@ -312,7 +308,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#schema2jsonstage"><code>Schema2JSONStage</code></a> (<code>#/$defs/Schema2JSONStage</code>)</li>
-<li><strong>Other keywords:</strong> x-order=30</li>
 </ul>
 </article>
 <article class="card">
@@ -323,7 +318,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#schema2docstage"><code>Schema2DocStage</code></a> (<code>#/$defs/Schema2DocStage</code>)</li>
-<li><strong>Other keywords:</strong> x-order=40</li>
 </ul>
 </article>
 <article class="card">
@@ -334,7 +328,80 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#schema2yamlstage"><code>Schema2YAMLStage</code></a> (<code>#/$defs/Schema2YAMLStage</code>)</li>
-<li><strong>Other keywords:</strong> x-order=50</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Mod2SchemaStage</summary>
+        <div class="def-body" id="mod2schemastage">
+<p>Mod2SchemaStage describes schema generation from one Go type.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 5</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="mod2schemastagemodule">Mod2SchemaStage.module</h3>
+        <p><strong>Key:</strong> <code>module</code></p>
+<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>module</code></p>
+<p>Module selects reflection source.</p>
+<p>Local mode: existing directory on disk with go.mod. Remote mode: module path with explicit version suffix (<code>@vX.Y.Z</code> or <code>@latest</code>).</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>.</code></li>
+<li><strong>Examples:</strong> <code>../project</code>, <code>github.com/acme/project@v1.2.3</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2schemastagepackage">Mod2SchemaStage.package</h3>
+        <p><strong>Key:</strong> <code>package</code></p>
+<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>package</code></p>
+<p>Package is import path where target type is declared.</p>
+<p>Keep empty when type is declared in module root package.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>github.com/acme/project/pkg/config</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2schemastagetype">Mod2SchemaStage.type</h3>
+        <p><strong>Key:</strong> <code>type</code></p>
+<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>type</code></p>
+<p>Type is root Go type name to reflect into schema.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Examples:</strong> <code>Config</code>, <code>RuntimeOptions</code></li>
+<li><strong>Constraints:</strong> <code>minLength=1</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2schemastagekey_namer">Mod2SchemaStage.key_namer</h3>
+        <p><strong>Key:</strong> <code>key_namer</code></p>
+<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>key_namer</code></p>
+<p>KeyNamer controls fallback field-name strategy when struct field has no explicit <code>json</code> tag.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>none</code></li>
+<li><strong>Enum:</strong> <code>none</code>, <code>snake</code>, <code>kebab</code>, <code>lower</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2schemastagejsonoutputoptions">Mod2SchemaStage.JSONOutputOptions</h3>
+        <p><strong>Key:</strong> <code>json</code></p>
+<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>json</code></p>
+<p>JSON configures formatting of generated schema file.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#jsonoutputoptions"><code>JSONOutputOptions</code></a> (<code>#/$defs/JSONOutputOptions</code>)</li>
 </ul>
 </article>
 </div>
@@ -368,7 +435,6 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>2</code></li>
 <li><strong>Constraints:</strong> <code>minimum=1</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
 </ul>
 </article>
 <article class="card">
@@ -387,7 +453,6 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>space</code></li>
 <li><strong>Enum:</strong> <code>space</code>, <code>tab</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
 </ul>
 </article>
 <article class="card">
@@ -403,7 +468,6 @@
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>boolean</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=3</li>
 </ul>
 </article>
 </div>
@@ -411,121 +475,109 @@
     </section>
 <section>
       <details class="definition">
-        <summary>MergeImport</summary>
-        <div class="def-body" id="mergeimport">
-<p>MergeImport describes one high-level definition import action.</p>
+        <summary>MergeStage</summary>
+        <div class="def-body" id="mergestage">
+<p>MergeStage describes merge execution over working schema.</p>
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 5</li>
+<li><strong>Properties:</strong> 3</li>
 <li><strong>Additional properties:</strong> boolean schema=false</li>
 </ul>
       </div>
 <article class="card">
-        <h3 id="mergeimportfile">MergeImport.file</h3>
+        <h3 id="mergestagepatches">MergeStage.patches</h3>
+        <p><strong>Key:</strong> <code>patches</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<code>patches</code></p>
+<p>Patches lists low-level merge actions applied in order.</p>
+<p>Each patch copies or merges one source node from another schema file into current <code>schema</code>. Items are applied top-to-bottom; later patches can overwrite results of earlier patches.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>array</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Items reference:</strong> <a href="#mergepatch"><code>MergePatch</code></a> (<code>#/$defs/MergePatch</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mergestageimports">MergeStage.imports</h3>
+        <p><strong>Key:</strong> <code>imports</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<code>imports</code></p>
+<p>Imports lists high-level definition imports applied in order.</p>
+<p>Each item imports entries from source defs object (for example <code>/$defs</code>) into target defs object in current <code>schema</code> (also usually <code>/$defs</code>). This is the convenient way to &#34;pull shared type definitions&#34; from other schema files without writing many manual patches.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>array</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Items reference:</strong> <a href="#mergeimport"><code>MergeImport</code></a> (<code>#/$defs/MergeImport</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mergestageprune_unreachable_defs">MergeStage.prune_unreachable_defs</h3>
+        <p><strong>Key:</strong> <code>prune_unreachable_defs</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<code>prune_unreachable_defs</code></p>
+<p>PruneUnreachableDefs removes unreachable <code>$defs</code> entries after merge.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>MergePatch</summary>
+        <div class="def-body" id="mergepatch">
+<p>MergePatch describes one low-level merge action.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 4</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="mergepatchfile">MergePatch.file</h3>
         <p><strong>Key:</strong> <code>file</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<code>file</code></p>
-<p>File is source schema path from which definitions are imported.</p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestagepatches"><code>patches</code></a>.<code>[]</code>.<code>file</code></p>
+<p>File is source schema path used by this action.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> yes</li>
 <li><strong>Examples:</strong> <code>schemas/common.schema.json</code></li>
 <li><strong>Constraints:</strong> <code>minLength=1</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
 </ul>
 </article>
 <article class="card">
-        <h3 id="mergeimportsource_defs">MergeImport.source_defs</h3>
-        <p><strong>Key:</strong> <code>source_defs</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<code>source_defs</code></p>
-<p>SourceDefs selects source object used as definition map.</p>
-<p>Import reads all direct child keys from this pointer and treats each key as one definition name to import.</p>
+        <h3 id="mergepatchsource">MergePatch.source</h3>
+        <p><strong>Key:</strong> <code>source</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestagepatches"><code>patches</code></a>.<code>[]</code>.<code>source</code></p>
+<p>Source points to source node in source schema.</p>
+<p>Empty value means source schema root.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>/$defs</code></li>
-<li><strong>Examples:</strong> <code>/components/schemas</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
+<li><strong>Examples:</strong> <code>/$defs/CommonConfig</code></li>
 </ul>
 </article>
 <article class="card">
-        <h3 id="mergeimporttarget_defs">MergeImport.target_defs</h3>
-        <p><strong>Key:</strong> <code>target_defs</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<code>target_defs</code></p>
-<p>TargetDefs selects destination object for imported definitions.</p>
-<p>Use this when project keeps reusable definitions outside default <code>/$defs</code> or when imported definitions must be isolated under dedicated subtree.</p>
+        <h3 id="mergepatchtarget">MergePatch.target</h3>
+        <p><strong>Key:</strong> <code>target</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestagepatches"><code>patches</code></a>.<code>[]</code>.<code>target</code></p>
+<p>Target points to destination node in working schema.</p>
+<p>Empty value means working schema root.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>/$defs</code></li>
-<li><strong>Examples:</strong> <code>/components/schemas</code>, <code>/$defs/imported</code></li>
-<li><strong>Other keywords:</strong> x-order=3</li>
+<li><strong>Examples:</strong> <code>/$defs/CommonConfig</code>, <code>/properties/spec</code></li>
 </ul>
 </article>
 <article class="card">
-        <h3 id="mergeimportmergeimportrename">MergeImport.MergeImportRename</h3>
-        <p><strong>Key:</strong> <code>rename</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<code>rename</code></p>
-<p>Rename configures how imported definition names are transformed.</p>
-<p>Useful when source and target schemas use different naming conventions or when name collisions must be avoided.</p>
+        <h3 id="mergepatchmergeop">MergePatch.MergeOp</h3>
+        <p><strong>Key:</strong> <code>op</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestagepatches"><code>patches</code></a>.<code>[]</code>.<code>op</code></p>
+<p>Op controls merge behavior for selected source and target nodes.</p>
 <ul class="attr-list">
-<li><strong>Required:</strong> no</li>
-<li><strong>Reference:</strong> <a href="#mergeimportrename"><code>MergeImportRename</code></a> (<code>#/$defs/MergeImportRename</code>)</li>
-<li><strong>Other keywords:</strong> x-order=4</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="mergeimportconflict">MergeImport.conflict</h3>
-        <p><strong>Key:</strong> <code>conflict</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<code>conflict</code></p>
-<p>Conflict sets behavior when target definition with same name already exists.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>error</code></li>
-<li><strong>Enum:</strong> <code>replace</code>, <code>merge</code>, <code>keep</code>, <code>error</code></li>
-<li><strong>Other keywords:</strong> x-order=5</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>MergeImportRename</summary>
-        <div class="def-body" id="mergeimportrename">
-<p>MergeImportRename configures imported definition name rewrite.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 2</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="mergeimportrenamemode">MergeImportRename.mode</h3>
-        <p><strong>Key:</strong> <code>mode</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<a href="#mergeimportmergeimportrename"><code>rename</code></a>.<code>mode</code></p>
-<p>Mode selects rename strategy.</p>
-<ul><li><code>none</code> keeps original names.</li><li><code>prefix</code> prepends <code>value</code>.</li><li><code>suffix</code> appends <code>value</code>.</li></ul>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>none</code></li>
-<li><strong>Enum:</strong> <code>none</code>, <code>prefix</code>, <code>suffix</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="mergeimportrenamevalue">MergeImportRename.value</h3>
-        <p><strong>Key:</strong> <code>value</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<a href="#mergeimportmergeimportrename"><code>rename</code></a>.<code>value</code></p>
-<p>Value is prefix or suffix text used by selected rename mode.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Examples:</strong> <code>model_</code>, <code>_shared</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
+<li><strong>Required:</strong> yes</li>
+<li><strong>Reference:</strong> <a href="#mergeop"><code>MergeOp</code></a> (<code>#/$defs/MergeOp</code>)</li>
 </ul>
 </article>
 </div>
@@ -554,7 +606,6 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>replace</code></li>
 <li><strong>Enum:</strong> <code>replace</code>, <code>merge</code>, <code>merge-defs</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
 </ul>
 </article>
 <article class="card">
@@ -567,7 +618,6 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>merge</code></li>
 <li><strong>Enum:</strong> <code>merge</code>, <code>replace</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
 </ul>
 </article>
 <article class="card">
@@ -580,7 +630,6 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>replace</code></li>
 <li><strong>Enum:</strong> <code>replace</code>, <code>append</code>, <code>append-unique</code></li>
-<li><strong>Other keywords:</strong> x-order=3</li>
 </ul>
 </article>
 </div>
@@ -588,126 +637,9 @@
     </section>
 <section>
       <details class="definition">
-        <summary>MergePatch</summary>
-        <div class="def-body" id="mergepatch">
-<p>MergePatch describes one low-level merge action.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 4</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="mergepatchfile">MergePatch.file</h3>
-        <p><strong>Key:</strong> <code>file</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestagepatches"><code>patches</code></a>.<code>[]</code>.<code>file</code></p>
-<p>File is source schema path used by this action.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> yes</li>
-<li><strong>Examples:</strong> <code>schemas/common.schema.json</code></li>
-<li><strong>Constraints:</strong> <code>minLength=1</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="mergepatchsource">MergePatch.source</h3>
-        <p><strong>Key:</strong> <code>source</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestagepatches"><code>patches</code></a>.<code>[]</code>.<code>source</code></p>
-<p>Source points to source node in source schema.</p>
-<p>Empty value means source schema root.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Examples:</strong> <code>/$defs/CommonConfig</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="mergepatchtarget">MergePatch.target</h3>
-        <p><strong>Key:</strong> <code>target</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestagepatches"><code>patches</code></a>.<code>[]</code>.<code>target</code></p>
-<p>Target points to destination node in working schema.</p>
-<p>Empty value means working schema root.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Examples:</strong> <code>/$defs/CommonConfig</code>, <code>/properties/spec</code></li>
-<li><strong>Other keywords:</strong> x-order=3</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="mergepatchmergeop">MergePatch.MergeOp</h3>
-        <p><strong>Key:</strong> <code>op</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestagepatches"><code>patches</code></a>.<code>[]</code>.<code>op</code></p>
-<p>Op controls merge behavior for selected source and target nodes.</p>
-<ul class="attr-list">
-<li><strong>Required:</strong> yes</li>
-<li><strong>Reference:</strong> <a href="#mergeop"><code>MergeOp</code></a> (<code>#/$defs/MergeOp</code>)</li>
-<li><strong>Other keywords:</strong> x-order=4</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>MergeStage</summary>
-        <div class="def-body" id="mergestage">
-<p>MergeStage describes merge execution over working schema.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 3</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="mergestagepatches">MergeStage.patches</h3>
-        <p><strong>Key:</strong> <code>patches</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<code>patches</code></p>
-<p>Patches lists low-level merge actions applied in order.</p>
-<p>Each patch copies or merges one source node from another schema file into current <code>schema</code>. Items are applied top-to-bottom; later patches can overwrite results of earlier patches.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>array</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Items reference:</strong> <a href="#mergepatch"><code>MergePatch</code></a> (<code>#/$defs/MergePatch</code>)</li>
-<li><strong>Other keywords:</strong> x-order=1</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="mergestageimports">MergeStage.imports</h3>
-        <p><strong>Key:</strong> <code>imports</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<code>imports</code></p>
-<p>Imports lists high-level definition imports applied in order.</p>
-<p>Each item imports entries from source defs object (for example <code>/$defs</code>) into target defs object in current <code>schema</code> (also usually <code>/$defs</code>). This is the convenient way to &#34;pull shared type definitions&#34; from other schema files without writing many manual patches.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>array</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Items reference:</strong> <a href="#mergeimport"><code>MergeImport</code></a> (<code>#/$defs/MergeImport</code>)</li>
-<li><strong>Other keywords:</strong> x-order=2</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="mergestageprune_unreachable_defs">MergeStage.prune_unreachable_defs</h3>
-        <p><strong>Key:</strong> <code>prune_unreachable_defs</code></p>
-<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<code>prune_unreachable_defs</code></p>
-<p>PruneUnreachableDefs removes unreachable <code>$defs</code> entries after merge.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=3</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>Mod2SchemaStage</summary>
-        <div class="def-body" id="mod2schemastage">
-<p>Mod2SchemaStage describes schema generation from one Go type.</p>
+        <summary>MergeImport</summary>
+        <div class="def-body" id="mergeimport">
+<p>MergeImport describes one high-level definition import action.</p>
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
@@ -716,67 +648,64 @@
 </ul>
       </div>
 <article class="card">
-        <h3 id="mod2schemastagemodule">Mod2SchemaStage.module</h3>
-        <p><strong>Key:</strong> <code>module</code></p>
-<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>module</code></p>
-<p>Module selects reflection source.</p>
-<p>Local mode: existing directory on disk with go.mod. Remote mode: module path with explicit version suffix (<code>@vX.Y.Z</code> or <code>@latest</code>).</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>.</code></li>
-<li><strong>Examples:</strong> <code>../project</code>, <code>github.com/acme/project@v1.2.3</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="mod2schemastagepackage">Mod2SchemaStage.package</h3>
-        <p><strong>Key:</strong> <code>package</code></p>
-<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>package</code></p>
-<p>Package is import path where target type is declared.</p>
-<p>Keep empty when type is declared in module root package.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Examples:</strong> <code>github.com/acme/project/pkg/config</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="mod2schemastagetype">Mod2SchemaStage.type</h3>
-        <p><strong>Key:</strong> <code>type</code></p>
-<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>type</code></p>
-<p>Type is root Go type name to reflect into schema.</p>
+        <h3 id="mergeimportfile">MergeImport.file</h3>
+        <p><strong>Key:</strong> <code>file</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<code>file</code></p>
+<p>File is source schema path from which definitions are imported.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> yes</li>
-<li><strong>Examples:</strong> <code>Config</code>, <code>RuntimeOptions</code></li>
+<li><strong>Examples:</strong> <code>schemas/common.schema.json</code></li>
 <li><strong>Constraints:</strong> <code>minLength=1</code></li>
-<li><strong>Other keywords:</strong> x-order=3</li>
 </ul>
 </article>
 <article class="card">
-        <h3 id="mod2schemastagekey_namer">Mod2SchemaStage.key_namer</h3>
-        <p><strong>Key:</strong> <code>key_namer</code></p>
-<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>key_namer</code></p>
-<p>KeyNamer controls fallback field-name strategy when struct field has no explicit <code>json</code> tag.</p>
+        <h3 id="mergeimportsource_defs">MergeImport.source_defs</h3>
+        <p><strong>Key:</strong> <code>source_defs</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<code>source_defs</code></p>
+<p>SourceDefs selects source object used as definition map.</p>
+<p>Import reads all direct child keys from this pointer and treats each key as one definition name to import.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>none</code></li>
-<li><strong>Enum:</strong> <code>none</code>, <code>snake</code>, <code>kebab</code>, <code>lower</code></li>
-<li><strong>Other keywords:</strong> x-order=4</li>
+<li><strong>Default:</strong> <code>/$defs</code></li>
+<li><strong>Examples:</strong> <code>/components/schemas</code></li>
 </ul>
 </article>
 <article class="card">
-        <h3 id="mod2schemastagejsonoutputoptions">Mod2SchemaStage.JSONOutputOptions</h3>
-        <p><strong>Key:</strong> <code>json</code></p>
-<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>json</code></p>
-<p>JSON configures formatting of generated schema file.</p>
+        <h3 id="mergeimporttarget_defs">MergeImport.target_defs</h3>
+        <p><strong>Key:</strong> <code>target_defs</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<code>target_defs</code></p>
+<p>TargetDefs selects destination object for imported definitions.</p>
+<p>Use this when project keeps reusable definitions outside default <code>/$defs</code> or when imported definitions must be isolated under dedicated subtree.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>/$defs</code></li>
+<li><strong>Examples:</strong> <code>/components/schemas</code>, <code>/$defs/imported</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mergeimportmergeimportrename">MergeImport.MergeImportRename</h3>
+        <p><strong>Key:</strong> <code>rename</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<code>rename</code></p>
+<p>Rename configures how imported definition names are transformed.</p>
+<p>Useful when source and target schemas use different naming conventions or when name collisions must be avoided.</p>
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
-<li><strong>Reference:</strong> <a href="#jsonoutputoptions"><code>JSONOutputOptions</code></a> (<code>#/$defs/JSONOutputOptions</code>)</li>
-<li><strong>Other keywords:</strong> x-order=5</li>
+<li><strong>Reference:</strong> <a href="#mergeimportrename"><code>MergeImportRename</code></a> (<code>#/$defs/MergeImportRename</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mergeimportconflict">MergeImport.conflict</h3>
+        <p><strong>Key:</strong> <code>conflict</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<code>conflict</code></p>
+<p>Conflict sets behavior when target definition with same name already exists.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>error</code></li>
+<li><strong>Enum:</strong> <code>replace</code>, <code>merge</code>, <code>keep</code>, <code>error</code></li>
 </ul>
 </article>
 </div>
@@ -784,178 +713,38 @@
     </section>
 <section>
       <details class="definition">
-        <summary>Schema2DocStage</summary>
-        <div class="def-body" id="schema2docstage">
-<p>Schema2DocStage describes documentation generation from working schema.</p>
+        <summary>MergeImportRename</summary>
+        <div class="def-body" id="mergeimportrename">
+<p>MergeImportRename configures imported definition name rewrite.</p>
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 13</li>
+<li><strong>Properties:</strong> 2</li>
 <li><strong>Additional properties:</strong> boolean schema=false</li>
 </ul>
       </div>
 <article class="card">
-        <h3 id="schema2docstageoutput">Schema2DocStage.output</h3>
-        <p><strong>Key:</strong> <code>output</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>output</code></p>
-<p>Output is markdown output path.</p>
-<p>When empty, build derives output from <code>schema</code> path:</p>
-<ul><li>template <code>list</code> -&gt; <code>&lt;schema-base&gt;.list.md</code></li><li>template <code>table</code> -&gt; <code>&lt;schema-base&gt;.table.md</code></li><li>template <code>html</code> -&gt; <code>&lt;schema-base&gt;.html</code></li></ul>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=1</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="schema2docstagetemplate">Schema2DocStage.template</h3>
-        <p><strong>Key:</strong> <code>template</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>template</code></p>
-<p>Template selects built-in document template.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>list</code></li>
-<li><strong>Enum:</strong> <code>list</code>, <code>table</code>, <code>html</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="schema2docstagetemplate_file">Schema2DocStage.template_file</h3>
-        <p><strong>Key:</strong> <code>template_file</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>template_file</code></p>
-<p>TemplateFile points to custom template file and overrides <code>template</code>.</p>
-<p>Use this for project-specific layout and branding.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Examples:</strong> <code>templates/custom.md.gotmpl</code></li>
-<li><strong>Other keywords:</strong> x-order=3</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="schema2docstagetitle">Schema2DocStage.title</h3>
-        <p><strong>Key:</strong> <code>title</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>title</code></p>
-<p>Title overrides top-level document heading.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Examples:</strong> <code>schema reference</code>, <code>Project Config Reference</code></li>
-<li><strong>Other keywords:</strong> x-order=4</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="schema2docstagedescription">Schema2DocStage.description</h3>
-        <p><strong>Key:</strong> <code>description</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>description</code></p>
-<p>Description overrides top-level document description.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Examples:</strong> <code>Generated by CI pipeline.</code></li>
-<li><strong>Other keywords:</strong> x-order=5</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="schema2docstagelist_marker">Schema2DocStage.list_marker</h3>
-        <p><strong>Key:</strong> <code>list_marker</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>list_marker</code></p>
-<p>ListMarker controls unordered list marker normalization in rendered markdown.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>*</code></li>
-<li><strong>Enum:</strong> <code>-</code>, <code>*</code></li>
-<li><strong>Other keywords:</strong> x-order=6</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="schema2docstagemode">Schema2DocStage.mode</h3>
+        <h3 id="mergeimportrenamemode">MergeImportRename.mode</h3>
         <p><strong>Key:</strong> <code>mode</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>mode</code></p>
-<p>Mode selects embedded example generation mode for doc template.</p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<a href="#mergeimportmergeimportrename"><code>rename</code></a>.<code>mode</code></p>
+<p>Mode selects rename strategy.</p>
+<ul><li><code>none</code> keeps original names.</li><li><code>prefix</code> prepends <code>value</code>.</li><li><code>suffix</code> appends <code>value</code>.</li></ul>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>all</code></li>
-<li><strong>Enum:</strong> <code>all</code>, <code>required</code></li>
-<li><strong>Other keywords:</strong> x-order=7</li>
+<li><strong>Default:</strong> <code>none</code></li>
+<li><strong>Enum:</strong> <code>none</code>, <code>prefix</code>, <code>suffix</code></li>
 </ul>
 </article>
 <article class="card">
-        <h3 id="schema2docstageformat">Schema2DocStage.format</h3>
-        <p><strong>Key:</strong> <code>format</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>format</code></p>
-<p>Format selects embedded example format for doc template.</p>
-<p>Empty value disables embedded example block.</p>
+        <h3 id="mergeimportrenamevalue">MergeImportRename.value</h3>
+        <p><strong>Key:</strong> <code>value</code></p>
+<p><strong>Path:</strong> <a href="#configmergestage"><code>merge</code></a>.<a href="#mergestageimports"><code>imports</code></a>.<code>[]</code>.<a href="#mergeimportmergeimportrename"><code>rename</code></a>.<code>value</code></p>
+<p>Value is prefix or suffix text used by selected rename mode.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>json</code></li>
-<li><strong>Enum:</strong> <code>json</code>, <code>yaml</code></li>
-<li><strong>Other keywords:</strong> x-order=8</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="schema2docstagewrap">Schema2DocStage.wrap</h3>
-        <p><strong>Key:</strong> <code>wrap</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>wrap</code></p>
-<p>Wrap sets wrap width for plain-text description blocks.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>integer</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>80</code></li>
-<li><strong>Constraints:</strong> <code>minimum=1</code></li>
-<li><strong>Other keywords:</strong> x-order=9</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="schema2docstagehide_extra_keywords">Schema2DocStage.hide_extra_keywords</h3>
-        <p><strong>Key:</strong> <code>hide_extra_keywords</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>hide_extra_keywords</code></p>
-<p>HideExtraKeywords disables &#34;Other keywords&#34; attribute row in rendered docs.</p>
-<p>When false, non-standard schema keywords (for example <code>x-order</code>) are shown in attributes.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=10</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="schema2docstagefooter">Schema2DocStage.footer</h3>
-        <p><strong>Key:</strong> <code>footer</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>footer</code></p>
-<p>Footer includes schemadoc version metadata in rendered documentation.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>false</code></li>
-<li><strong>Other keywords:</strong> x-order=11</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="schema2docstagejsonoutputoptions">Schema2DocStage.JSONOutputOptions</h3>
-        <p><strong>Key:</strong> <code>json</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>json</code></p>
-<p>JSON configures embedded JSON example formatting.</p>
-<p>Used when <code>format: json</code>.</p>
-<ul class="attr-list">
-<li><strong>Required:</strong> no</li>
-<li><strong>Reference:</strong> <a href="#jsonoutputoptions"><code>JSONOutputOptions</code></a> (<code>#/$defs/JSONOutputOptions</code>)</li>
-<li><strong>Other keywords:</strong> x-order=11</li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="schema2docstageyamloutputoptions">Schema2DocStage.YAMLOutputOptions</h3>
-        <p><strong>Key:</strong> <code>yaml</code></p>
-<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>yaml</code></p>
-<p>YAML configures embedded YAML example formatting.</p>
-<p>Used when <code>format: yaml</code>.</p>
-<ul class="attr-list">
-<li><strong>Required:</strong> no</li>
-<li><strong>Reference:</strong> <a href="#yamloutputoptions"><code>YAMLOutputOptions</code></a> (<code>#/$defs/YAMLOutputOptions</code>)</li>
-<li><strong>Other keywords:</strong> x-order=12</li>
+<li><strong>Examples:</strong> <code>model_</code>, <code>_shared</code></li>
 </ul>
 </article>
 </div>
@@ -983,7 +772,6 @@
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=1</li>
 </ul>
 </article>
 <article class="card">
@@ -996,7 +784,6 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>all</code></li>
 <li><strong>Enum:</strong> <code>all</code>, <code>required</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
 </ul>
 </article>
 <article class="card">
@@ -1007,7 +794,6 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#jsonoutputoptions"><code>JSONOutputOptions</code></a> (<code>#/$defs/JSONOutputOptions</code>)</li>
-<li><strong>Other keywords:</strong> x-order=3</li>
 </ul>
 </article>
 </div>
@@ -1015,51 +801,175 @@
     </section>
 <section>
       <details class="definition">
-        <summary>Schema2YAMLStage</summary>
-        <div class="def-body" id="schema2yamlstage">
-<p>Schema2YAMLStage describes schema2yaml stage.</p>
+        <summary>Schema2DocStage</summary>
+        <div class="def-body" id="schema2docstage">
+<p>Schema2DocStage describes documentation generation from working schema.</p>
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 3</li>
+<li><strong>Properties:</strong> 14</li>
 <li><strong>Additional properties:</strong> boolean schema=false</li>
 </ul>
       </div>
 <article class="card">
-        <h3 id="schema2yamlstageoutput">Schema2YAMLStage.output</h3>
+        <h3 id="schema2docstageoutput">Schema2DocStage.output</h3>
         <p><strong>Key:</strong> <code>output</code></p>
-<p><strong>Path:</strong> <a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<code>output</code></p>
-<p>Output is output file path.</p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>output</code></p>
+<p>Output is markdown output path.</p>
 <p>When empty, build derives output from <code>schema</code> path:</p>
-<ul><li>schema2yaml -&gt; <code>&lt;schema-base&gt;.yaml</code></li></ul>
+<ul><li>template <code>list</code> -&gt; <code>&lt;schema-base&gt;.list.md</code></li><li>template <code>table</code> -&gt; <code>&lt;schema-base&gt;.table.md</code></li><li>template <code>html</code> -&gt; <code>&lt;schema-base&gt;.html</code></li></ul>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=1</li>
 </ul>
 </article>
 <article class="card">
-        <h3 id="schema2yamlstagemode">Schema2YAMLStage.mode</h3>
+        <h3 id="schema2docstagetemplate">Schema2DocStage.template</h3>
+        <p><strong>Key:</strong> <code>template</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>template</code></p>
+<p>Template selects built-in document template.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>list</code></li>
+<li><strong>Enum:</strong> <code>list</code>, <code>table</code>, <code>html</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagetemplate_file">Schema2DocStage.template_file</h3>
+        <p><strong>Key:</strong> <code>template_file</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>template_file</code></p>
+<p>TemplateFile points to custom template file and overrides <code>template</code>.</p>
+<p>Use this for project-specific layout and branding.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>templates/custom.md.gotmpl</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagetitle">Schema2DocStage.title</h3>
+        <p><strong>Key:</strong> <code>title</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>title</code></p>
+<p>Title overrides top-level document heading.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>schema reference</code>, <code>Project Config Reference</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagedescription">Schema2DocStage.description</h3>
+        <p><strong>Key:</strong> <code>description</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>description</code></p>
+<p>Description overrides top-level document description.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>Generated by CI pipeline.</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagelist_marker">Schema2DocStage.list_marker</h3>
+        <p><strong>Key:</strong> <code>list_marker</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>list_marker</code></p>
+<p>ListMarker controls unordered list marker normalization in rendered markdown.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>*</code></li>
+<li><strong>Enum:</strong> <code>-</code>, <code>*</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagemode">Schema2DocStage.mode</h3>
         <p><strong>Key:</strong> <code>mode</code></p>
-<p><strong>Path:</strong> <a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<code>mode</code></p>
-<p>Mode sets example generation mode (<code>all</code> or <code>required</code>).</p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>mode</code></p>
+<p>Mode selects embedded example generation mode for doc template.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>all</code></li>
 <li><strong>Enum:</strong> <code>all</code>, <code>required</code></li>
-<li><strong>Other keywords:</strong> x-order=2</li>
 </ul>
 </article>
 <article class="card">
-        <h3 id="schema2yamlstageyamloutputoptions">Schema2YAMLStage.YAMLOutputOptions</h3>
+        <h3 id="schema2docstageformat">Schema2DocStage.format</h3>
+        <p><strong>Key:</strong> <code>format</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>format</code></p>
+<p>Format selects embedded example format for doc template.</p>
+<p>Empty value disables embedded example block.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>json</code></li>
+<li><strong>Enum:</strong> <code>json</code>, <code>yaml</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagewrap">Schema2DocStage.wrap</h3>
+        <p><strong>Key:</strong> <code>wrap</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>wrap</code></p>
+<p>Wrap sets wrap width for plain-text description blocks.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>80</code></li>
+<li><strong>Constraints:</strong> <code>minimum=1</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagehide_extra_keywords">Schema2DocStage.hide_extra_keywords</h3>
+        <p><strong>Key:</strong> <code>hide_extra_keywords</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>hide_extra_keywords</code></p>
+<p>HideExtraKeywords disables &#34;Other keywords&#34; attribute row in rendered docs.</p>
+<p>Internal keywords such as <code>x-order</code> are hidden regardless of this option.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagejsonoutputoptions">Schema2DocStage.JSONOutputOptions</h3>
+        <p><strong>Key:</strong> <code>json</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>json</code></p>
+<p>JSON configures embedded JSON example formatting.</p>
+<p>Used when <code>format: json</code>.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#jsonoutputoptions"><code>JSONOutputOptions</code></a> (<code>#/$defs/JSONOutputOptions</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstageshow_internal_keywords">Schema2DocStage.show_internal_keywords</h3>
+        <p><strong>Key:</strong> <code>show_internal_keywords</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>show_internal_keywords</code></p>
+<p>ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagefooter">Schema2DocStage.footer</h3>
+        <p><strong>Key:</strong> <code>footer</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>footer</code></p>
+<p>Footer includes schemadoc version metadata in rendered documentation.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>false</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstageyamloutputoptions">Schema2DocStage.YAMLOutputOptions</h3>
         <p><strong>Key:</strong> <code>yaml</code></p>
-<p><strong>Path:</strong> <a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<code>yaml</code></p>
-<p>YAML configures output formatting/comments for schema2yaml.</p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>yaml</code></p>
+<p>YAML configures embedded YAML example formatting.</p>
+<p>Used when <code>format: yaml</code>.</p>
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#yamloutputoptions"><code>YAMLOutputOptions</code></a> (<code>#/$defs/YAMLOutputOptions</code>)</li>
-<li><strong>Other keywords:</strong> x-order=3</li>
 </ul>
 </article>
 </div>
@@ -1091,7 +1001,6 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>2</code></li>
 <li><strong>Constraints:</strong> <code>minimum=1</code></li>
-<li><strong>Other keywords:</strong> x-order=1</li>
 </ul>
 </article>
 <article class="card">
@@ -1107,7 +1016,55 @@
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>boolean</code></li>
 <li><strong>Required:</strong> no</li>
-<li><strong>Other keywords:</strong> x-order=2</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Schema2YAMLStage</summary>
+        <div class="def-body" id="schema2yamlstage">
+<p>Schema2YAMLStage describes schema2yaml stage.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 3</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="schema2yamlstageoutput">Schema2YAMLStage.output</h3>
+        <p><strong>Key:</strong> <code>output</code></p>
+<p><strong>Path:</strong> <a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<code>output</code></p>
+<p>Output is output file path.</p>
+<p>When empty, build derives output from <code>schema</code> path:</p>
+<ul><li>schema2yaml -&gt; <code>&lt;schema-base&gt;.yaml</code></li></ul>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2yamlstagemode">Schema2YAMLStage.mode</h3>
+        <p><strong>Key:</strong> <code>mode</code></p>
+<p><strong>Path:</strong> <a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<code>mode</code></p>
+<p>Mode sets example generation mode (<code>all</code> or <code>required</code>).</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>all</code></li>
+<li><strong>Enum:</strong> <code>all</code>, <code>required</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2yamlstageyamloutputoptions">Schema2YAMLStage.YAMLOutputOptions</h3>
+        <p><strong>Key:</strong> <code>yaml</code></p>
+<p><strong>Path:</strong> <a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<code>yaml</code></p>
+<p>YAML configures output formatting/comments for schema2yaml.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#yamloutputoptions"><code>YAMLOutputOptions</code></a> (<code>#/$defs/YAMLOutputOptions</code>)</li>
 </ul>
 </article>
 </div>
@@ -1307,14 +1264,9 @@ schema2doc:
   # Wrap sets wrap width for plain-text description blocks.
   # Default: 80
   wrap: 80
-  # HideExtraKeywords disables &#34;Other keywords&#34; attribute row in rendered
-  # docs.
-  # When false, non-standard schema keywords (for example `x-order`) are
-  # shown in attributes.
+  # HideExtraKeywords disables &#34;Other keywords&#34; attribute row in rendered docs.
+  # Internal keywords such as `x-order` are hidden regardless of this option.
   hide_extra_keywords: false
-  # Footer includes schemadoc version metadata in rendered documentation.
-  # Default: false
-  footer: false
   # JSON configures embedded JSON example formatting.
   # Used when `format: json`.
   json:
@@ -1329,6 +1281,11 @@ schema2doc:
     indent_type: space
     # Minify enables compact one-line JSON output without indentation.
     minify: false
+  # ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.
+  show_internal_keywords: false
+  # Footer includes schemadoc version metadata in rendered documentation.
+  # Default: false
+  footer: false
   # YAML configures embedded YAML example formatting.
   # Used when `format: yaml`.
   yaml:

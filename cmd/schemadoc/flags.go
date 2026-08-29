@@ -27,13 +27,14 @@ type moduleReflectFlags struct {
 
 // markdownRenderFlags groups markdown rendering flags.
 type markdownRenderFlags struct {
-	TemplatePath      string `long:"template-file"       description:"Path to custom markdown template (.gotmpl)"           short:"f"`
-	Title             string `long:"title"               description:"Markdown document title"                              short:"T" default:"schema reference"`
-	Description       string `long:"description"         description:"Optional top-level document description under title"  short:"d"`
-	ListMarker        string `long:"list-marker"         description:"List marker used in generated markdown lists"         short:"l" default:"*" choices:"-;*"`
-	WrapWidth         int    `long:"wrap"                description:"Wrap width for plain text descriptions"               short:"w" default:"80" validate-min:"1"`
-	HideExtraKeywords bool   `long:"hide-extra-keywords" description:"Hide non-standard schema keywords in Attributes"`
-	Footer            bool   `long:"footer"              description:"Include schemadoc version footer in generated output"`
+	TemplatePath         string `long:"template-file"          description:"Path to custom markdown template (.gotmpl)"           short:"f"`
+	Title                string `long:"title"                  description:"Markdown document title"                              short:"T" default:"schema reference"`
+	Description          string `long:"description"            description:"Optional top-level document description under title"  short:"d"`
+	ListMarker           string `long:"list-marker"            description:"List marker used in generated markdown lists"         short:"l" default:"*" choices:"-;*"`
+	WrapWidth            int    `long:"wrap"                   description:"Wrap width for plain text descriptions"               short:"w" default:"80" validate-min:"1"`
+	HideExtraKeywords    bool   `long:"hide-extra-keywords"    description:"Hide non-standard schema keywords in Attributes"`
+	ShowInternalKeywords bool   `long:"show-internal-keywords" description:"Show renderer-specific schema keywords in Attributes"`
+	Footer               bool   `long:"footer"                 description:"Include schemadoc version footer in generated output"`
 }
 
 // templateSelectFlags groups built-in template selection flags.

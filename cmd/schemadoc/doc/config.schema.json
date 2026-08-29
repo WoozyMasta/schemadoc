@@ -341,7 +341,7 @@
           "default": false,
           "description": "Footer includes schemadoc version metadata in rendered documentation.",
           "type": "boolean",
-          "x-order": "11"
+          "x-order": "12"
         },
         "format": {
           "default": "json",
@@ -354,7 +354,7 @@
           "x-order": "8"
         },
         "hide_extra_keywords": {
-          "description": "HideExtraKeywords disables \"Other keywords\" attribute row in rendered\ndocs.\n\nWhen false, non-standard schema keywords (for example `x-order`) are\nshown in attributes.",
+          "description": "HideExtraKeywords disables \"Other keywords\" attribute row in rendered docs.\n\nInternal keywords such as `x-order` are hidden regardless of this option.",
           "type": "boolean",
           "x-order": "10"
         },
@@ -387,6 +387,11 @@
           "description": "Output is markdown output path.\n\nWhen empty, build derives output from `schema` path:\n  - template `list` -> `<schema-base>.list.md`\n  - template `table` -> `<schema-base>.table.md`\n  - template `html` -> `<schema-base>.html`",
           "type": "string",
           "x-order": "1"
+        },
+        "show_internal_keywords": {
+          "description": "ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.",
+          "type": "boolean",
+          "x-order": "11"
         },
         "template": {
           "default": "list",

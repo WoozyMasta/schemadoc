@@ -76,6 +76,82 @@ func TestRenderGeneratedFixtureSmoke(t *testing.T) {
 	}
 }
 
+func TestRenderXOrderControlsTOCAndPropertyHeadings(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"$ref": "#/$defs/Root",
+		"$defs": map[string]any{
+			"Root": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"first": map[string]any{
+						"$ref":    "#/$defs/First",
+						"x-order": 2,
+					},
+					"second": map[string]any{
+						"$ref":    "#/$defs/Second",
+						"x-order": 1,
+					},
+				},
+			},
+			"First":  map[string]any{"type": "object"},
+			"Second": map[string]any{"type": "object"},
+		},
+	})
+
+	for _, templateName := range []string{"list", "html"} {
+		t.Run(templateName, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := Render(schema, Options{TemplateName: templateName})
+			if err != nil {
+				t.Fatalf("Render(%s): %v", templateName, err)
+			}
+
+			assertBefore(t, got, "Second", "First")
+			assertBefore(t, got, "Root.Second", "Root.First")
+		})
+	}
+}
+
+func TestRenderHidesInternalKeywordsByDefault(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"value": map[string]any{
+				"type":    "string",
+				"x-order": 1,
+				"x-owner": "platform",
+			},
+		},
+	})
+
+	defaultOutput, err := Render(schema, Options{})
+	if err != nil {
+		t.Fatalf("Render default: %v", err)
+	}
+	assertNotContains(t, defaultOutput, "x-order=1")
+	assertContains(t, defaultOutput, "x-owner=platform")
+
+	internalOutput, err := Render(schema, Options{ShowInternalKeywords: true})
+	if err != nil {
+		t.Fatalf("Render with internal keywords: %v", err)
+	}
+	assertContains(t, internalOutput, "x-order=1")
+}
+
+func assertBefore(t *testing.T, text, first, second string) {
+	t.Helper()
+	firstIndex := strings.Index(text, first)
+	secondIndex := strings.Index(text, second)
+	if firstIndex < 0 || secondIndex < 0 || firstIndex >= secondIndex {
+		t.Fatalf("expected %q before %q", first, second)
+	}
+}
+
 func TestRenderGeneratedFixturesByDraft(t *testing.T) {
 	t.Parallel()
 

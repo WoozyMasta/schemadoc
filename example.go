@@ -69,9 +69,10 @@ var exampleScalarPlaceholders = map[string]any{
 
 // exampleBuilder converts normalized schema tree into example values.
 type exampleBuilder struct {
-	activeRefs map[string]int
-	mode       ExampleMode
-	doc        schemaDocument
+	activeRefs          map[string]int
+	mode                ExampleMode
+	doc                 schemaDocument
+	disableYAMLComments bool
 }
 
 // GenerateExampleJSON returns generated example payload encoded as pretty JSON.
@@ -118,11 +119,13 @@ func GenerateExampleYAMLWithOptions(
 	if err != nil {
 		return nil, err
 	}
+	normalizedOptions := normalizeExampleOptions(options)
 
 	builder := exampleBuilder{
-		doc:        doc,
-		mode:       mode,
-		activeRefs: make(map[string]int),
+		doc:                 doc,
+		mode:                mode,
+		activeRefs:          make(map[string]int),
+		disableYAMLComments: normalizedOptions.DisableExampleComments,
 	}
 
 	value := builder.buildNode(doc.Root)
@@ -131,10 +134,7 @@ func GenerateExampleYAMLWithOptions(
 		return nil, fmt.Errorf("%w: %w", ErrEncodeExampleYAML, err)
 	}
 
-	normalizedOptions := normalizeExampleOptions(options)
-	if !normalizedOptions.DisableExampleComments {
-		builder.annotateYAMLNode(rootNode, doc.Root)
-	}
+	builder.annotateYAMLNode(rootNode, doc.Root)
 
 	data, err := marshalExampleYAMLNode(rootNode, normalizedOptions.YAMLIndent)
 	if err != nil {
@@ -813,8 +813,10 @@ func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaVa
 				continue
 			}
 
-			if comment := schemaKeyComment(property); comment != "" {
-				keyNode.HeadComment = comment
+			if !builder.disableYAMLComments {
+				if comment := schemaKeyComment(property); comment != "" {
+					keyNode.HeadComment = comment
+				}
 			}
 
 			builder.annotateYAMLNode(valueNode, property)

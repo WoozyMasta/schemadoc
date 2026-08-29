@@ -83,8 +83,13 @@ var knownSchemaKeywords = map[string]struct{}{
 	"contentSchema":    {},
 }
 
+// internalSchemaKeywords enumerates renderer-specific schema keywords hidden by default.
+var internalSchemaKeywords = map[string]struct{}{
+	"x-order": {},
+}
+
 // schemaAttributes renders flat attribute list for one schema node.
-func schemaAttributes(node schemaValue, required *bool, disableOtherKeywords bool) []attributeView {
+func schemaAttributes(node schemaValue, required *bool, disableOtherKeywords, showInternalKeywords bool) []attributeView {
 	out := make([]attributeView, 0, 32)
 
 	if node.Bool != nil {
@@ -258,7 +263,7 @@ func schemaAttributes(node schemaValue, required *bool, disableOtherKeywords boo
 	}
 
 	if !disableOtherKeywords {
-		other := otherKeywordList(obj)
+		other := otherKeywordList(obj, showInternalKeywords)
 		if len(other) > 0 {
 			out = append(out, attributeView{Name: "Other keywords", Value: strings.Join(other, "; ")})
 		}
@@ -538,7 +543,7 @@ func constraintList(node map[string]any) []string {
 }
 
 // otherKeywordList lists non-standard keywords that were not rendered in known sections.
-func otherKeywordList(node map[string]any) []string {
+func otherKeywordList(node map[string]any, showInternalKeywords bool) []string {
 	if len(node) == 0 {
 		return nil
 	}
@@ -547,6 +552,12 @@ func otherKeywordList(node map[string]any) []string {
 	for _, key := range sortedKeys(node) {
 		if _, ok := knownSchemaKeywords[key]; ok {
 			continue
+		}
+
+		if !showInternalKeywords {
+			if _, ok := internalSchemaKeywords[key]; ok {
+				continue
+			}
 		}
 
 		out = append(out, key+"="+inlineValueText(node[key]))

@@ -89,8 +89,11 @@ type Options struct {
 
 	// HideExtraKeywords hides "Other keywords" attribute rows in rendered docs.
 	//
-	// When false, non-standard schema keywords (for example `x-order`) are shown.
+	// Internal keywords such as `x-order` are hidden regardless of this option.
 	HideExtraKeywords bool `json:"hide_extra_keywords,omitempty" jsonschema:"default=false"`
+
+	// ShowInternalKeywords includes renderer-specific schema keywords in docs.
+	ShowInternalKeywords bool `json:"show_internal_keywords,omitempty" jsonschema:"default=false"`
 }
 
 // DraftInfo describes detected JSON Schema draft support status.

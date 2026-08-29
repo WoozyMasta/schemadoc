@@ -52,6 +52,7 @@
     "list_marker": "*",
     "mode": "all",
     "output": "<string>",
+    "show_internal_keywords": false,
     "template": "list",
     "template_file": "templates/custom.md.gotmpl",
     "title": "schema reference",

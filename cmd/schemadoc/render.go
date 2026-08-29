@@ -19,18 +19,19 @@ import (
 
 // markdownRenderRequest stores markdown rendering request parameters.
 type markdownRenderRequest struct {
-	TemplateName      string
-	Title             string
-	Description       string
-	TemplatePath      string
-	ListMarker        string
-	ExampleMode       string
-	ExampleFmt        string
-	OutputPath        string
-	ExampleOut        exampleOutputOptions
-	WrapWidth         int
-	HideExtraKeywords bool
-	Footer            bool
+	TemplateName         string
+	Title                string
+	Description          string
+	TemplatePath         string
+	ListMarker           string
+	ExampleMode          string
+	ExampleFmt           string
+	OutputPath           string
+	ExampleOut           exampleOutputOptions
+	WrapWidth            int
+	HideExtraKeywords    bool
+	ShowInternalKeywords bool
+	Footer               bool
 }
 
 // jsonOutputOptions stores JSON formatting options for CLI output.
@@ -134,7 +135,7 @@ func (runner *cliRunner) runSchemaToExample(
 	outputPath string,
 	options exampleOutputOptions,
 ) error {
-	schemaBytes, _, err := readSchemaInput(inputPath, runner.stdin)
+	schemaBytes, sourcePath, err := readSchemaInput(inputPath, runner.stdin)
 	if err != nil {
 		return fmt.Errorf("read schema input: %w", err)
 	}
@@ -163,6 +164,9 @@ func (runner *cliRunner) runSchemaToExample(
 			err,
 		)
 	}
+	if selectedFormat == schemadoc.ExampleFormatYAML {
+		content = addYAMLSchemaComment(content, schemaBytes, sourcePath)
+	}
 
 	if err := writeBytes(runner.stdout, outputPath, content, "example"); err != nil {
 		return err
@@ -176,6 +180,22 @@ func (runner *cliRunner) runSchemaToExample(
 		firstNonEmpty(strings.TrimSpace(mode), "all"),
 	)
 	return nil
+}
+
+// addYAMLSchemaComment adds the standard editor schema hint for file-backed schemas.
+func addYAMLSchemaComment(content, schemaBytes []byte, sourcePath string) []byte {
+	sourcePath = strings.TrimSpace(sourcePath)
+	if sourcePath == "" || sourcePath == "(stdin)" {
+		return content
+	}
+
+	schemaURL := schemadoc.SchemaSourceURL(schemaBytes, sourcePath)
+	if schemaURL == "" {
+		schemaURL = sourcePath
+	}
+
+	schemaURL = strings.NewReplacer("\r", "", "\n", "", "\\", "/").Replace(schemaURL)
+	return append([]byte("# yaml-language-server: $schema="+schemaURL+"\n\n"), content...)
 }
 
 // toExampleOptions converts CLI options to schemadoc example options.
@@ -324,16 +344,17 @@ func (runner *cliRunner) renderSchemaToDoc(
 	}
 
 	options := schemadoc.Options{
-		Title:             request.Title,
-		Description:       request.Description,
-		SourcePath:        sourcePath,
-		TemplateName:      request.TemplateName,
-		ListMarker:        request.ListMarker,
-		HideExtraKeywords: request.HideExtraKeywords,
-		ExampleMode:       mode,
-		ExampleFormat:     format,
-		ExampleOptions:    toExampleOptions(request.ExampleOut),
-		WrapWidth:         request.WrapWidth,
+		Title:                request.Title,
+		Description:          request.Description,
+		SourcePath:           sourcePath,
+		TemplateName:         request.TemplateName,
+		ListMarker:           request.ListMarker,
+		HideExtraKeywords:    request.HideExtraKeywords,
+		ShowInternalKeywords: request.ShowInternalKeywords,
+		ExampleMode:          mode,
+		ExampleFormat:        format,
+		ExampleOptions:       toExampleOptions(request.ExampleOut),
+		WrapWidth:            request.WrapWidth,
 	}
 	if request.Footer {
 		options.FooterToolName = "schemadoc"

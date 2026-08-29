@@ -110,6 +110,38 @@ func TestGenerateExampleYAMLCommentsIncludeEnumValues(t *testing.T) {
 	assertContains(t, string(gotBytes), "# Allowed values: safe, fast, debug")
 }
 
+func TestGenerateExampleYAMLDisableCommentsKeepsXOrder(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"first": map[string]any{
+				"type":    "string",
+				"x-order": 2,
+			},
+			"second": map[string]any{
+				"type":    "string",
+				"x-order": 1,
+			},
+		},
+	})
+
+	gotBytes, err := GenerateExampleYAMLWithOptions(schema, ExampleModeAll, ExampleOptions{
+		DisableExampleComments: true,
+	})
+	if err != nil {
+		t.Fatalf("GenerateExampleYAMLWithOptions: %v", err)
+	}
+
+	got := strings.TrimSpace(string(gotBytes))
+	want := "second: <string>\nfirst: <string>"
+	if got != want {
+		t.Fatalf("unexpected generated yaml:\n%s\nwant:\n%s", got, want)
+	}
+	assertNotContains(t, got, "#")
+}
+
 func TestGenerateExampleJSONModeValidation(t *testing.T) {
 	t.Parallel()
 

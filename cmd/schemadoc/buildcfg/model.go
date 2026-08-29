@@ -260,15 +260,16 @@ type Schema2DocStage struct {
 	// Wrap sets wrap width for plain-text description blocks.
 	Wrap int `json:"wrap,omitempty" yaml:"wrap,omitempty" jsonschema:"minimum=1,default=80" jsonschema_extras:"x-order=9"`
 
-	// HideExtraKeywords disables "Other keywords" attribute row in rendered
-	// docs.
+	// HideExtraKeywords disables "Other keywords" attribute row in rendered docs.
 	//
-	// When false, non-standard schema keywords (for example `x-order`) are
-	// shown in attributes.
+	// Internal keywords such as `x-order` are hidden regardless of this option.
 	HideExtraKeywords bool `json:"hide_extra_keywords,omitempty" yaml:"hide_extra_keywords,omitempty" jsonschema_extras:"x-order=10"`
 
+	// ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.
+	ShowInternalKeywords bool `json:"show_internal_keywords,omitempty" yaml:"show_internal_keywords,omitempty" jsonschema_extras:"x-order=11"`
+
 	// Footer includes schemadoc version metadata in rendered documentation.
-	Footer bool `json:"footer,omitempty" yaml:"footer,omitempty" jsonschema:"default=false" jsonschema_extras:"x-order=11"`
+	Footer bool `json:"footer,omitempty" yaml:"footer,omitempty" jsonschema:"default=false" jsonschema_extras:"x-order=12"`
 }
 
 // Schema2JSONStage describes schema2json stage.

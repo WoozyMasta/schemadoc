@@ -13,16 +13,16 @@
 ## Contents
 
 * [Config](#config)
-  * [MergeStage](#mergestage)
-    * [MergeImport](#mergeimport)
-      * [MergeImportRename](#mergeimportrename)
-    * [MergePatch](#mergepatch)
-      * [MergeOp](#mergeop)
   * [Mod2SchemaStage](#mod2schemastage)
     * [JSONOutputOptions](#jsonoutputoptions)
+  * [MergeStage](#mergestage)
+    * [MergePatch](#mergepatch)
+      * [MergeOp](#mergeop)
+    * [MergeImport](#mergeimport)
+      * [MergeImportRename](#mergeimportrename)
+  * [Schema2JSONStage](#schema2jsonstage)
   * [Schema2DocStage](#schema2docstage)
     * [YAMLOutputOptions](#yamloutputoptions)
-  * [Schema2JSONStage](#schema2jsonstage)
   * [Schema2YAMLStage](#schema2yamlstage)
 * [Example yaml document](#example-yaml-document)
 
@@ -52,7 +52,6 @@ repository-local workflows, or absolute path for CI/temp directories.
 | Required | yes |
 | Examples | `schema.json`, `build/schema/config.schema.json` |
 | Constraints | `minLength=1` |
-| Other keywords | x-order=1 |
 
 ### Config.check
 
@@ -68,7 +67,6 @@ generated files are up to date.
 | --- | --- |
 | Type | `boolean` |
 | Required | no |
-| Other keywords | x-order=2 |
 
 ### Config.Mod2SchemaStage
 
@@ -83,7 +81,6 @@ generated from source code before merge/export stages.
 | --- | --- |
 | Required | no |
 | Reference | [`Mod2SchemaStage`](#mod2schemastage) (`#/$defs/Mod2SchemaStage`) |
-| Other keywords | x-order=10 |
 
 ### Config.MergeStage
 
@@ -98,7 +95,6 @@ Use it to import shared definitions or patch fragments from other schema files.
 | --- | --- |
 | Required | no |
 | Reference | [`MergeStage`](#mergestage) (`#/$defs/MergeStage`) |
-| Other keywords | x-order=20 |
 
 ### Config.Schema2JSONStage
 
@@ -113,7 +109,6 @@ repositories, tests, and CI artifacts.
 | --- | --- |
 | Required | no |
 | Reference | [`Schema2JSONStage`](#schema2jsonstage) (`#/$defs/Schema2JSONStage`) |
-| Other keywords | x-order=30 |
 
 ### Config.Schema2DocStage
 
@@ -127,7 +122,6 @@ Use this stage for user-facing reference docs committed to repository.
 | --- | --- |
 | Required | no |
 | Reference | [`Schema2DocStage`](#schema2docstage) (`#/$defs/Schema2DocStage`) |
-| Other keywords | x-order=40 |
 
 ### Config.Schema2YAMLStage
 
@@ -141,7 +135,94 @@ This stage is useful for human-readable config examples and snippets.
 | --- | --- |
 | Required | no |
 | Reference | [`Schema2YAMLStage`](#schema2yamlstage) (`#/$defs/Schema2YAMLStage`) |
-| Other keywords | x-order=50 |
+
+## Mod2SchemaStage
+
+Mod2SchemaStage describes schema generation from one Go type.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `object` |
+| Properties | 5 |
+| Additional properties | boolean schema=false |
+
+### Mod2SchemaStage.module
+
+Key: `module`
+
+Path: [`mod2schema`](#configmod2schemastage).`module`
+
+Module selects reflection source.
+
+Local mode: existing directory on disk with go.mod. Remote mode: module path
+with explicit version suffix (`@vX.Y.Z` or `@latest`).
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `.` |
+| Examples | `../project`, `github.com/acme/project@v1.2.3` |
+
+### Mod2SchemaStage.package
+
+Key: `package`
+
+Path: [`mod2schema`](#configmod2schemastage).`package`
+
+Package is import path where target type is declared.
+
+Keep empty when type is declared in module root package.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `github.com/acme/project/pkg/config` |
+
+### Mod2SchemaStage.type
+
+Key: `type`
+
+Path: [`mod2schema`](#configmod2schemastage).`type`
+
+Type is root Go type name to reflect into schema.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | yes |
+| Examples | `Config`, `RuntimeOptions` |
+| Constraints | `minLength=1` |
+
+### Mod2SchemaStage.key_namer
+
+Key: `key_namer`
+
+Path: [`mod2schema`](#configmod2schemastage).`key_namer`
+
+KeyNamer controls fallback field-name strategy when struct field has no explicit
+`json` tag.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `none` |
+| Enum | `none`, `snake`, `kebab`, `lower` |
+
+### Mod2SchemaStage.JSONOutputOptions
+
+Key: `json`
+
+Path: [`mod2schema`](#configmod2schemastage).`json`
+
+JSON configures formatting of generated schema file.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`JSONOutputOptions`](#jsonoutputoptions) (`#/$defs/JSONOutputOptions`) |
 
 ## JSONOutputOptions
 
@@ -173,7 +254,6 @@ For `space`, this is number of spaces. For `tab`, this is number of tabs.
 | Required | no |
 | Default | `2` |
 | Constraints | `minimum=1` |
-| Other keywords | x-order=1 |
 
 ### JSONOutputOptions.indent_type
 
@@ -195,7 +275,6 @@ IndentType sets indentation character for pretty JSON.
 | Required | no |
 | Default | `space` |
 | Enum | `space`, `tab` |
-| Other keywords | x-order=2 |
 
 ### JSONOutputOptions.minify
 
@@ -213,25 +292,84 @@ Minify enables compact one-line JSON output without indentation.
 | --- | --- |
 | Type | `boolean` |
 | Required | no |
-| Other keywords | x-order=3 |
 
-## MergeImport
+## MergeStage
 
-MergeImport describes one high-level definition import action.
+MergeStage describes merge execution over working schema.
 
 | Attribute | Value |
 | --- | --- |
 | Type | `object` |
-| Properties | 5 |
+| Properties | 3 |
 | Additional properties | boolean schema=false |
 
-### MergeImport.file
+### MergeStage.patches
+
+Key: `patches`
+
+Path: [`merge`](#configmergestage).`patches`
+
+Patches lists low-level merge actions applied in order.
+
+Each patch copies or merges one source node from another schema file into
+current `schema`. Items are applied top-to-bottom; later patches can overwrite
+results of earlier patches.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `array` |
+| Required | no |
+| Items reference | [`MergePatch`](#mergepatch) (`#/$defs/MergePatch`) |
+
+### MergeStage.imports
+
+Key: `imports`
+
+Path: [`merge`](#configmergestage).`imports`
+
+Imports lists high-level definition imports applied in order.
+
+Each item imports entries from source defs object (for example `/$defs`) into
+target defs object in current `schema` (also usually `/$defs`). This is the
+convenient way to "pull shared type definitions" from other schema files without
+writing many manual patches.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `array` |
+| Required | no |
+| Items reference | [`MergeImport`](#mergeimport) (`#/$defs/MergeImport`) |
+
+### MergeStage.prune_unreachable_defs
+
+Key: `prune_unreachable_defs`
+
+Path: [`merge`](#configmergestage).`prune_unreachable_defs`
+
+PruneUnreachableDefs removes unreachable `$defs` entries after merge.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+
+## MergePatch
+
+MergePatch describes one low-level merge action.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `object` |
+| Properties | 4 |
+| Additional properties | boolean schema=false |
+
+### MergePatch.file
 
 Key: `file`
 
-Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.`file`
+Path: [`merge`](#configmergestage).[`patches`](#mergestagepatches).`[]`.`file`
 
-File is source schema path from which definitions are imported.
+File is source schema path used by this action.
 
 | Attribute | Value |
 | --- | --- |
@@ -239,123 +377,51 @@ File is source schema path from which definitions are imported.
 | Required | yes |
 | Examples | `schemas/common.schema.json` |
 | Constraints | `minLength=1` |
-| Other keywords | x-order=1 |
 
-### MergeImport.source_defs
+### MergePatch.source
 
-Key: `source_defs`
+Key: `source`
 
-Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.`source_defs`
+Path: [`merge`](#configmergestage).[`patches`](#mergestagepatches).`[]`.`source`
 
-SourceDefs selects source object used as definition map.
+Source points to source node in source schema.
 
-Import reads all direct child keys from this pointer and treats each key as one
-definition name to import.
+Empty value means source schema root.
 
 | Attribute | Value |
 | --- | --- |
 | Type | `string` |
 | Required | no |
-| Default | `/$defs` |
-| Examples | `/components/schemas` |
-| Other keywords | x-order=2 |
+| Examples | `/$defs/CommonConfig` |
 
-### MergeImport.target_defs
+### MergePatch.target
 
-Key: `target_defs`
+Key: `target`
 
-Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.`target_defs`
+Path: [`merge`](#configmergestage).[`patches`](#mergestagepatches).`[]`.`target`
 
-TargetDefs selects destination object for imported definitions.
+Target points to destination node in working schema.
 
-Use this when project keeps reusable definitions outside default `/$defs` or
-when imported definitions must be isolated under dedicated subtree.
+Empty value means working schema root.
 
 | Attribute | Value |
 | --- | --- |
 | Type | `string` |
 | Required | no |
-| Default | `/$defs` |
-| Examples | `/components/schemas`, `/$defs/imported` |
-| Other keywords | x-order=3 |
+| Examples | `/$defs/CommonConfig`, `/properties/spec` |
 
-### MergeImport.MergeImportRename
+### MergePatch.MergeOp
 
-Key: `rename`
+Key: `op`
 
-Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.`rename`
+Path: [`merge`](#configmergestage).[`patches`](#mergestagepatches).`[]`.`op`
 
-Rename configures how imported definition names are transformed.
-
-Useful when source and target schemas use different naming conventions or when
-name collisions must be avoided.
+Op controls merge behavior for selected source and target nodes.
 
 | Attribute | Value |
 | --- | --- |
-| Required | no |
-| Reference | [`MergeImportRename`](#mergeimportrename) (`#/$defs/MergeImportRename`) |
-| Other keywords | x-order=4 |
-
-### MergeImport.conflict
-
-Key: `conflict`
-
-Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.`conflict`
-
-Conflict sets behavior when target definition with same name already exists.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Default | `error` |
-| Enum | `replace`, `merge`, `keep`, `error` |
-| Other keywords | x-order=5 |
-
-## MergeImportRename
-
-MergeImportRename configures imported definition name rewrite.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `object` |
-| Properties | 2 |
-| Additional properties | boolean schema=false |
-
-### MergeImportRename.mode
-
-Key: `mode`
-
-Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.[`rename`](#mergeimportmergeimportrename).`mode`
-
-Mode selects rename strategy.
-
-* `none` keeps original names.
-* `prefix` prepends `value`.
-* `suffix` appends `value`.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Default | `none` |
-| Enum | `none`, `prefix`, `suffix` |
-| Other keywords | x-order=1 |
-
-### MergeImportRename.value
-
-Key: `value`
-
-Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.[`rename`](#mergeimportmergeimportrename).`value`
-
-Value is prefix or suffix text used by selected rename mode.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Examples | `model_`, `_shared` |
-| Other keywords | x-order=2 |
+| Required | yes |
+| Reference | [`MergeOp`](#mergeop) (`#/$defs/MergeOp`) |
 
 ## MergeOp
 
@@ -385,7 +451,6 @@ Node selects primary operation for target node.
 | Required | no |
 | Default | `replace` |
 | Enum | `replace`, `merge`, `merge-defs` |
-| Other keywords | x-order=1 |
 
 ### MergeOp.object
 
@@ -401,7 +466,6 @@ Object selects object behavior for deep-merge operations.
 | Required | no |
 | Default | `merge` |
 | Enum | `merge`, `replace` |
-| Other keywords | x-order=2 |
 
 ### MergeOp.array
 
@@ -417,148 +481,10 @@ Array selects array behavior for deep-merge operations.
 | Required | no |
 | Default | `replace` |
 | Enum | `replace`, `append`, `append-unique` |
-| Other keywords | x-order=3 |
 
-## MergePatch
+## MergeImport
 
-MergePatch describes one low-level merge action.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `object` |
-| Properties | 4 |
-| Additional properties | boolean schema=false |
-
-### MergePatch.file
-
-Key: `file`
-
-Path: [`merge`](#configmergestage).[`patches`](#mergestagepatches).`[]`.`file`
-
-File is source schema path used by this action.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | yes |
-| Examples | `schemas/common.schema.json` |
-| Constraints | `minLength=1` |
-| Other keywords | x-order=1 |
-
-### MergePatch.source
-
-Key: `source`
-
-Path: [`merge`](#configmergestage).[`patches`](#mergestagepatches).`[]`.`source`
-
-Source points to source node in source schema.
-
-Empty value means source schema root.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Examples | `/$defs/CommonConfig` |
-| Other keywords | x-order=2 |
-
-### MergePatch.target
-
-Key: `target`
-
-Path: [`merge`](#configmergestage).[`patches`](#mergestagepatches).`[]`.`target`
-
-Target points to destination node in working schema.
-
-Empty value means working schema root.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Examples | `/$defs/CommonConfig`, `/properties/spec` |
-| Other keywords | x-order=3 |
-
-### MergePatch.MergeOp
-
-Key: `op`
-
-Path: [`merge`](#configmergestage).[`patches`](#mergestagepatches).`[]`.`op`
-
-Op controls merge behavior for selected source and target nodes.
-
-| Attribute | Value |
-| --- | --- |
-| Required | yes |
-| Reference | [`MergeOp`](#mergeop) (`#/$defs/MergeOp`) |
-| Other keywords | x-order=4 |
-
-## MergeStage
-
-MergeStage describes merge execution over working schema.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `object` |
-| Properties | 3 |
-| Additional properties | boolean schema=false |
-
-### MergeStage.patches
-
-Key: `patches`
-
-Path: [`merge`](#configmergestage).`patches`
-
-Patches lists low-level merge actions applied in order.
-
-Each patch copies or merges one source node from another schema file into
-current `schema`. Items are applied top-to-bottom; later patches can overwrite
-results of earlier patches.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `array` |
-| Required | no |
-| Items reference | [`MergePatch`](#mergepatch) (`#/$defs/MergePatch`) |
-| Other keywords | x-order=1 |
-
-### MergeStage.imports
-
-Key: `imports`
-
-Path: [`merge`](#configmergestage).`imports`
-
-Imports lists high-level definition imports applied in order.
-
-Each item imports entries from source defs object (for example `/$defs`) into
-target defs object in current `schema` (also usually `/$defs`). This is the
-convenient way to "pull shared type definitions" from other schema files without
-writing many manual patches.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `array` |
-| Required | no |
-| Items reference | [`MergeImport`](#mergeimport) (`#/$defs/MergeImport`) |
-| Other keywords | x-order=2 |
-
-### MergeStage.prune_unreachable_defs
-
-Key: `prune_unreachable_defs`
-
-Path: [`merge`](#configmergestage).`prune_unreachable_defs`
-
-PruneUnreachableDefs removes unreachable `$defs` entries after merge.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `boolean` |
-| Required | no |
-| Other keywords | x-order=3 |
-
-## Mod2SchemaStage
-
-Mod2SchemaStage describes schema generation from one Go type.
+MergeImport describes one high-level definition import action.
 
 | Attribute | Value |
 | --- | --- |
@@ -566,311 +492,130 @@ Mod2SchemaStage describes schema generation from one Go type.
 | Properties | 5 |
 | Additional properties | boolean schema=false |
 
-### Mod2SchemaStage.module
+### MergeImport.file
 
-Key: `module`
+Key: `file`
 
-Path: [`mod2schema`](#configmod2schemastage).`module`
+Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.`file`
 
-Module selects reflection source.
-
-Local mode: existing directory on disk with go.mod. Remote mode: module path
-with explicit version suffix (`@vX.Y.Z` or `@latest`).
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Default | `.` |
-| Examples | `../project`, `github.com/acme/project@v1.2.3` |
-| Other keywords | x-order=1 |
-
-### Mod2SchemaStage.package
-
-Key: `package`
-
-Path: [`mod2schema`](#configmod2schemastage).`package`
-
-Package is import path where target type is declared.
-
-Keep empty when type is declared in module root package.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Examples | `github.com/acme/project/pkg/config` |
-| Other keywords | x-order=2 |
-
-### Mod2SchemaStage.type
-
-Key: `type`
-
-Path: [`mod2schema`](#configmod2schemastage).`type`
-
-Type is root Go type name to reflect into schema.
+File is source schema path from which definitions are imported.
 
 | Attribute | Value |
 | --- | --- |
 | Type | `string` |
 | Required | yes |
-| Examples | `Config`, `RuntimeOptions` |
+| Examples | `schemas/common.schema.json` |
 | Constraints | `minLength=1` |
-| Other keywords | x-order=3 |
 
-### Mod2SchemaStage.key_namer
+### MergeImport.source_defs
 
-Key: `key_namer`
+Key: `source_defs`
 
-Path: [`mod2schema`](#configmod2schemastage).`key_namer`
+Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.`source_defs`
 
-KeyNamer controls fallback field-name strategy when struct field has no explicit
-`json` tag.
+SourceDefs selects source object used as definition map.
+
+Import reads all direct child keys from this pointer and treats each key as one
+definition name to import.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `/$defs` |
+| Examples | `/components/schemas` |
+
+### MergeImport.target_defs
+
+Key: `target_defs`
+
+Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.`target_defs`
+
+TargetDefs selects destination object for imported definitions.
+
+Use this when project keeps reusable definitions outside default `/$defs` or
+when imported definitions must be isolated under dedicated subtree.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `/$defs` |
+| Examples | `/components/schemas`, `/$defs/imported` |
+
+### MergeImport.MergeImportRename
+
+Key: `rename`
+
+Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.`rename`
+
+Rename configures how imported definition names are transformed.
+
+Useful when source and target schemas use different naming conventions or when
+name collisions must be avoided.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`MergeImportRename`](#mergeimportrename) (`#/$defs/MergeImportRename`) |
+
+### MergeImport.conflict
+
+Key: `conflict`
+
+Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.`conflict`
+
+Conflict sets behavior when target definition with same name already exists.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `error` |
+| Enum | `replace`, `merge`, `keep`, `error` |
+
+## MergeImportRename
+
+MergeImportRename configures imported definition name rewrite.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `object` |
+| Properties | 2 |
+| Additional properties | boolean schema=false |
+
+### MergeImportRename.mode
+
+Key: `mode`
+
+Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.[`rename`](#mergeimportmergeimportrename).`mode`
+
+Mode selects rename strategy.
+
+* `none` keeps original names.
+* `prefix` prepends `value`.
+* `suffix` appends `value`.
 
 | Attribute | Value |
 | --- | --- |
 | Type | `string` |
 | Required | no |
 | Default | `none` |
-| Enum | `none`, `snake`, `kebab`, `lower` |
-| Other keywords | x-order=4 |
+| Enum | `none`, `prefix`, `suffix` |
 
-### Mod2SchemaStage.JSONOutputOptions
+### MergeImportRename.value
 
-Key: `json`
+Key: `value`
 
-Path: [`mod2schema`](#configmod2schemastage).`json`
+Path: [`merge`](#configmergestage).[`imports`](#mergestageimports).`[]`.[`rename`](#mergeimportmergeimportrename).`value`
 
-JSON configures formatting of generated schema file.
-
-| Attribute | Value |
-| --- | --- |
-| Required | no |
-| Reference | [`JSONOutputOptions`](#jsonoutputoptions) (`#/$defs/JSONOutputOptions`) |
-| Other keywords | x-order=5 |
-
-## Schema2DocStage
-
-Schema2DocStage describes documentation generation from working schema.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `object` |
-| Properties | 13 |
-| Additional properties | boolean schema=false |
-
-### Schema2DocStage.output
-
-Key: `output`
-
-Path: [`schema2doc`](#configschema2docstage).`output`
-
-Output is markdown output path.
-
-When empty, build derives output from `schema` path:
-
-* template `list` -> `<schema-base>.list.md`
-* template `table` -> `<schema-base>.table.md`
-* template `html` -> `<schema-base>.html`
+Value is prefix or suffix text used by selected rename mode.
 
 | Attribute | Value |
 | --- | --- |
 | Type | `string` |
 | Required | no |
-| Other keywords | x-order=1 |
-
-### Schema2DocStage.template
-
-Key: `template`
-
-Path: [`schema2doc`](#configschema2docstage).`template`
-
-Template selects built-in document template.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Default | `list` |
-| Enum | `list`, `table`, `html` |
-| Other keywords | x-order=2 |
-
-### Schema2DocStage.template_file
-
-Key: `template_file`
-
-Path: [`schema2doc`](#configschema2docstage).`template_file`
-
-TemplateFile points to custom template file and overrides `template`.
-
-Use this for project-specific layout and branding.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Examples | `templates/custom.md.gotmpl` |
-| Other keywords | x-order=3 |
-
-### Schema2DocStage.title
-
-Key: `title`
-
-Path: [`schema2doc`](#configschema2docstage).`title`
-
-Title overrides top-level document heading.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Examples | `schema reference`, `Project Config Reference` |
-| Other keywords | x-order=4 |
-
-### Schema2DocStage.description
-
-Key: `description`
-
-Path: [`schema2doc`](#configschema2docstage).`description`
-
-Description overrides top-level document description.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Examples | `Generated by CI pipeline.` |
-| Other keywords | x-order=5 |
-
-### Schema2DocStage.list_marker
-
-Key: `list_marker`
-
-Path: [`schema2doc`](#configschema2docstage).`list_marker`
-
-ListMarker controls unordered list marker normalization in rendered markdown.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Default | `*` |
-| Enum | `-`, `*` |
-| Other keywords | x-order=6 |
-
-### Schema2DocStage.mode
-
-Key: `mode`
-
-Path: [`schema2doc`](#configschema2docstage).`mode`
-
-Mode selects embedded example generation mode for doc template.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Default | `all` |
-| Enum | `all`, `required` |
-| Other keywords | x-order=7 |
-
-### Schema2DocStage.format
-
-Key: `format`
-
-Path: [`schema2doc`](#configschema2docstage).`format`
-
-Format selects embedded example format for doc template.
-
-Empty value disables embedded example block.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Default | `json` |
-| Enum | `json`, `yaml` |
-| Other keywords | x-order=8 |
-
-### Schema2DocStage.wrap
-
-Key: `wrap`
-
-Path: [`schema2doc`](#configschema2docstage).`wrap`
-
-Wrap sets wrap width for plain-text description blocks.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `integer` |
-| Required | no |
-| Default | `80` |
-| Constraints | `minimum=1` |
-| Other keywords | x-order=9 |
-
-### Schema2DocStage.hide_extra_keywords
-
-Key: `hide_extra_keywords`
-
-Path: [`schema2doc`](#configschema2docstage).`hide_extra_keywords`
-
-HideExtraKeywords disables "Other keywords" attribute row in rendered docs.
-
-When false, non-standard schema keywords (for example `x-order`) are shown in
-attributes.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `boolean` |
-| Required | no |
-| Other keywords | x-order=10 |
-
-### Schema2DocStage.footer
-
-Key: `footer`
-
-Path: [`schema2doc`](#configschema2docstage).`footer`
-
-Footer includes schemadoc version metadata in rendered documentation.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `boolean` |
-| Required | no |
-| Default | `false` |
-| Other keywords | x-order=11 |
-
-### Schema2DocStage.JSONOutputOptions
-
-Key: `json`
-
-Path: [`schema2doc`](#configschema2docstage).`json`
-
-JSON configures embedded JSON example formatting.
-
-Used when `format: json`.
-
-| Attribute | Value |
-| --- | --- |
-| Required | no |
-| Reference | [`JSONOutputOptions`](#jsonoutputoptions) (`#/$defs/JSONOutputOptions`) |
-| Other keywords | x-order=11 |
-
-### Schema2DocStage.YAMLOutputOptions
-
-Key: `yaml`
-
-Path: [`schema2doc`](#configschema2docstage).`yaml`
-
-YAML configures embedded YAML example formatting.
-
-Used when `format: yaml`.
-
-| Attribute | Value |
-| --- | --- |
-| Required | no |
-| Reference | [`YAMLOutputOptions`](#yamloutputoptions) (`#/$defs/YAMLOutputOptions`) |
-| Other keywords | x-order=12 |
+| Examples | `model_`, `_shared` |
 
 ## Schema2JSONStage
 
@@ -898,7 +643,6 @@ When empty, build derives output from `schema` path:
 | --- | --- |
 | Type | `string` |
 | Required | no |
-| Other keywords | x-order=1 |
 
 ### Schema2JSONStage.mode
 
@@ -914,7 +658,6 @@ Mode sets example generation mode (`all` or `required`).
 | Required | no |
 | Default | `all` |
 | Enum | `all`, `required` |
-| Other keywords | x-order=2 |
 
 ### Schema2JSONStage.JSONOutputOptions
 
@@ -928,43 +671,117 @@ JSON configures output formatting for schema2json.
 | --- | --- |
 | Required | no |
 | Reference | [`JSONOutputOptions`](#jsonoutputoptions) (`#/$defs/JSONOutputOptions`) |
-| Other keywords | x-order=3 |
 
-## Schema2YAMLStage
+## Schema2DocStage
 
-Schema2YAMLStage describes schema2yaml stage.
+Schema2DocStage describes documentation generation from working schema.
 
 | Attribute | Value |
 | --- | --- |
 | Type | `object` |
-| Properties | 3 |
+| Properties | 14 |
 | Additional properties | boolean schema=false |
 
-### Schema2YAMLStage.output
+### Schema2DocStage.output
 
 Key: `output`
 
-Path: [`schema2yaml`](#configschema2yamlstage).`output`
+Path: [`schema2doc`](#configschema2docstage).`output`
 
-Output is output file path.
+Output is markdown output path.
 
 When empty, build derives output from `schema` path:
 
-* schema2yaml -> `<schema-base>.yaml`
+* template `list` -> `<schema-base>.list.md`
+* template `table` -> `<schema-base>.table.md`
+* template `html` -> `<schema-base>.html`
 
 | Attribute | Value |
 | --- | --- |
 | Type | `string` |
 | Required | no |
-| Other keywords | x-order=1 |
 
-### Schema2YAMLStage.mode
+### Schema2DocStage.template
+
+Key: `template`
+
+Path: [`schema2doc`](#configschema2docstage).`template`
+
+Template selects built-in document template.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `list` |
+| Enum | `list`, `table`, `html` |
+
+### Schema2DocStage.template_file
+
+Key: `template_file`
+
+Path: [`schema2doc`](#configschema2docstage).`template_file`
+
+TemplateFile points to custom template file and overrides `template`.
+
+Use this for project-specific layout and branding.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `templates/custom.md.gotmpl` |
+
+### Schema2DocStage.title
+
+Key: `title`
+
+Path: [`schema2doc`](#configschema2docstage).`title`
+
+Title overrides top-level document heading.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `schema reference`, `Project Config Reference` |
+
+### Schema2DocStage.description
+
+Key: `description`
+
+Path: [`schema2doc`](#configschema2docstage).`description`
+
+Description overrides top-level document description.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `Generated by CI pipeline.` |
+
+### Schema2DocStage.list_marker
+
+Key: `list_marker`
+
+Path: [`schema2doc`](#configschema2docstage).`list_marker`
+
+ListMarker controls unordered list marker normalization in rendered markdown.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `*` |
+| Enum | `-`, `*` |
+
+### Schema2DocStage.mode
 
 Key: `mode`
 
-Path: [`schema2yaml`](#configschema2yamlstage).`mode`
+Path: [`schema2doc`](#configschema2docstage).`mode`
 
-Mode sets example generation mode (`all` or `required`).
+Mode selects embedded example generation mode for doc template.
 
 | Attribute | Value |
 | --- | --- |
@@ -972,21 +789,111 @@ Mode sets example generation mode (`all` or `required`).
 | Required | no |
 | Default | `all` |
 | Enum | `all`, `required` |
-| Other keywords | x-order=2 |
 
-### Schema2YAMLStage.YAMLOutputOptions
+### Schema2DocStage.format
+
+Key: `format`
+
+Path: [`schema2doc`](#configschema2docstage).`format`
+
+Format selects embedded example format for doc template.
+
+Empty value disables embedded example block.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `json` |
+| Enum | `json`, `yaml` |
+
+### Schema2DocStage.wrap
+
+Key: `wrap`
+
+Path: [`schema2doc`](#configschema2docstage).`wrap`
+
+Wrap sets wrap width for plain-text description blocks.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `integer` |
+| Required | no |
+| Default | `80` |
+| Constraints | `minimum=1` |
+
+### Schema2DocStage.hide_extra_keywords
+
+Key: `hide_extra_keywords`
+
+Path: [`schema2doc`](#configschema2docstage).`hide_extra_keywords`
+
+HideExtraKeywords disables "Other keywords" attribute row in rendered docs.
+
+Internal keywords such as `x-order` are hidden regardless of this option.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+
+### Schema2DocStage.JSONOutputOptions
+
+Key: `json`
+
+Path: [`schema2doc`](#configschema2docstage).`json`
+
+JSON configures embedded JSON example formatting.
+
+Used when `format: json`.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`JSONOutputOptions`](#jsonoutputoptions) (`#/$defs/JSONOutputOptions`) |
+
+### Schema2DocStage.show_internal_keywords
+
+Key: `show_internal_keywords`
+
+Path: [`schema2doc`](#configschema2docstage).`show_internal_keywords`
+
+ShowInternalKeywords includes renderer-specific schema keywords in rendered
+docs.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+
+### Schema2DocStage.footer
+
+Key: `footer`
+
+Path: [`schema2doc`](#configschema2docstage).`footer`
+
+Footer includes schemadoc version metadata in rendered documentation.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+| Default | `false` |
+
+### Schema2DocStage.YAMLOutputOptions
 
 Key: `yaml`
 
-Path: [`schema2yaml`](#configschema2yamlstage).`yaml`
+Path: [`schema2doc`](#configschema2docstage).`yaml`
 
-YAML configures output formatting/comments for schema2yaml.
+YAML configures embedded YAML example formatting.
+
+Used when `format: yaml`.
 
 | Attribute | Value |
 | --- | --- |
 | Required | no |
 | Reference | [`YAMLOutputOptions`](#yamloutputoptions) (`#/$defs/YAMLOutputOptions`) |
-| Other keywords | x-order=3 |
 
 ## YAMLOutputOptions
 
@@ -1015,7 +922,6 @@ Indent sets YAML indentation width for one nesting level.
 | Required | no |
 | Default | `2` |
 | Constraints | `minimum=1` |
-| Other keywords | x-order=1 |
 
 ### YAMLOutputOptions.disable_example_comments
 
@@ -1035,7 +941,61 @@ default, example, enum).
 | --- | --- |
 | Type | `boolean` |
 | Required | no |
-| Other keywords | x-order=2 |
+
+## Schema2YAMLStage
+
+Schema2YAMLStage describes schema2yaml stage.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `object` |
+| Properties | 3 |
+| Additional properties | boolean schema=false |
+
+### Schema2YAMLStage.output
+
+Key: `output`
+
+Path: [`schema2yaml`](#configschema2yamlstage).`output`
+
+Output is output file path.
+
+When empty, build derives output from `schema` path:
+
+* schema2yaml -> `<schema-base>.yaml`
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+
+### Schema2YAMLStage.mode
+
+Key: `mode`
+
+Path: [`schema2yaml`](#configschema2yamlstage).`mode`
+
+Mode sets example generation mode (`all` or `required`).
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `all` |
+| Enum | `all`, `required` |
+
+### Schema2YAMLStage.YAMLOutputOptions
+
+Key: `yaml`
+
+Path: [`schema2yaml`](#configschema2yamlstage).`yaml`
+
+YAML configures output formatting/comments for schema2yaml.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`YAMLOutputOptions`](#yamloutputoptions) (`#/$defs/YAMLOutputOptions`) |
 
 ## Example yaml document
 
@@ -1234,14 +1194,9 @@ schema2doc:
   # Wrap sets wrap width for plain-text description blocks.
   # Default: 80
   wrap: 80
-  # HideExtraKeywords disables "Other keywords" attribute row in rendered
-  # docs.
-  # When false, non-standard schema keywords (for example `x-order`) are
-  # shown in attributes.
+  # HideExtraKeywords disables "Other keywords" attribute row in rendered docs.
+  # Internal keywords such as `x-order` are hidden regardless of this option.
   hide_extra_keywords: false
-  # Footer includes schemadoc version metadata in rendered documentation.
-  # Default: false
-  footer: false
   # JSON configures embedded JSON example formatting.
   # Used when `format: json`.
   json:
@@ -1256,6 +1211,11 @@ schema2doc:
     indent_type: space
     # Minify enables compact one-line JSON output without indentation.
     minify: false
+  # ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.
+  show_internal_keywords: false
+  # Footer includes schemadoc version metadata in rendered documentation.
+  # Default: false
+  footer: false
   # YAML configures embedded YAML example formatting.
   # Used when `format: yaml`.
   yaml:

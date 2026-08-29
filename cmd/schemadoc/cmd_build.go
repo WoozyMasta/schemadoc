@@ -151,17 +151,18 @@ func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Co
 			strings.TrimSpace(stage.Template),
 		)
 		if err := runner.runSchemaToDocForBuild(schemaPath, markdownRenderRequest{
-			TemplateName:      strings.TrimSpace(stage.Template),
-			TemplatePath:      strings.TrimSpace(stage.TemplateFile),
-			Title:             strings.TrimSpace(stage.Title),
-			Description:       strings.TrimSpace(stage.Description),
-			ListMarker:        strings.TrimSpace(stage.ListMarker),
-			WrapWidth:         stage.Wrap,
-			HideExtraKeywords: stage.HideExtraKeywords,
-			Footer:            stage.Footer,
-			ExampleMode:       strings.TrimSpace(stage.Mode),
-			ExampleFmt:        strings.TrimSpace(stage.Format),
-			OutputPath:        outputPath,
+			TemplateName:         strings.TrimSpace(stage.Template),
+			TemplatePath:         strings.TrimSpace(stage.TemplateFile),
+			Title:                strings.TrimSpace(stage.Title),
+			Description:          strings.TrimSpace(stage.Description),
+			ListMarker:           strings.TrimSpace(stage.ListMarker),
+			WrapWidth:            stage.Wrap,
+			HideExtraKeywords:    stage.HideExtraKeywords,
+			ShowInternalKeywords: stage.ShowInternalKeywords,
+			Footer:               stage.Footer,
+			ExampleMode:          strings.TrimSpace(stage.Mode),
+			ExampleFmt:           strings.TrimSpace(stage.Format),
+			OutputPath:           outputPath,
 			ExampleOut: exampleOutputOptions{
 				JSON: jsonOutputFromBuild(stage.JSON),
 				YAML: yamlOutputFromBuild(stage.YAML),
@@ -369,7 +370,7 @@ func (runner *cliRunner) runSchemaToExampleForBuild(
 	check bool,
 	options exampleOutputOptions,
 ) error {
-	schemaBytes, _, err := readSchemaInput(inputPath, runner.stdin)
+	schemaBytes, sourcePath, err := readSchemaInput(inputPath, runner.stdin)
 	if err != nil {
 		return fmt.Errorf("read schema input: %w", err)
 	}
@@ -392,6 +393,10 @@ func (runner *cliRunner) runSchemaToExampleForBuild(
 	)
 	if err != nil {
 		return fmt.Errorf("generate %s %s example: %w", selectedMode, selectedFormat, err)
+	}
+
+	if selectedFormat == schemadoc.ExampleFormatYAML {
+		content = addYAMLSchemaComment(content, schemaBytes, sourcePath)
 	}
 
 	if !check {
