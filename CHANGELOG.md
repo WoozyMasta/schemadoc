@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.7.0][] - 2026-08-29
 
 ### Added
 
@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning][].
   are hidden from documentation by default.
 * File-backed YAML examples now include a `yaml-language-server` schema hint;
   GitHub-backed schemas use their Raw URL when available.
+
+[0.7.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.6.0...v0.7.0
 
 ## [0.6.0][] - 2026-08-14
 
