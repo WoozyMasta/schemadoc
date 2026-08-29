@@ -89,9 +89,6 @@ func runWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			flags.DetectShellEnvStyle,
 	)
 	parser.Name = runner.programName
-	parser.LongDescription = "schemadoc helps you build JSON Schema, docs, and example configs." +
-		"You can generate docs from schema files, reflect Go types into schema," +
-		"merge schema fragments, and run multi-step jobs from config."
 
 	fields := flags.VersionFieldsCore
 	if BuildTime.IsZero() {
@@ -112,7 +109,7 @@ func runWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return 1
 	}
 
-	applyCommandLongDescriptions(parser)
+	configureDescriptions(parser, options)
 
 	_, err := parser.ParseArgs(args)
 	if err == nil {

@@ -172,8 +172,8 @@ docs-schema:
 
 docs-cli:
 	GOWORK=$(GOWORK) $(GO) run $(GOFLAGS) -ldflags="$(LDFLAGS)" ./cmd/$(BINARY) \
-		docs md --program-name "$(BINARY)" --style posix --template=table \
-		--toc --dash-lists --trim-descriptions "$(CLI_DOCS)/CLI.md"
+		docs md --program-name "$(BINARY)" --style posix --shell=bash --template=table \
+		--toc --toc-nested --dash-lists --trim-descriptions "$(CLI_DOCS)/CLI.md"
 
 release-notes:
 	@awk '\
