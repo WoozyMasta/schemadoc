@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Changed
+
+* Local module targets with a `/vN` major-version suffix
+  now use a Go-compatible placeholder requirement version
+  in the temporary helper module.
+
 ## [0.7.0][] - 2026-08-29
 
 ### Added

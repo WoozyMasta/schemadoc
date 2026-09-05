@@ -53,6 +53,95 @@ func TestResolveJSONSchemaVersion(t *testing.T) {
 	}
 }
 
+func TestLocalModulePlaceholderVersion(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name       string
+		modulePath string
+		want       string
+	}{
+		{
+			name:       "module without major suffix",
+			modulePath: "github.com/acme/project",
+			want:       "v0.0.0",
+		},
+		{
+			name:       "v1 suffix",
+			modulePath: "github.com/acme/project/v1",
+			want:       "v0.0.0",
+		},
+		{
+			name:       "v2 suffix",
+			modulePath: "github.com/acme/project/v2",
+			want:       "v2.0.0",
+		},
+		{
+			name:       "multi digit major suffix",
+			modulePath: "github.com/acme/project/v12",
+			want:       "v12.0.0",
+		},
+		{
+			name:       "invalid major suffix",
+			modulePath: "github.com/acme/project/v02",
+			want:       "v0.0.0",
+		},
+	}
+
+	for index := range testCases {
+		testCase := testCases[index]
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := localModulePlaceholderVersion(testCase.modulePath)
+			if got != testCase.want {
+				t.Fatalf(
+					"localModulePlaceholderVersion(%q) = %q, want %q",
+					testCase.modulePath,
+					got,
+					testCase.want,
+				)
+			}
+		})
+	}
+}
+
+func TestInitSchemaGeneratorWorkspace_LocalMajorVersion(t *testing.T) {
+	helperDir := t.TempDir()
+	moduleDir := t.TempDir()
+	modulePath := "github.com/acme/project/v2"
+	if err := os.WriteFile(
+		filepath.Join(moduleDir, "go.mod"),
+		[]byte("module "+modulePath+"\n\ngo 1.25.5\n"),
+		0o600,
+	); err != nil {
+		t.Fatalf("write target go.mod: %v", err)
+	}
+
+	err := initSchemaGeneratorWorkspace(
+		helperDir,
+		resolvedTarget{
+			Source:     moduleSourceLocal,
+			ModulePath: modulePath,
+			ModuleDir:  filepath.ToSlash(moduleDir),
+		},
+		schemaGeneratorJSONSchemaVersion,
+	)
+	if err != nil {
+		t.Fatalf("initSchemaGeneratorWorkspace() error = %v", err)
+	}
+
+	goMod, err := os.ReadFile(filepath.Join(helperDir, "go.mod"))
+	if err != nil {
+		t.Fatalf("read helper go.mod: %v", err)
+	}
+
+	wantRequire := modulePath + " v2.0.0"
+	if !strings.Contains(string(goMod), wantRequire) {
+		t.Fatalf("helper go.mod does not contain %q:\n%s", wantRequire, goMod)
+	}
+}
+
 func TestParseGoMajorMinor(t *testing.T) {
 	t.Parallel()
 

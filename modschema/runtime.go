@@ -450,7 +450,10 @@ func initSchemaGeneratorWorkspace(
 	}
 
 	requireVersion := "v0.0.0"
-	if target.Source == moduleSourceRemote {
+	switch target.Source {
+	case moduleSourceLocal:
+		requireVersion = localModulePlaceholderVersion(target.ModulePath)
+	case moduleSourceRemote:
 		requireVersion = target.ModuleVer
 	}
 
@@ -490,6 +493,29 @@ func initSchemaGeneratorWorkspace(
 	}
 
 	return nil
+}
+
+// localModulePlaceholderVersion returns a Go-compatible local module version.
+func localModulePlaceholderVersion(modulePath string) string {
+	const defaultVersion = "v0.0.0"
+
+	trimmedModulePath := strings.TrimSpace(modulePath)
+	lastSlash := strings.LastIndex(trimmedModulePath, "/")
+	if lastSlash < 0 {
+		return defaultVersion
+	}
+
+	majorText, ok := strings.CutPrefix(trimmedModulePath[lastSlash+1:], "v")
+	if !ok {
+		return defaultVersion
+	}
+
+	major, err := strconv.Atoi(majorText)
+	if err != nil || major < 2 || strconv.Itoa(major) != majorText {
+		return defaultVersion
+	}
+
+	return fmt.Sprintf("v%d.0.0", major)
 }
 
 // applySourceModuleReplaces copies replace directives from source module go.mod.
