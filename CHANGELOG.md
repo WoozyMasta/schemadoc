@@ -14,13 +14,15 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.7.1][] - 2026-09-05
 
 ### Changed
 
 * Local module targets with a `/vN` major-version suffix
   now use a Go-compatible placeholder requirement version
   in the temporary helper module.
+
+[0.7.1]: https://github.com/WoozyMasta/schemadoc/compare/v0.7.0...v0.7.1
 
 ## [0.7.0][] - 2026-08-29
 
