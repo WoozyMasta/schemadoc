@@ -73,6 +73,7 @@ type propertyView struct {
 	Paths       []string
 	Description string
 	Attributes  []attributeView
+	pathValues  []schemaPath
 }
 
 // attributeView is a single rendered name/value metadata item.

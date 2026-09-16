@@ -76,6 +76,25 @@ func TestRenderGeneratedFixtureSmoke(t *testing.T) {
 	}
 }
 
+func TestRenderListPathsAreContiguous(t *testing.T) {
+	t.Parallel()
+
+	output, err := RenderFile(
+		filepath.Join("testdata", "generated", "app.schema.json"),
+		Options{TemplateName: "list", ListMarker: "-"},
+	)
+	if err != nil {
+		t.Fatalf("RenderFile: %v", err)
+	}
+
+	want := "- [`bucket_groups`](#serviceconfigbucket_groups).`[]`.`[]`.`region`\n" +
+		"- [`buckets_by_priority`](#serviceconfigbuckets_by_priority)`[\"^[0-9]+$\"]`.`region`\n" +
+		"- [`named_buckets`](#serviceconfignamed_buckets).`[]`.`region`"
+	if !strings.Contains(output, want) {
+		t.Fatalf("Paths list contains unexpected spacing or presentation")
+	}
+}
+
 func TestRenderXOrderControlsTOCAndPropertyHeadings(t *testing.T) {
 	t.Parallel()
 

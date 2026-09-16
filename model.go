@@ -128,11 +128,13 @@ type SchemaModel struct {
 // schemaDocument is the normalized JSON Schema root model used by renderer.
 type schemaDocument struct {
 	Root        schemaValue
+	Raw         any
 	Defs        map[string]schemaValue
 	RawKeywords map[string]any
 	Schema      string
 	ID          string
 	Ref         string
+	Dialect     schemaDialect
 	Draft       DraftInfo
 }
 
@@ -161,6 +163,7 @@ func parseDocument(schemaBytes []byte) (schemaDocument, error) {
 
 	doc := schemaDocument{
 		Root: rootValue,
+		Raw:  root,
 	}
 
 	if rootObject := rootValue.Object; rootObject != nil {
@@ -170,10 +173,12 @@ func parseDocument(schemaBytes []byte) (schemaDocument, error) {
 		doc.Ref = asString(rootObject["$ref"])
 		doc.Defs = mergeDefinitions(rootObject)
 		doc.Draft = detectDraft(doc.Schema)
+		doc.Dialect = normalizeSchemaDialect(doc.Schema)
 		return doc, nil
 	}
 
 	doc.Draft = detectDraft("")
+	doc.Dialect = normalizeSchemaDialect("")
 	return doc, nil
 }
 
@@ -286,9 +291,11 @@ func asNumber(value any) (float64, bool) {
 	switch typed := value.(type) {
 	case float64:
 		return typed, !math.IsNaN(typed) && !math.IsInf(typed, 0)
+
 	case float32:
 		floatValue := float64(typed)
 		return floatValue, !math.IsNaN(floatValue) && !math.IsInf(floatValue, 0)
+
 	case int:
 		return float64(typed), true
 	case int8:
@@ -309,6 +316,7 @@ func asNumber(value any) (float64, bool) {
 		return float64(typed), true
 	case uint64:
 		return float64(typed), true
+
 	case json.Number:
 		floatValue, err := typed.Float64()
 		if err != nil {
@@ -316,6 +324,7 @@ func asNumber(value any) (float64, bool) {
 		}
 
 		return floatValue, !math.IsNaN(floatValue) && !math.IsInf(floatValue, 0)
+
 	case string:
 		text := strings.TrimSpace(typed)
 		if text == "" {
@@ -328,6 +337,7 @@ func asNumber(value any) (float64, bool) {
 		}
 
 		return floatValue, !math.IsNaN(floatValue) && !math.IsInf(floatValue, 0)
+
 	default:
 		return 0, false
 	}
@@ -354,64 +364,4 @@ func firstNonEmpty(values ...string) string {
 	}
 
 	return ""
-}
-
-// supportedDraftAliases maps known draft aliases and schema URIs to canonical labels.
-var supportedDraftAliases = map[string]string{
-	"2020-12":  "2020-12",
-	"2019-09":  "2019-09",
-	"draft-07": "draft-07",
-	"draft-06": "draft-06",
-	"draft-05": "draft-05",
-
-	"https://json-schema.org/draft/2020-12/schema": "2020-12",
-	"http://json-schema.org/draft/2020-12/schema":  "2020-12",
-	"https://json-schema.org/draft/2019-09/schema": "2019-09",
-	"http://json-schema.org/draft/2019-09/schema":  "2019-09",
-	"https://json-schema.org/draft-07/schema":      "draft-07",
-	"http://json-schema.org/draft-07/schema":       "draft-07",
-	"https://json-schema.org/draft-06/schema":      "draft-06",
-	"http://json-schema.org/draft-06/schema":       "draft-06",
-	"https://json-schema.org/draft-05/schema":      "draft-05",
-	"http://json-schema.org/draft-05/schema":       "draft-05",
-}
-
-// detectDraft normalizes and resolves raw $schema value into DraftInfo metadata.
-func detectDraft(raw string) DraftInfo {
-	normalized := normalizeDraft(raw)
-	if normalized == "" {
-		return DraftInfo{Raw: raw}
-	}
-
-	canonical, ok := supportedDraftAliases[normalized]
-	if !ok {
-		return DraftInfo{
-			Raw:       raw,
-			Canonical: normalized,
-			Supported: false,
-		}
-	}
-
-	return DraftInfo{
-		Raw:       raw,
-		Canonical: canonical,
-		Supported: true,
-	}
-}
-
-// normalizeDraft normalizes draft strings for matching by lower-casing and trimming suffixes.
-func normalizeDraft(raw string) string {
-	normalized := strings.TrimSpace(strings.ToLower(raw))
-	if normalized == "" {
-		return ""
-	}
-
-	normalized = strings.TrimSuffix(normalized, "#")
-	normalized = strings.TrimSuffix(normalized, "/")
-	return normalized
-}
-
-// DetectDraft reports draft support info for a single $schema value.
-func DetectDraft(schemaURI string) DraftInfo {
-	return detectDraft(schemaURI)
 }

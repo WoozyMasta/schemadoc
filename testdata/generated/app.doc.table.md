@@ -1532,7 +1532,7 @@ Key: `region`
 Paths:
 
 * [`bucket_groups`](#serviceconfigbucket_groups).`[]`.`[]`.`region`
-* [`buckets_by_priority`](#serviceconfigbuckets_by_priority).`^[0-9]+$`.`region`
+* [`buckets_by_priority`](#serviceconfigbuckets_by_priority)`["^[0-9]+$"]`.`region`
 * [`named_buckets`](#serviceconfignamed_buckets).`[]`.`region`
 
 Region is bucket region.
@@ -1550,7 +1550,7 @@ Key: `name`
 Paths:
 
 * [`bucket_groups`](#serviceconfigbucket_groups).`[]`.`[]`.`name`
-* [`buckets_by_priority`](#serviceconfigbuckets_by_priority).`^[0-9]+$`.`name`
+* [`buckets_by_priority`](#serviceconfigbuckets_by_priority)`["^[0-9]+$"]`.`name`
 * [`named_buckets`](#serviceconfignamed_buckets).`[]`.`name`
 
 Name is bucket name.
@@ -1569,7 +1569,7 @@ Key: `read_only`
 Paths:
 
 * [`bucket_groups`](#serviceconfigbucket_groups).`[]`.`[]`.`read_only`
-* [`buckets_by_priority`](#serviceconfigbuckets_by_priority).`^[0-9]+$`.`read_only`
+* [`buckets_by_priority`](#serviceconfigbuckets_by_priority)`["^[0-9]+$"]`.`read_only`
 * [`named_buckets`](#serviceconfignamed_buckets).`[]`.`read_only`
 
 ReadOnly marks bucket as read-only.

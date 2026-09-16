@@ -14,14 +14,14 @@ import (
 
 // definitionEdge is one graph edge from a definition property path to another definition.
 type definitionEdge struct {
-	Path   string
 	Target string
+	Path   schemaPath
 }
 
 // definitionPathState is one BFS queue item for definition path traversal.
 type definitionPathState struct {
 	Definition string
-	Prefix     string
+	Prefix     schemaPath
 	Depth      int
 }
 
@@ -101,14 +101,15 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 			allPaths := buildPropertyPaths(basePaths, propName, false)
 			paths := filterPropertyPaths(allPaths, propertyPathFilterOptions{
 				HideRootPath: isRootDefinition,
-				RootPath:     strings.TrimSpace(propName),
+				RootPath:     schemaPath{}.appendProperty(strings.TrimSpace(propName)),
 			})
 			indexPathAnchors(pathAnchors, ambiguousPathAnchors, allPaths, headingAnchor)
 
 			definition.Properties = append(definition.Properties, propertyView{
 				Heading:     escapeInline(headingText),
 				Name:        escapeInline(propName),
-				Paths:       paths,
+				Paths:       pathPresentations(paths),
+				pathValues:  paths,
 				Description: formatDescriptionMarkdown(nodeDescription(prop), wrapWidth, listMarker),
 				Attributes:  schemaAttributes(prop, &propRequired, opt.HideExtraKeywords, opt.ShowInternalKeywords),
 			})
@@ -342,12 +343,12 @@ func propertyHeadingName(key string, prop schemaValue) string {
 
 // propertyPathFilterOptions defines path filtering options for rendered properties.
 type propertyPathFilterOptions struct {
-	RootPath     string
+	RootPath     schemaPath
 	HideRootPath bool
 }
 
 // filterPropertyPaths removes root-level property path when requested.
-func filterPropertyPaths(paths []string, opts propertyPathFilterOptions) []string {
+func filterPropertyPaths(paths []schemaPath, opts propertyPathFilterOptions) []schemaPath {
 	if len(paths) == 0 {
 		return nil
 	}
@@ -355,14 +356,13 @@ func filterPropertyPaths(paths []string, opts propertyPathFilterOptions) []strin
 		return paths
 	}
 
-	rootPath := strings.TrimSpace(opts.RootPath)
-	if rootPath == "" {
+	if len(opts.RootPath.segments) == 0 {
 		return paths
 	}
 
-	out := make([]string, 0, len(paths))
+	out := make([]schemaPath, 0, len(paths))
 	for _, path := range paths {
-		if strings.TrimSpace(path) == rootPath {
+		if path.equal(opts.RootPath) {
 			continue
 		}
 
@@ -373,28 +373,28 @@ func filterPropertyPaths(paths []string, opts propertyPathFilterOptions) []strin
 }
 
 // indexPathAnchors stores deterministic path prefix anchors and skips ambiguous mappings.
-func indexPathAnchors(pathAnchors map[string]string, ambiguous map[string]struct{}, paths []string, anchor string) {
+func indexPathAnchors(pathAnchors map[string]string, ambiguous map[string]struct{}, paths []schemaPath, anchor string) {
 	anchor = strings.TrimSpace(anchor)
 	if anchor == "" || len(paths) == 0 {
 		return
 	}
 
 	for _, path := range paths {
-		path = strings.TrimSpace(path)
-		if path == "" {
+		if len(path.segments) == 0 {
+			continue
+		}
+		key := path.key()
+
+		if _, blocked := ambiguous[key]; blocked {
+			continue
+		}
+		if existing, ok := pathAnchors[key]; ok && existing != anchor {
+			delete(pathAnchors, key)
+			ambiguous[key] = struct{}{}
 			continue
 		}
 
-		if _, blocked := ambiguous[path]; blocked {
-			continue
-		}
-		if existing, ok := pathAnchors[path]; ok && existing != anchor {
-			delete(pathAnchors, path)
-			ambiguous[path] = struct{}{}
-			continue
-		}
-
-		pathAnchors[path] = anchor
+		pathAnchors[key] = anchor
 	}
 }
 
@@ -408,12 +408,12 @@ func applyPathLinks(view *renderView, pathAnchors map[string]string) {
 		definition := &view.Definitions[i]
 		for j := range definition.Properties {
 			property := &definition.Properties[j]
-			if len(property.Paths) == 0 {
+			if len(property.pathValues) == 0 {
 				continue
 			}
 
 			linkedPaths := make([]string, 0, len(property.Paths))
-			for _, path := range property.Paths {
+			for _, path := range property.pathValues {
 				linkedPaths = append(linkedPaths, buildLinkedPath(path, pathAnchors))
 			}
 
@@ -422,37 +422,23 @@ func applyPathLinks(view *renderView, pathAnchors map[string]string) {
 	}
 }
 
-// buildLinkedPath renders one dotted path with links on intermediate segments.
-func buildLinkedPath(path string, pathAnchors map[string]string) string {
-	path = strings.TrimSpace(path)
-	if path == "" {
+// buildLinkedPath renders one presentation path with links on intermediate segments.
+func buildLinkedPath(path schemaPath, pathAnchors map[string]string) string {
+	if len(path.segments) == 0 {
 		return ""
 	}
 
-	parts := strings.Split(path, ".")
-	if len(parts) == 0 {
-		return "`" + escapeInline(path) + "`"
-	}
-
 	var builder strings.Builder
-	prefix := make([]string, 0, len(parts))
-	last := len(parts) - 1
+	prefix := schemaPath{}
 
-	for index, part := range parts {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-		if builder.Len() > 0 {
-			builder.WriteString(".")
-		}
-
-		prefix = append(prefix, part)
-		segment := "`" + escapeInline(part) + "`"
-
-		if index < last {
-			anchor, ok := pathAnchors[strings.Join(prefix, ".")]
+	for index, segmentValue := range path.segments {
+		separator := path.segmentSeparator(index)
+		segment := "`" + escapeInline(segmentValue.display()) + "`"
+		prefix = prefix.append(segmentValue)
+		if index < len(path.segments)-1 {
+			anchor, ok := pathAnchors[prefix.key()]
 			if ok && strings.TrimSpace(anchor) != "" {
+				builder.WriteString(separator)
 				builder.WriteString("[")
 				builder.WriteString(segment)
 				builder.WriteString("](#")
@@ -462,6 +448,7 @@ func buildLinkedPath(path string, pathAnchors map[string]string) string {
 			}
 		}
 
+		builder.WriteString(separator)
 		builder.WriteString(segment)
 	}
 
@@ -469,7 +456,7 @@ func buildLinkedPath(path string, pathAnchors map[string]string) string {
 }
 
 // buildDefinitionPaths finds all reachable JSON paths for every definition from root definition.
-func buildDefinitionPaths(definitions map[string]schemaValue, rootDefinition string) map[string][]string {
+func buildDefinitionPaths(definitions map[string]schemaValue, rootDefinition string) map[string][]schemaPath {
 	if strings.TrimSpace(rootDefinition) == "" {
 		return nil
 	}
@@ -478,8 +465,8 @@ func buildDefinitionPaths(definitions map[string]schemaValue, rootDefinition str
 		return nil
 	}
 
-	paths := map[string][]string{
-		rootDefinition: {""},
+	paths := map[string][]schemaPath{
+		rootDefinition: {{}},
 	}
 	seen := map[string]struct{}{
 		rootDefinition + "\x00": {},
@@ -488,7 +475,7 @@ func buildDefinitionPaths(definitions map[string]schemaValue, rootDefinition str
 	queue := []definitionPathState{{
 		Definition: rootDefinition,
 		Depth:      0,
-		Prefix:     "",
+		Prefix:     schemaPath{},
 	}}
 
 	const maxDepth = 20
@@ -508,12 +495,12 @@ func buildDefinitionPaths(definitions map[string]schemaValue, rootDefinition str
 				continue
 			}
 
-			nextPrefix := appendPath(current.Prefix, edge.Path)
-			if strings.TrimSpace(nextPrefix) == "" {
+			nextPrefix := appendSchemaPath(current.Prefix, edge.Path)
+			if len(nextPrefix.segments) == 0 {
 				continue
 			}
 
-			seenKey := edge.Target + "\x00" + nextPrefix
+			seenKey := edge.Target + "\x00" + nextPrefix.key()
 			if _, ok := seen[seenKey]; ok {
 				continue
 			}
@@ -529,7 +516,9 @@ func buildDefinitionPaths(definitions map[string]schemaValue, rootDefinition str
 	}
 
 	for name, values := range paths {
-		sort.Strings(values)
+		sort.Slice(values, func(left, right int) bool {
+			return values[left].display() < values[right].display()
+		})
 		paths[name] = values
 	}
 
@@ -537,7 +526,7 @@ func buildDefinitionPaths(definitions map[string]schemaValue, rootDefinition str
 }
 
 // buildPropertyPaths builds normalized root-relative JSON paths for one property.
-func buildPropertyPaths(basePaths []string, propertyName string, hideRootPath bool) []string {
+func buildPropertyPaths(basePaths []schemaPath, propertyName string, hideRootPath bool) []schemaPath {
 	propertyName = strings.TrimSpace(propertyName)
 	if propertyName == "" {
 		return nil
@@ -547,30 +536,33 @@ func buildPropertyPaths(basePaths []string, propertyName string, hideRootPath bo
 		return nil
 	}
 
-	dedup := make(map[string]struct{}, len(basePaths))
+	dedup := make(map[string]schemaPath, len(basePaths))
 	for _, base := range basePaths {
-		path := appendPath(base, propertyName)
-		if strings.TrimSpace(path) == "" {
+		path := base.appendProperty(propertyName)
+		if len(path.segments) == 0 {
 			continue
 		}
 
-		if hideRootPath && path == propertyName {
+		if hideRootPath && path.equal(schemaPath{}.appendProperty(propertyName)) {
 			continue
 		}
 
-		dedup[path] = struct{}{}
+		dedup[path.key()] = path
 	}
 
 	if len(dedup) == 0 {
 		return nil
 	}
 
-	out := make([]string, 0, len(dedup))
-	for path := range dedup {
+	out := make([]schemaPath, 0, len(dedup))
+	for _, path := range dedup {
 		out = append(out, path)
 	}
 
-	sort.Strings(out)
+	sort.Slice(out, func(left, right int) bool {
+		return out[left].display() < out[right].display()
+	})
+
 	return out
 }
 
@@ -587,7 +579,7 @@ func definitionEdges(node schemaValue) []definitionEdge {
 
 	edgeMap := make(map[string]definitionEdge)
 	for _, name := range sortedSchemaValueKeys(properties) {
-		collectDefinitionEdges(properties[name], name, edgeMap)
+		collectDefinitionEdges(properties[name], schemaPath{}.appendProperty(name), edgeMap)
 	}
 
 	if len(edgeMap) == 0 {
@@ -606,8 +598,8 @@ func definitionEdges(node schemaValue) []definitionEdge {
 	}
 
 	sort.SliceStable(out, func(left, right int) bool {
-		leftProperty, _, _ := strings.Cut(out[left].Path, ".")
-		rightProperty, _, _ := strings.Cut(out[right].Path, ".")
+		leftProperty := firstPathProperty(out[left].Path)
+		rightProperty := firstPathProperty(out[right].Path)
 		leftRank, leftOK := propertyRank[leftProperty]
 		rightRank, rightOK := propertyRank[rightProperty]
 
@@ -617,8 +609,8 @@ func definitionEdges(node schemaValue) []definitionEdge {
 		if leftOK != rightOK {
 			return leftOK
 		}
-		if out[left].Path != out[right].Path {
-			return out[left].Path < out[right].Path
+		if out[left].Path.display() != out[right].Path.display() {
+			return out[left].Path.display() < out[right].Path.display()
 		}
 
 		return out[left].Target < out[right].Target
@@ -627,8 +619,19 @@ func definitionEdges(node schemaValue) []definitionEdge {
 	return out
 }
 
+// firstPathProperty returns the first property name for stable edge ordering.
+func firstPathProperty(path schemaPath) string {
+	for _, segment := range path.segments {
+		if segment.kind == schemaPathProperty {
+			return segment.value
+		}
+	}
+
+	return ""
+}
+
 // collectDefinitionEdges recursively collects all referenced definitions under one schema node.
-func collectDefinitionEdges(schema schemaValue, path string, edgeMap map[string]definitionEdge) {
+func collectDefinitionEdges(schema schemaValue, path schemaPath, edgeMap map[string]definitionEdge) {
 	if schema.Object == nil {
 		return
 	}
@@ -649,28 +652,28 @@ func collectDefinitionEdges(schema schemaValue, path string, edgeMap map[string]
 	}
 
 	for _, keyword := range []string{"items", "prefixItems", "contains", "additionalItems", "unevaluatedItems"} {
-		collectDefinitionEdgesAny(object[keyword], appendPath(path, "[]"), edgeMap)
+		collectDefinitionEdgesAny(object[keyword], path.appendArrayItem(), edgeMap)
 	}
 
 	for _, keyword := range []string{"additionalProperties", "unevaluatedProperties"} {
-		collectDefinitionEdgesAny(object[keyword], appendPath(path, "[]"), edgeMap)
+		collectDefinitionEdgesAny(object[keyword], path.appendArrayItem(), edgeMap)
 	}
 
 	if nested := mapSchemaValues(object["properties"]); len(nested) > 0 {
 		for _, key := range sortedSchemaValueKeys(nested) {
-			collectDefinitionEdges(nested[key], appendPath(path, key), edgeMap)
+			collectDefinitionEdges(nested[key], path.appendProperty(key), edgeMap)
 		}
 	}
 
 	if nested := mapSchemaValues(object["patternProperties"]); len(nested) > 0 {
 		for _, key := range sortedSchemaValueKeys(nested) {
-			collectDefinitionEdges(nested[key], appendPath(path, key), edgeMap)
+			collectDefinitionEdges(nested[key], path.appendProperty(key), edgeMap)
 		}
 	}
 }
 
 // collectDefinitionEdgesAny unwraps arrays and forwards schema-like values to edge collector.
-func collectDefinitionEdgesAny(raw any, path string, edgeMap map[string]definitionEdge) {
+func collectDefinitionEdgesAny(raw any, path schemaPath, edgeMap map[string]definitionEdge) {
 	switch typed := raw.(type) {
 	case []any:
 		for _, value := range typed {
@@ -687,30 +690,41 @@ func collectDefinitionEdgesAny(raw any, path string, edgeMap map[string]definiti
 }
 
 // addDefinitionEdge stores one unique edge key in edge map.
-func addDefinitionEdge(edgeMap map[string]definitionEdge, path, target string) {
-	path = strings.TrimSpace(path)
+func addDefinitionEdge(edgeMap map[string]definitionEdge, path schemaPath, target string) {
 	target = strings.TrimSpace(target)
-	if path == "" || target == "" {
+	if len(path.segments) == 0 || target == "" {
 		return
 	}
 
 	edge := definitionEdge{Path: path, Target: target}
-	edgeMap[target+"\x00"+path] = edge
+	edgeMap[target+"\x00"+path.key()] = edge
 }
 
-// appendPath joins path segments with a dot while preserving empty root prefix.
-func appendPath(base, segment string) string {
-	base = strings.TrimSpace(base)
-	segment = strings.TrimSpace(segment)
-	if base == "" {
-		return segment
-	}
-
-	if segment == "" {
+// appendSchemaPath joins two structured paths without changing either input.
+func appendSchemaPath(base, suffix schemaPath) schemaPath {
+	if len(suffix.segments) == 0 {
 		return base
 	}
 
-	return base + "." + segment
+	segments := make([]schemaPathSegment, 0, len(base.segments)+len(suffix.segments))
+	segments = append(segments, base.segments...)
+	segments = append(segments, suffix.segments...)
+
+	return schemaPath{segments: segments}
+}
+
+// pathPresentations converts internal paths to template-facing strings.
+func pathPresentations(paths []schemaPath) []string {
+	if len(paths) == 0 {
+		return nil
+	}
+
+	out := make([]string, 0, len(paths))
+	for _, path := range paths {
+		out = append(out, path.display())
+	}
+
+	return out
 }
 
 // sortedSchemaValueKeys returns deterministic sorted keys for schema maps.

@@ -630,9 +630,7 @@ Key: `weight`
 Paths:
 
 - [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`weight`
-
 - [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`weight`
-
 - [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`weight`
 
 Weight is load balancing weight.
@@ -650,9 +648,7 @@ Key: `region`
 Paths:
 
 - [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`region`
-
 - [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`region`
-
 - [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`region`
 
 Region is deployment region code.
@@ -670,9 +666,7 @@ Key: `read_only`
 Paths:
 
 - [`base_binding`](#serviceconfigmodel_sharedendpointbinding).[`meta`](#model_sharedendpointbindingendpointmeta).`read_only`
-
 - [`shared`](#serviceconfigmodel_sharedoptions).[`endpoint_binding`](#model_sharedoptionssharedendpointbinding).[`meta`](#sharedendpointbindingendpointmeta).`read_only`
-
 - [`shared`](#serviceconfigmodel_sharedoptions).[`endpoints`](#model_sharedoptionssharedendpoints).[`meta`](#sharedendpointsmeta).`[]`.`read_only`
 
 ReadOnly marks endpoint as read-only.
@@ -879,7 +873,6 @@ Key: `backoff_ms`
 Paths:
 
 - [`optional_retry`](#serviceconfigretrypolicy).`backoff_ms`
-
 - [`retry`](#serviceconfigretrypolicy).`backoff_ms`
 
 Backoff is delay between attempts in milliseconds.
@@ -898,7 +891,6 @@ Key: `max_jitter_ms`
 Paths:
 
 - [`optional_retry`](#serviceconfigretrypolicy).`max_jitter_ms`
-
 - [`retry`](#serviceconfigretrypolicy).`max_jitter_ms`
 
 MaxJitter is random jitter upper bound in milliseconds.
@@ -917,7 +909,6 @@ Key: `attempts`
 Paths:
 
 - [`optional_retry`](#serviceconfigretrypolicy).`attempts`
-
 - [`retry`](#serviceconfigretrypolicy).`attempts`
 
 Maximum number of retry attempts for one operation.
@@ -1083,41 +1074,23 @@ Key: `enabled`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`enabled`
-
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`enabled`
-
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`enabled`
-
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`enabled`
-
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`probe`](#level2deepprobe).`enabled`
-
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`probe`](#level1deepprobe).`enabled`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`enabled`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`enabled`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`enabled`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`enabled`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`probe`](#level2deepprobe).`enabled`
-
 - [`deep_primary`](#serviceconfiglevel1).[`probe`](#level1deepprobe).`enabled`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`enabled`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`enabled`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`enabled`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`enabled`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`probe`](#level2deepprobe).`enabled`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`probe`](#level1deepprobe).`enabled`
-
 - [`direct_probe`](#serviceconfigdeepprobe).`enabled`
 
 Enabled toggles probe branch.
@@ -1135,41 +1108,23 @@ Key: `token`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`token`
-
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`token`
-
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`token`
-
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`token`
-
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`probe`](#level2deepprobe).`token`
-
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`probe`](#level1deepprobe).`token`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`token`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`token`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`token`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`token`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`probe`](#level2deepprobe).`token`
-
 - [`deep_primary`](#serviceconfiglevel1).[`probe`](#level1deepprobe).`token`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).[`probe`](#level6deepprobe).`token`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`probe`](#level5deepprobe).`token`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`probe`](#level4deepprobe).`token`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`probe`](#level3deepprobe).`token`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`probe`](#level2deepprobe).`token`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`probe`](#level1deepprobe).`token`
-
 - [`direct_probe`](#serviceconfigdeepprobe).`token`
 
 Token is stable probe token value.
@@ -1197,9 +1152,7 @@ Key: `probe`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.`probe`
-
 - [`deep_primary`](#serviceconfiglevel1).`probe`
-
 - [`deep_secondary`](#serviceconfiglevel1).`probe`
 
 Probe is repeated reusable type on this level.
@@ -1216,9 +1169,7 @@ Key: `next`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.`next`
-
 - [`deep_primary`](#serviceconfiglevel1).`next`
-
 - [`deep_secondary`](#serviceconfiglevel1).`next`
 
 Next points to next nested level.
@@ -1245,9 +1196,7 @@ Key: `probe`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).`probe`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).`probe`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).`probe`
 
 Probe is repeated reusable type on this level.
@@ -1264,9 +1213,7 @@ Key: `next`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).`next`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).`next`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).`next`
 
 Next points to next nested level.
@@ -1293,9 +1240,7 @@ Key: `next`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).`next`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).`next`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).`next`
 
 Next points to next nested level.
@@ -1312,9 +1257,7 @@ Key: `probe`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).`probe`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).`probe`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).`probe`
 
 Probe is repeated reusable type on this level.
@@ -1341,9 +1284,7 @@ Key: `next`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`next`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`next`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`next`
 
 Next points to next nested level.
@@ -1360,9 +1301,7 @@ Key: `probe`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`probe`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`probe`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).`probe`
 
 Probe is repeated reusable type on this level.
@@ -1389,9 +1328,7 @@ Key: `next`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`next`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`next`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`next`
 
 Next points to next nested level.
@@ -1408,9 +1345,7 @@ Key: `probe`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`probe`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`probe`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).`probe`
 
 Probe is repeated reusable type on this level.
@@ -1437,9 +1372,7 @@ Key: `final_value`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`final_value`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`final_value`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`final_value`
 
 FinalValue is terminal deep value.
@@ -1457,9 +1390,7 @@ Key: `probe`
 Paths:
 
 - [`deep_by_env`](#serviceconfigdeep_by_env).`[]`.[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`probe`
-
 - [`deep_primary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`probe`
-
 - [`deep_secondary`](#serviceconfiglevel1).[`next`](#level1level2).[`next`](#level2level3).[`next`](#level3level4).[`next`](#level4level5).[`next`](#level5level6).`probe`
 
 Probe is repeated reusable type on this level.
@@ -1603,9 +1534,7 @@ Key: `region`
 Paths:
 
 - [`bucket_groups`](#serviceconfigbucket_groups).`[]`.`[]`.`region`
-
-- [`buckets_by_priority`](#serviceconfigbuckets_by_priority).`^[0-9]+$`.`region`
-
+- [`buckets_by_priority`](#serviceconfigbuckets_by_priority)`["^[0-9]+$"]`.`region`
 - [`named_buckets`](#serviceconfignamed_buckets).`[]`.`region`
 
 Region is bucket region.
@@ -1623,9 +1552,7 @@ Key: `name`
 Paths:
 
 - [`bucket_groups`](#serviceconfigbucket_groups).`[]`.`[]`.`name`
-
-- [`buckets_by_priority`](#serviceconfigbuckets_by_priority).`^[0-9]+$`.`name`
-
+- [`buckets_by_priority`](#serviceconfigbuckets_by_priority)`["^[0-9]+$"]`.`name`
 - [`named_buckets`](#serviceconfignamed_buckets).`[]`.`name`
 
 Name is bucket name.
@@ -1644,9 +1571,7 @@ Key: `read_only`
 Paths:
 
 - [`bucket_groups`](#serviceconfigbucket_groups).`[]`.`[]`.`read_only`
-
-- [`buckets_by_priority`](#serviceconfigbuckets_by_priority).`^[0-9]+$`.`read_only`
-
+- [`buckets_by_priority`](#serviceconfigbuckets_by_priority)`["^[0-9]+$"]`.`read_only`
 - [`named_buckets`](#serviceconfignamed_buckets).`[]`.`read_only`
 
 ReadOnly marks bucket as read-only.

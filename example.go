@@ -69,9 +69,9 @@ var exampleScalarPlaceholders = map[string]any{
 
 // exampleBuilder converts normalized schema tree into example values.
 type exampleBuilder struct {
+	resolver            *localSchemaResolver
 	activeRefs          map[string]int
 	mode                ExampleMode
-	doc                 schemaDocument
 	disableYAMLComments bool
 }
 
@@ -122,9 +122,9 @@ func GenerateExampleYAMLWithOptions(
 	normalizedOptions := normalizeExampleOptions(options)
 
 	builder := exampleBuilder{
-		doc:                 doc,
 		mode:                mode,
 		activeRefs:          make(map[string]int),
+		resolver:            newLocalSchemaResolverPointer(doc.Raw),
 		disableYAMLComments: normalizedOptions.DisableExampleComments,
 	}
 
@@ -206,9 +206,9 @@ func generateExampleValue(schemaBytes []byte, mode ExampleMode) (any, error) {
 	}
 
 	builder := exampleBuilder{
-		doc:        doc,
 		mode:       mode,
 		activeRefs: make(map[string]int),
+		resolver:   newLocalSchemaResolverPointer(doc.Raw),
 	}
 
 	return builder.buildNode(doc.Root), nil
@@ -531,69 +531,10 @@ func (builder *exampleBuilder) resolvedObjectForReference(object map[string]any)
 	return mergeSchemaObjects(resolved.Object, object), release, true
 }
 
-// resolveLocalReference resolves local JSON pointer references against root schema.
+// resolveLocalReference resolves a local JSON Pointer against the root schema.
 func (builder *exampleBuilder) resolveLocalReference(ref string) (schemaValue, bool) {
-	ref = strings.TrimSpace(ref)
-	if ref == "" || !strings.HasPrefix(ref, "#") {
-		return schemaValue{}, false
-	}
-
-	if len(builder.doc.RawKeywords) == 0 {
-		return schemaValue{}, false
-	}
-
-	raw, ok := resolveJSONPointer(builder.doc.RawKeywords, ref)
-	if !ok {
-		return schemaValue{}, false
-	}
-
-	return toSchemaValue(raw)
-}
-
-// resolveJSONPointer resolves JSON pointer token path from root document value.
-func resolveJSONPointer(root any, ref string) (any, bool) {
-	ref = strings.TrimSpace(ref)
-	if ref == "#" {
-		return root, true
-	}
-
-	if !strings.HasPrefix(ref, "#/") {
-		return nil, false
-	}
-
-	current := root
-	tokens := strings.SplitSeq(strings.TrimPrefix(ref, "#/"), "/")
-	for token := range tokens {
-		token = decodeJSONPointerToken(token)
-
-		switch typed := current.(type) {
-		case map[string]any:
-			next, exists := typed[token]
-			if !exists {
-				return nil, false
-			}
-
-			current = next
-		case []any:
-			index, err := strconv.Atoi(token)
-			if err != nil || index < 0 || index >= len(typed) {
-				return nil, false
-			}
-
-			current = typed[index]
-		default:
-			return nil, false
-		}
-	}
-
-	return current, true
-}
-
-// decodeJSONPointerToken unescapes one JSON pointer token.
-func decodeJSONPointerToken(token string) string {
-	token = strings.ReplaceAll(token, "~1", "/")
-	token = strings.ReplaceAll(token, "~0", "~")
-	return token
+	value, err := builder.resolver.resolve(ref)
+	return value, err == nil
 }
 
 // enterReference registers active local ref and returns release callback.

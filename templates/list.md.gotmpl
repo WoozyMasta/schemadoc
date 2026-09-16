@@ -70,9 +70,9 @@ Path: {{ index .Paths 0 }}
 {{ else }}
 Paths:
 
-{{ range .Paths }}
+{{ range .Paths -}}
 {{ $.ListMarker }} {{ . }}
-{{ end }}
+{{ end -}}
 {{ end }}
 {{ end }}
 

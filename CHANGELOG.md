@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Changed
+
+* Schema path identity is now structured
+  and local JSON Pointer resolution is strict, deterministic, and network-free.
+* Draft 5 aliases use Draft 4-compatible semantic handling.
+
 ## [0.7.1][] - 2026-09-05
 
 ### Changed

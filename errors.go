@@ -37,4 +37,12 @@ var (
 	ErrEncodeExampleJSON = errors.New("encode example json")
 	// ErrEncodeExampleYAML is returned when generated example YAML encoding fails.
 	ErrEncodeExampleYAML = errors.New("encode example yaml")
+	// ErrExternalSchemaReference is returned when a reference leaves the document.
+	ErrExternalSchemaReference = errors.New("external schema reference")
+	// ErrUnresolvedSchemaReference is returned when a local reference target is missing.
+	ErrUnresolvedSchemaReference = errors.New("unresolved schema reference")
+	// ErrInvalidSchemaPointer is returned when a local reference is not a JSON Pointer.
+	ErrInvalidSchemaPointer = errors.New("invalid schema JSON pointer")
+	// ErrSchemaReferenceCycle is returned when local references form a cycle.
+	ErrSchemaReferenceCycle = errors.New("schema reference cycle")
 )
