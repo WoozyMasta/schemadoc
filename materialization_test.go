@@ -73,6 +73,116 @@ func TestMaterializationCandidateOrderAndValidation(t *testing.T) {
 	}
 }
 
+func TestMaterializationScalarConstraints(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		schema map[string]any
+		want   string
+	}{
+		{
+			name: "bounded string",
+			schema: map[string]any{
+				"type":      "string",
+				"minLength": 3,
+				"maxLength": 3,
+			},
+			want: `"aaa"`,
+		},
+		{
+			name: "unicode length",
+			schema: map[string]any{
+				"type":      "string",
+				"examples":  []any{"é"},
+				"minLength": 2,
+				"maxLength": 2,
+			},
+			want: `"aa"`,
+		},
+		{
+			name: "simple pattern",
+			schema: map[string]any{
+				"type":    "string",
+				"pattern": "^[0-9]+$",
+			},
+			want: `"0"`,
+		},
+		{
+			name: "format example",
+			schema: map[string]any{
+				"type":   "string",
+				"format": "email",
+			},
+			want: `"user@example.com"`,
+		},
+		{
+			name: "integer multiple",
+			schema: map[string]any{
+				"type":       "integer",
+				"minimum":    1,
+				"maximum":    5,
+				"multipleOf": 2,
+			},
+			want: "2",
+		},
+		{
+			name: "exclusive integer bounds",
+			schema: map[string]any{
+				"type":             "integer",
+				"exclusiveMinimum": 1,
+				"exclusiveMaximum": 3,
+			},
+			want: "2",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := GenerateExampleJSON(minimalSchemaBytes(t, test.schema), ExampleModeAll)
+			if err != nil {
+				t.Fatalf("GenerateExampleJSON: %v", err)
+			}
+			if strings.TrimSpace(string(got)) != test.want {
+				t.Fatalf("example = %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
+func TestMaterializationLargeStringConstraintDoesNotAllocate(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type":      "string",
+		"minLength": maxGeneratedStringLength + 1,
+		"maxLength": maxGeneratedStringLength + 2,
+	})
+
+	_, err := GenerateExampleJSON(schema, ExampleModeAll)
+	if !errors.Is(err, ErrUnsupportedMaterialization) {
+		t.Fatalf("error = %v, want ErrUnsupportedMaterialization", err)
+	}
+}
+
+func TestMaterializationImpossibleMultipleOf(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type":       "number",
+		"minimum":    0.1,
+		"maximum":    0.2,
+		"multipleOf": 0.3,
+	})
+
+	_, err := GenerateExampleJSON(schema, ExampleModeAll)
+	if !errors.Is(err, ErrMaterializationUnsatisfiable) {
+		t.Fatalf("error = %v, want ErrMaterializationUnsatisfiable", err)
+	}
+}
+
 func TestMaterializationWholeValueCandidates(t *testing.T) {
 	t.Parallel()
 

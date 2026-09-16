@@ -11,9 +11,12 @@ import (
 	"math"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
+
+const maxGeneratedStringLength = 4096
 
 // MaterializationErrorCode identifies a stable example-generation failure.
 type MaterializationErrorCode string
@@ -64,6 +67,26 @@ type MaterializationError struct {
 	Path     string
 }
 
+// exampleMaterializer selects and validates one deterministic example value.
+type exampleMaterializer struct {
+	semantic   *schemaSemanticView
+	activeRefs map[string]int
+	mode       ExampleMode
+}
+
+// materializationCandidate records an explicit value and its source keyword.
+type materializationCandidate struct {
+	value  any
+	source string
+}
+
+// candidateValidationError describes why one candidate was rejected.
+type candidateValidationError struct {
+	path    string
+	keyword string
+	reason  string
+}
+
 // Error implements error.
 func (err *MaterializationError) Error() string {
 	if err == nil {
@@ -108,13 +131,6 @@ func (err *MaterializationError) Is(target error) bool {
 	default:
 		return false
 	}
-}
-
-// exampleMaterializer selects and validates one deterministic example value.
-type exampleMaterializer struct {
-	semantic   *schemaSemanticView
-	activeRefs map[string]int
-	mode       ExampleMode
 }
 
 // newExampleMaterializer creates a materializer for one parsed document.
@@ -253,12 +269,6 @@ func (materializer *exampleMaterializer) explicitCandidates(schema effectiveSche
 	return candidates
 }
 
-// materializationCandidate records an explicit value and its source keyword.
-type materializationCandidate struct {
-	value  any
-	source string
-}
-
 // synthesize creates a deterministic fallback after explicit candidates fail.
 func (materializer *exampleMaterializer) synthesize(schema effectiveSchema, path schemaPath) (any, error) {
 	if len(schema.compositionGroups) > 0 {
@@ -269,6 +279,7 @@ func (materializer *exampleMaterializer) synthesize(schema effectiveSchema, path
 	if err != nil {
 		return nil, materializationReferenceError(err, path)
 	}
+
 	required := schema.required()
 	typeName := effectiveSchemaType(schema)
 	additionalProperties, err := schema.additionalProperties(materializer.semantic)
@@ -300,16 +311,12 @@ func (materializer *exampleMaterializer) synthesize(schema effectiveSchema, path
 		return materializer.synthesizeArray(schema, path)
 	}
 
-	if typeName == "string" && hasSchemaKeyword(schema, "pattern") {
-		if value, ok := knownPatternExample(schema); ok {
-			return value, nil
-		}
-		return nil, newMaterializationError(
-			MaterializationCodeUnsupported,
-			MaterializationCategoryUnsupportedMaterialization,
-			materializationKeywordPath(path, "pattern"),
-			ErrUnsupportedMaterialization,
-		)
+	if typeName == "string" {
+		return materializer.synthesizeString(schema, path)
+	}
+
+	if typeName == "number" || typeName == "integer" {
+		return materializer.synthesizeNumber(schema, path)
 	}
 
 	if value, ok := scalarPlaceholder(typeName); ok {
@@ -317,6 +324,97 @@ func (materializer *exampleMaterializer) synthesize(schema effectiveSchema, path
 	}
 
 	return nil, nil
+}
+
+// synthesizeString tries readable format and conservative pattern candidates
+// before adjusting the generic placeholder to the declared Unicode length.
+func (materializer *exampleMaterializer) synthesizeString(schema effectiveSchema, path schemaPath) (string, error) {
+	candidates := make([]string, 0, 4)
+	minimum, maximum := stringBounds(schema)
+	if value, ok := knownPatternExample(schema); ok {
+		candidates = append(candidates, value)
+	}
+	if value, ok := formatStringExample(schema); ok {
+		candidates = append(candidates, value)
+	}
+	for _, value := range simplePatternExamples(schema) {
+		candidates = append(candidates, value)
+		if minimum <= maximum && minimum > 1 && minimum <= maxGeneratedStringLength {
+			candidates = append(candidates, strings.Repeat(value, minimum))
+		}
+	}
+	candidates = append(candidates, "<string>")
+
+	if minimum <= maximum && minimum <= maxGeneratedStringLength {
+		candidates = append(candidates, strings.Repeat("a", minimum))
+	}
+
+	seen := make(map[string]struct{}, len(candidates))
+	for _, candidate := range candidates {
+		if _, exists := seen[candidate]; exists {
+			continue
+		}
+		seen[candidate] = struct{}{}
+		if err := validateEffectiveInstance(materializer.semantic, schema, candidate, path); err == nil {
+			return candidate, nil
+		} else if isMaterializationReferenceError(err) {
+			return "", err
+		}
+	}
+
+	if isDefinitelyUnsatisfiable(schema) {
+		return "", newMaterializationError(
+			MaterializationCodeUnsatisfiable,
+			MaterializationCategoryUnsatisfiableSchema,
+			unsatisfiableConstraintPath(schema, path),
+			ErrMaterializationUnsatisfiable,
+		)
+	}
+
+	keyword := "minLength"
+	if hasSchemaKeyword(schema, "pattern") {
+		keyword = "pattern"
+	}
+	return "", newMaterializationError(
+		MaterializationCodeUnsupported,
+		MaterializationCategoryUnsupportedMaterialization,
+		materializationKeywordPath(path, keyword),
+		ErrUnsupportedMaterialization,
+	)
+}
+
+// synthesizeNumber tries boundary and multipleOf-derived values in stable order.
+func (materializer *exampleMaterializer) synthesizeNumber(schema effectiveSchema, path schemaPath) (any, error) {
+	candidates := numberCandidates(schema)
+	for _, candidate := range candidates {
+		if effectiveSchemaType(schema) == "integer" {
+			number, ok := asNumber(candidate)
+			if !ok || math.Trunc(number) != number {
+				continue
+			}
+		}
+		if err := validateEffectiveInstance(materializer.semantic, schema, candidate, path); err == nil {
+			return candidate, nil
+		} else if isMaterializationReferenceError(err) {
+			return nil, err
+		}
+	}
+
+	if isDefinitelyUnsatisfiable(schema) {
+		return nil, newMaterializationError(
+			MaterializationCodeUnsatisfiable,
+			MaterializationCategoryUnsatisfiableSchema,
+			unsatisfiableConstraintPath(schema, path),
+			ErrMaterializationUnsatisfiable,
+		)
+	}
+
+	return nil, newMaterializationError(
+		MaterializationCodeUnsupported,
+		MaterializationCategoryUnsupportedMaterialization,
+		pathPointer(path),
+		ErrUnsupportedMaterialization,
+	)
 }
 
 // synthesizeComposition evaluates branch-generated candidates against the whole schema.
@@ -670,6 +768,241 @@ func objectBounds(schema effectiveSchema) (minimum int, hasMinimum bool, maximum
 func scalarPlaceholder(schemaType string) (any, bool) {
 	value, ok := exampleScalarPlaceholders[schemaType]
 	return value, ok
+}
+
+// stringBounds returns the narrowest Unicode length interval across all terms.
+func stringBounds(schema effectiveSchema) (int, int) {
+	minimum, maximum := 0, int(^uint(0)>>1)
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+		if value, ok := integerKeyword(term.Object, "minLength"); ok && value > minimum {
+			minimum = value
+		}
+		if value, ok := integerKeyword(term.Object, "maxLength"); ok && value < maximum {
+			maximum = value
+		}
+	}
+
+	return minimum, maximum
+}
+
+// formatStringExample returns readable examples for common annotation formats.
+func formatStringExample(schema effectiveSchema) (string, bool) {
+	format := strings.ToLower(asStringValue(schema.annotation("format")))
+	switch format {
+	case "date":
+		return "2000-01-01", true
+	case "date-time":
+		return "2000-01-01T00:00:00Z", true
+	case "duration":
+		return "P1D", true
+	case "email", "idn-email":
+		return "user@example.com", true
+	case "hostname", "idn-hostname":
+		return "example.com", true
+	case "ipv4":
+		return "192.0.2.1", true
+	case "ipv6":
+		return "2001:db8::1", true
+	case "time":
+		return "00:00:00Z", true
+	case "uri", "uri-reference", "uri-template", "url":
+		return "https://example.com", true
+	case "uuid":
+		return "00000000-0000-4000-8000-000000000000", true
+	default:
+		return "", false
+	}
+}
+
+// asStringValue extracts a string annotation without changing schema accessors.
+func asStringValue(value any, ok bool) string {
+	if !ok {
+		return ""
+	}
+
+	return asString(value)
+}
+
+// simplePatternExamples keeps one candidate for every supported pattern term
+// so conjunctive patterns can converge on a value satisfying them all.
+func simplePatternExamples(schema effectiveSchema) []string {
+	values := make([]string, 0)
+	seen := make(map[string]struct{})
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		pattern := asString(term.Object["pattern"])
+		if value, ok := simplePatternValue(pattern); ok {
+			if _, exists := seen[value]; exists {
+				continue
+			}
+			seen[value] = struct{}{}
+			values = append(values, value)
+		}
+	}
+
+	return values
+}
+
+// simplePatternValue creates a candidate only for a small allowlist of regex shapes.
+func simplePatternValue(pattern string) (string, bool) {
+	switch pattern {
+	case "^[a-z]+$", "^[A-Z]+$", "^[0-9]+$", "^[A-Za-z0-9_-]+$", "^[a-z][a-z0-9_]*$":
+		return map[string]string{
+			"^[a-z]+$":          "a",
+			"^[A-Z]+$":          "A",
+			"^[0-9]+$":          "0",
+			"^[A-Za-z0-9_-]+$":  "a",
+			"^[a-z][a-z0-9_]*$": "a",
+		}[pattern], true
+	}
+
+	for _, class := range []struct {
+		prefix string
+		value  string
+	}{
+		{prefix: "^[a-z]{", value: "a"},
+		{prefix: "^[A-Z]{", value: "A"},
+		{prefix: "^[0-9]{", value: "0"},
+	} {
+		if !strings.HasPrefix(pattern, class.prefix) || !strings.HasSuffix(pattern, "}$") {
+			continue
+		}
+
+		count, err := strconv.Atoi(strings.TrimSuffix(strings.TrimPrefix(pattern, class.prefix), "}$"))
+		if err == nil && count > 0 && count <= maxGeneratedStringLength {
+			return strings.Repeat(class.value, count), true
+		}
+	}
+
+	if strings.HasPrefix(pattern, "^") && strings.HasSuffix(pattern, "$") {
+		literal := strings.TrimSuffix(strings.TrimPrefix(pattern, "^"), "$")
+		if literal != "" && !strings.ContainsAny(literal, `\\.*+?()[]{}|^$`) {
+			return literal, true
+		}
+	}
+
+	return "", false
+}
+
+// numberCandidates returns stable boundary and multipleOf candidates.
+func numberCandidates(schema effectiveSchema) []any {
+	result := []any{0, 1, -1}
+	integer := effectiveSchemaType(schema) == "integer"
+	lower, upper, lowerExclusive, upperExclusive, hasLower, hasUpper := numericBounds(schema)
+
+	if hasLower {
+		candidate := lower
+		if integer {
+			candidate = math.Ceil(candidate)
+			if lowerExclusive && candidate <= lower {
+				candidate++
+			}
+		} else if lowerExclusive {
+			candidate = math.Nextafter(candidate, math.Inf(1))
+		}
+		result = append(result, candidate)
+	}
+
+	if hasUpper {
+		candidate := upper
+		if integer {
+			candidate = math.Floor(candidate)
+			if upperExclusive && candidate >= upper {
+				candidate--
+			}
+		} else if upperExclusive {
+			candidate = math.Nextafter(candidate, math.Inf(-1))
+		}
+		result = append(result, candidate)
+	}
+
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		multiple, ok := asNumber(term.Object["multipleOf"])
+		if !ok || multiple <= 0 {
+			continue
+		}
+
+		result = append(result, multiple, -multiple)
+
+		if hasLower {
+			factor := math.Ceil(lower / multiple)
+			if lowerExclusive && factor*multiple <= lower {
+				factor++
+			}
+			result = append(result, factor*multiple)
+		}
+
+		if hasUpper {
+			factor := math.Floor(upper / multiple)
+			if upperExclusive && factor*multiple >= upper {
+				factor--
+			}
+			result = append(result, factor*multiple)
+		}
+	}
+
+	return result
+}
+
+// numericBounds returns the combined inclusive/exclusive numeric interval.
+func numericBounds(schema effectiveSchema) (float64, float64, bool, bool, bool, bool) {
+	lower, upper := math.Inf(-1), math.Inf(1)
+	lowerExclusive, upperExclusive := false, false
+	hasLower, hasUpper := false, false
+
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		if value, ok := asNumber(term.Object["minimum"]); ok {
+			exclusive := false
+			if flag, isBool := term.Object["exclusiveMinimum"].(bool); isBool {
+				exclusive = flag
+			} else if bound, isNumber := asNumber(term.Object["exclusiveMinimum"]); isNumber {
+				value, exclusive = bound, true
+			}
+			if !hasLower || value > lower || (value == lower && exclusive && !lowerExclusive) {
+				lower, hasLower = value, true
+				lowerExclusive = exclusive
+			}
+		} else if value, ok := asNumber(term.Object["exclusiveMinimum"]); ok {
+			if !hasLower || value > lower || (value == lower && !lowerExclusive) {
+				lower, hasLower = value, true
+				lowerExclusive = true
+			}
+		}
+
+		if value, ok := asNumber(term.Object["maximum"]); ok {
+			exclusive := false
+			if flag, isBool := term.Object["exclusiveMaximum"].(bool); isBool {
+				exclusive = flag
+			} else if bound, isNumber := asNumber(term.Object["exclusiveMaximum"]); isNumber {
+				value, exclusive = bound, true
+			}
+			if !hasUpper || value < upper || (value == upper && exclusive && !upperExclusive) {
+				upper, hasUpper = value, true
+				upperExclusive = exclusive
+			}
+		} else if value, ok := asNumber(term.Object["exclusiveMaximum"]); ok {
+			if !hasUpper || value < upper || (value == upper && !upperExclusive) {
+				upper, hasUpper = value, true
+				upperExclusive = true
+			}
+		}
+	}
+
+	return lower, upper, lowerExclusive, upperExclusive, hasLower, hasUpper
 }
 
 // synthesizeArray first materializes every mandatory tuple position,
@@ -1797,13 +2130,6 @@ func candidateValidationKeyword(err error) string {
 	return ""
 }
 
-// candidateValidationError describes why one candidate was rejected.
-type candidateValidationError struct {
-	path    string
-	keyword string
-	reason  string
-}
-
 // Error implements error.
 func (err *candidateValidationError) Error() string {
 	return fmt.Sprintf("candidate violates %s: %s", err.keyword, err.reason)
@@ -1868,25 +2194,10 @@ func validationPath(err error, fallback schemaPath) string {
 
 // isDefinitelyUnsatisfiable detects contradictions that need no search.
 func isDefinitelyUnsatisfiable(schema effectiveSchema) bool {
-	var intersection map[string]struct{}
-	for _, declaration := range schema.types() {
-		current := make(map[string]struct{})
-		for _, name := range schemaTypeNames(declaration) {
-			current[name] = struct{}{}
-		}
-		if intersection == nil {
-			intersection = current
-			continue
-		}
-
-		for name := range intersection {
-			if _, ok := current[name]; !ok {
-				delete(intersection, name)
-			}
-		}
+	if schemaTypesContradict(schema) {
+		return true
 	}
-
-	if intersection != nil && len(intersection) == 0 {
+	if numericConstraintsDefinitelyUnsatisfiable(schema) {
 		return true
 	}
 
@@ -1926,6 +2237,99 @@ func isDefinitelyUnsatisfiable(schema effectiveSchema) bool {
 	}
 
 	return false
+}
+
+// numericConstraintsDefinitelyUnsatisfiable proves an empty numeric interval
+// when a positive multipleOf cannot place even one value inside it.
+// It only runs for exclusively numeric schemas;
+// a schema that also admits strings or another type
+// may still have valid instances despite numeric constraints.
+func numericConstraintsDefinitelyUnsatisfiable(schema effectiveSchema) bool {
+	typeName := effectiveSchemaType(schema)
+	if typeName != "number" && typeName != "integer" {
+		return false
+	}
+
+	lower, upper, lowerExclusive, upperExclusive, hasLower, hasUpper := numericBounds(schema)
+	if hasLower && hasUpper && (lower > upper || (lower == upper && (lowerExclusive || upperExclusive))) {
+		return true
+	}
+
+	if typeName == "integer" && hasLower && hasUpper {
+		first := math.Ceil(lower)
+		if lowerExclusive && first <= lower {
+			first++
+		}
+		last := math.Floor(upper)
+		if upperExclusive && last >= upper {
+			last--
+		}
+		if first > last {
+			return true
+		}
+	}
+
+	if !hasLower || !hasUpper {
+		return false
+	}
+
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		multiple, ok := asNumber(term.Object["multipleOf"])
+		if !ok || multiple <= 0 {
+			continue
+		}
+
+		first := math.Ceil(lower / multiple)
+		if lowerExclusive && first*multiple <= lower {
+			first++
+		}
+		last := math.Floor(upper / multiple)
+		if upperExclusive && last*multiple >= upper {
+			last--
+		}
+		if first > last {
+			return true
+		}
+	}
+
+	return false
+}
+
+// unsatisfiableConstraintPath points diagnostics at the first constraint
+// that can prove the effective schema has no valid instance.
+func unsatisfiableConstraintPath(schema effectiveSchema, path schemaPath) string {
+	if schemaTypesContradict(schema) {
+		return materializationKeywordPath(path, "type")
+	}
+
+	return pathPointer(path)
+}
+
+// schemaTypesContradict reports an empty intersection of simultaneous types.
+func schemaTypesContradict(schema effectiveSchema) bool {
+	var intersection map[string]struct{}
+	for _, declaration := range schema.types() {
+		current := make(map[string]struct{})
+		for _, name := range schemaTypeNames(declaration) {
+			current[name] = struct{}{}
+		}
+		if intersection == nil {
+			intersection = current
+			continue
+		}
+
+		for name := range intersection {
+			if _, ok := current[name]; !ok {
+				delete(intersection, name)
+			}
+		}
+	}
+
+	return intersection != nil && len(intersection) == 0
 }
 
 // pathPointer returns a root-relative JSON Pointer for a schema location.
