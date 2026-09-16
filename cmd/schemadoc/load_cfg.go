@@ -19,7 +19,10 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-const buildConfigSchemaID = "urn:schemadoc:config:v1"
+const (
+	buildConfigSchemaID   = "urn:schemadoc:config:v1"
+	buildConfigSchemaPath = "cmd/schemadoc/doc/config.schema.json"
+)
 
 //go:embed doc/config.schema.json
 var buildConfigSchemaJSON []byte
@@ -37,6 +40,9 @@ func renderBuildConfigExample(
 	content, err := schemadoc.GenerateExample(schemaBytes, mode, format)
 	if err != nil {
 		return nil, fmt.Errorf("generate config example: %w", err)
+	}
+	if format == schemadoc.ExampleFormatYAML {
+		content = addYAMLSchemaComment(content, schemaBytes, buildConfigSchemaPath)
 	}
 
 	return content, nil

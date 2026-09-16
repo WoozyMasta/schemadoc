@@ -9,8 +9,8 @@
           "mode": "none",
           "value": "model_"
         },
-        "source_defs": "/$defs",
-        "target_defs": "/$defs"
+        "source_defs": "/components/schemas",
+        "target_defs": "/components/schemas"
       }
     ],
     "patches": [
@@ -34,7 +34,7 @@
       "minify": false
     },
     "key_namer": "none",
-    "module": ".",
+    "module": "../project",
     "package": "github.com/acme/project/pkg/config",
     "type": "Config"
   },
@@ -58,7 +58,14 @@
     "title": "schema reference",
     "wrap": 80,
     "yaml": {
-      "disable_example_comments": false,
+      "comments": {
+        "defaults": true,
+        "descriptions": true,
+        "enums": true,
+        "example_format": "block",
+        "examples": "scalar",
+        "titles": true
+      },
       "indent": 2
     }
   },
@@ -75,7 +82,14 @@
     "mode": "all",
     "output": "<string>",
     "yaml": {
-      "disable_example_comments": false,
+      "comments": {
+        "defaults": true,
+        "descriptions": true,
+        "enums": true,
+        "example_format": "block",
+        "examples": "scalar",
+        "titles": true
+      },
       "indent": 2
     }
   }

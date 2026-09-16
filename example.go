@@ -43,8 +43,53 @@ const (
 	ExampleIndentTypeTab = "tab"
 )
 
+const (
+	// YAMLCommentExamplesNone disables YAML comments sourced from examples.
+	YAMLCommentExamplesNone YAMLCommentExamples = "none"
+	// YAMLCommentExamplesScalar includes only scalar and null examples.
+	YAMLCommentExamplesScalar YAMLCommentExamples = "scalar"
+	// YAMLCommentExamplesAll includes scalar and structured examples.
+	YAMLCommentExamplesAll YAMLCommentExamples = "all"
+	// YAMLCommentFormatInline renders annotation values on one comment line.
+	YAMLCommentFormatInline YAMLCommentFormat = "inline"
+	// YAMLCommentFormatBlock renders structured annotation values as YAML blocks.
+	YAMLCommentFormatBlock YAMLCommentFormat = "block"
+)
+
+// YAMLCommentExamples controls which schema examples are copied to YAML comments.
+type YAMLCommentExamples string
+
+// YAMLCommentFormat controls rendering of structured annotation values.
+type YAMLCommentFormat string
+
+// YAMLCommentPolicy configures independent schema annotation comments in YAML.
+//
+// Boolean pointers distinguish an omitted option from an explicit false value.
+// A zero policy is normalized to the documented defaults.
+type YAMLCommentPolicy struct {
+	// Titles enables comments sourced from schema titles.
+	Titles *bool `json:"titles,omitempty" yaml:"titles,omitempty"`
+
+	// Descriptions enables comments sourced from schema descriptions.
+	Descriptions *bool `json:"descriptions,omitempty" yaml:"descriptions,omitempty"`
+
+	// Defaults enables comments sourced from schema defaults.
+	Defaults *bool `json:"defaults,omitempty" yaml:"defaults,omitempty"`
+
+	// Enums enables comments listing schema enum values.
+	Enums *bool `json:"enums,omitempty" yaml:"enums,omitempty"`
+
+	// Examples selects scalar, all, or no schema examples.
+	Examples YAMLCommentExamples `json:"examples,omitempty" yaml:"examples,omitempty"`
+
+	// ExampleFormat selects inline or block annotation value formatting.
+	ExampleFormat YAMLCommentFormat `json:"example_format,omitempty" yaml:"example_format,omitempty"`
+}
+
 // ExampleOptions configures example output formatting.
 type ExampleOptions struct {
+	// YAMLComments configures schema annotation comments in YAML output.
+	YAMLComments YAMLCommentPolicy
 	// JSONIndentType sets JSON indentation type: space or tab. Default is space.
 	JSONIndentType string
 	// JSONIndent sets JSON indentation width. Default is 2.
@@ -53,8 +98,6 @@ type ExampleOptions struct {
 	YAMLIndent int
 	// JSONMinify enables minified JSON output.
 	JSONMinify bool
-	// DisableExampleComments disables YAML title/description/default/example comments.
-	DisableExampleComments bool
 }
 
 // exampleScalarPlaceholders provides fallback values for scalar schema types.
@@ -68,8 +111,8 @@ var exampleScalarPlaceholders = map[string]any{
 
 // exampleBuilder converts normalized schema tree into example values.
 type exampleBuilder struct {
-	semantic            *schemaSemanticView
-	disableYAMLComments bool
+	semantic     *schemaSemanticView
+	yamlComments YAMLCommentPolicy
 }
 
 // GenerateExampleJSON returns generated example payload encoded as pretty JSON.
@@ -125,8 +168,8 @@ func GenerateExampleYAMLWithOptions(
 	}
 
 	builder := exampleBuilder{
-		semantic:            materializer.semantic,
-		disableYAMLComments: normalizedOptions.DisableExampleComments,
+		semantic:     materializer.semantic,
+		yamlComments: normalizedOptions.YAMLComments,
 	}
 	rootNode, err := yamlNodeForValue(value)
 	if err != nil {
@@ -188,8 +231,44 @@ func normalizeExampleOptions(options ExampleOptions) ExampleOptions {
 	if options.YAMLIndent < 1 {
 		options.YAMLIndent = 2
 	}
+	options.YAMLComments = normalizeYAMLCommentPolicy(options.YAMLComments)
 
 	return options
+}
+
+// normalizeYAMLCommentPolicy applies defaults while preserving explicit false values.
+func normalizeYAMLCommentPolicy(policy YAMLCommentPolicy) YAMLCommentPolicy {
+	if policy.Titles == nil {
+		policy.Titles = boolPointer(true)
+	}
+	if policy.Descriptions == nil {
+		policy.Descriptions = boolPointer(true)
+	}
+	if policy.Defaults == nil {
+		policy.Defaults = boolPointer(true)
+	}
+	if policy.Enums == nil {
+		policy.Enums = boolPointer(true)
+	}
+
+	switch policy.Examples {
+	case YAMLCommentExamplesNone, YAMLCommentExamplesScalar, YAMLCommentExamplesAll:
+	default:
+		policy.Examples = YAMLCommentExamplesScalar
+	}
+
+	switch policy.ExampleFormat {
+	case YAMLCommentFormatInline, YAMLCommentFormatBlock:
+	default:
+		policy.ExampleFormat = YAMLCommentFormatBlock
+	}
+
+	return policy
+}
+
+// boolPointer returns a stable pointer for normalized boolean options.
+func boolPointer(value bool) *bool {
+	return &value
 }
 
 // generateExampleValue parses schema and builds example value for selected mode.
@@ -348,14 +427,13 @@ func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaVa
 				continue
 			}
 
-			if !builder.disableYAMLComments {
-				if comment := schemaKeyCommentEffective(property); comment != "" {
-					keyNode.HeadComment = comment
-				}
+			if comment := schemaKeyCommentEffective(property, builder.yamlComments); comment != "" {
+				keyNode.HeadComment = comment
 			}
 
 			builder.annotateYAMLNode(valueNode, property.asSchemaValue())
 		}
+
 	case yaml.SequenceNode:
 		if len(node.Content) == 0 {
 			return
@@ -520,14 +598,22 @@ func effectiveArrayItemSchema(schema effectiveSchema, view *schemaSemanticView) 
 	return schemaValue{}
 }
 
-// schemaKeyComment builds YAML key comment from schema title and description.
-func schemaKeyComment(schema schemaValue) string {
+// schemaKeyComment builds YAML key comments from selected schema annotations.
+func schemaKeyComment(schema schemaValue, policy YAMLCommentPolicy) string {
 	if schema.Object == nil {
 		return ""
 	}
 
-	title := strings.TrimSpace(asString(schema.Object["title"]))
-	description := strings.TrimSpace(asString(schema.Object["description"]))
+	policy = normalizeYAMLCommentPolicy(policy)
+
+	title := ""
+	if *policy.Titles {
+		title = strings.TrimSpace(asString(schema.Object["title"]))
+	}
+	description := ""
+	if *policy.Descriptions {
+		description = strings.TrimSpace(asString(schema.Object["description"]))
+	}
 
 	baseComment := ""
 	switch {
@@ -551,34 +637,37 @@ func schemaKeyComment(schema schemaValue) string {
 		lines = append(lines, strings.Split(baseComment, "\n")...)
 	}
 
-	if value, ok := schema.Object["default"]; ok {
-		commentValue := normalizeInlineCommentValue(value)
-		if commentValue != "" {
-			lines = append(lines, "Default: "+commentValue)
+	if value, ok := schema.Object["default"]; ok && *policy.Defaults {
+		appendYAMLCommentValue(&lines, "Default:", value, policy.ExampleFormat)
+	}
+
+	if values := asSlice(schema.Object["examples"]); policy.Examples != YAMLCommentExamplesNone && len(values) > 0 {
+		for _, value := range values {
+			if policy.Examples == YAMLCommentExamplesScalar && !isScalarAnnotationValue(value) {
+				continue
+			}
+			if defaultValue, hasDefault := schema.Object["default"]; hasDefault && equalJSONValue(value, defaultValue) {
+				continue
+			}
+
+			appendYAMLCommentValue(&lines, "Example:", value, policy.ExampleFormat)
+			break
 		}
 	}
 
-	if value, ok := schemaExampleValue(schema.Object); ok {
-		commentValue := normalizeInlineCommentValue(value)
-		defaultValue := ""
-		if rawDefault, hasDefault := schema.Object["default"]; hasDefault {
-			defaultValue = normalizeInlineCommentValue(rawDefault)
+	if values := schemaEnumValues(schema.Object, policy); len(values) > 0 && *policy.Enums {
+		if policy.ExampleFormat == YAMLCommentFormatBlock && hasStructuredAnnotationValue(asSlice(schema.Object["enum"])) {
+			appendYAMLCommentValue(&lines, "Allowed values:", asSlice(schema.Object["enum"]), policy.ExampleFormat)
+		} else {
+			lines = append(lines, "Allowed values: "+strings.Join(values, ", "))
 		}
-
-		if commentValue != "" && commentValue != defaultValue {
-			lines = append(lines, "Example: "+commentValue)
-		}
-	}
-
-	if values := schemaEnumValues(schema.Object); len(values) > 0 {
-		lines = append(lines, "Allowed values: "+strings.Join(values, ", "))
 	}
 
 	return normalizeYAMLComment(strings.Join(lines, "\n"))
 }
 
 // schemaKeyCommentEffective builds comments using presentation annotation precedence.
-func schemaKeyCommentEffective(schema effectiveSchema) string {
+func schemaKeyCommentEffective(schema effectiveSchema, policy YAMLCommentPolicy) string {
 	titleValue, _ := schema.annotation("title")
 	descriptionValue, _ := schema.annotation("description")
 
@@ -588,31 +677,17 @@ func schemaKeyCommentEffective(schema effectiveSchema) string {
 		"title":       title,
 		"description": description,
 	}
-	for _, keyword := range []string{"default", "example", "examples", "enum"} {
+	for _, keyword := range []string{"default", "examples", "enum"} {
 		if value, exists := schema.annotation(keyword); exists {
 			object[keyword] = value
 		}
 	}
 
-	return schemaKeyComment(schemaValue{Object: object})
-}
-
-// schemaExampleValue returns first explicit schema example value.
-func schemaExampleValue(object map[string]any) (any, bool) {
-	if value, ok := object["example"]; ok {
-		return value, true
-	}
-
-	values := asSlice(object["examples"])
-	if len(values) == 0 {
-		return nil, false
-	}
-
-	return values[0], true
+	return schemaKeyComment(schemaValue{Object: object}, policy)
 }
 
 // schemaEnumValues returns normalized one-line enum values for comments.
-func schemaEnumValues(object map[string]any) []string {
+func schemaEnumValues(object map[string]any, policy YAMLCommentPolicy) []string {
 	values := asSlice(object["enum"])
 	if len(values) == 0 {
 		return nil
@@ -620,15 +695,69 @@ func schemaEnumValues(object map[string]any) []string {
 
 	out := make([]string, 0, len(values))
 	for _, value := range values {
-		commentValue := normalizeInlineCommentValue(value)
-		if commentValue == "" {
-			continue
-		}
-
-		out = append(out, commentValue)
+		out = append(out, formatYAMLCommentValue(value, policy.ExampleFormat, false))
 	}
 
 	return out
+}
+
+// appendYAMLCommentValue appends scalar values inline and structured values
+// as readable continuation lines when block formatting is selected.
+func appendYAMLCommentValue(lines *[]string, label string, value any, format YAMLCommentFormat) {
+	formatted := formatYAMLCommentValue(value, format, true)
+	if formatted == "" {
+		return
+	}
+	if !strings.Contains(formatted, "\n") {
+		*lines = append(*lines, label+" "+formatted)
+		return
+	}
+
+	*lines = append(*lines, label)
+	for line := range strings.SplitSeq(formatted, "\n") {
+		*lines = append(*lines, "  "+line)
+	}
+}
+
+// formatYAMLCommentValue formats one annotation
+// without losing false, zero, or empty-string values.
+func formatYAMLCommentValue(value any, format YAMLCommentFormat, allowBlock bool) string {
+	if !allowBlock || format != YAMLCommentFormatBlock || isScalarAnnotationValue(value) {
+		return normalizeInlineCommentValue(value)
+	}
+
+	encoded, err := yaml.Marshal(value)
+	if err != nil {
+		return normalizeInlineCommentValue(value)
+	}
+
+	return strings.TrimSpace(string(encoded))
+}
+
+// isScalarAnnotationValue identifies values suitable for scalar example mode.
+func isScalarAnnotationValue(value any) bool {
+	if value == nil {
+		return true
+	}
+
+	switch value.(type) {
+	case bool, string:
+		return true
+	default:
+		_, ok := asNumber(value)
+		return ok
+	}
+}
+
+// hasStructuredAnnotationValue reports whether a collection contains a map or array.
+func hasStructuredAnnotationValue(values []any) bool {
+	for _, value := range values {
+		if !isScalarAnnotationValue(value) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // normalizeInlineCommentValue converts value to one-line safe YAML comment text.
@@ -639,7 +768,11 @@ func normalizeInlineCommentValue(value any) string {
 
 	switch typed := value.(type) {
 	case string:
+		if typed == "" {
+			return `""`
+		}
 		return normalizeInlineWhitespace(typed)
+
 	default:
 		encoded, err := json.Marshal(typed)
 		if err == nil {

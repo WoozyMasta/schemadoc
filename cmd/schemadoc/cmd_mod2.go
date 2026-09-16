@@ -52,10 +52,7 @@ func (command *moduleToMarkdownCommand) Execute(_ []string) error {
 					IndentType: command.JSONFlags.IndentType,
 					Minify:     command.JSONFlags.Minify,
 				},
-				YAML: yamlOutputOptions{
-					Indent:                 command.YAMLFlags.Indent,
-					DisableExampleComments: command.YAMLFlags.DisableExampleComments,
-				},
+				YAML: yamlOutputFromFlags(command.YAMLFlags),
 			},
 		},
 	)

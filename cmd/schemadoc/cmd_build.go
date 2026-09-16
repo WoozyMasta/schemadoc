@@ -506,10 +506,29 @@ func yamlOutputFromBuild(options *buildcfg.YAMLOutputOptions) yamlOutputOptions 
 		return yamlOutputOptions{}
 	}
 
-	return yamlOutputOptions{
-		Indent:                 options.Indent,
-		DisableExampleComments: options.DisableExampleComments,
+	result := yamlOutputOptions{Indent: options.Indent}
+	if options.Comments != nil {
+		comments := options.Comments
+		result.Comments = &yamlCommentOptions{
+			Titles:       boolValue(comments.Titles),
+			Descriptions: boolValue(comments.Descriptions),
+			Defaults:     boolValue(comments.Defaults),
+			Enums:        boolValue(comments.Enums),
+			Examples:     comments.Examples,
+			Format:       comments.ExampleFormat,
+		}
 	}
+
+	return result
+}
+
+// boolValue returns an optional configuration value or the documented true default.
+func boolValue(value *bool) bool {
+	if value == nil {
+		return true
+	}
+
+	return *value
 }
 
 // mergeRenameFromBuild converts optional build rename options to merge API options.

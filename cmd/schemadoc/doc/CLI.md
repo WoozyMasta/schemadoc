@@ -268,8 +268,13 @@ schemadoc mod2doc --type Config --key-namer snake . > model.snake.md
 
 |Option|Description|Default|Required|
 |---|---|---|---|
+|`--yaml-comments-examples`|Schema examples to include in comments; choices: `none, scalar, all`|`scalar`|no|
+|`--yaml-comments-example-format`|Annotation value format; choices: `inline, block`|`block`|no|
 |`--yaml-indent`|YAML indentation width|`2`|no|
-|`--disable-example-comments`|Disable YAML key comments from schema metadata||no|
+|`--yaml-no-titles`|Disable schema title comments||no|
+|`--yaml-no-descriptions`|Disable schema description comments||no|
+|`--yaml-no-defaults`|Disable schema default comments||no|
+|`--yaml-no-enums`|Disable schema enum comments||no|
 
 #### Arguments
 
@@ -390,8 +395,13 @@ schemadoc schema2doc --mode required --format yaml schema.json > schema.with-exa
 
 |Option|Description|Default|Required|
 |---|---|---|---|
+|`--yaml-comments-examples`|Schema examples to include in comments; choices: `none, scalar, all`|`scalar`|no|
+|`--yaml-comments-example-format`|Annotation value format; choices: `inline, block`|`block`|no|
 |`--yaml-indent`|YAML indentation width|`2`|no|
-|`--disable-example-comments`|Disable YAML key comments from schema metadata||no|
+|`--yaml-no-titles`|Disable schema title comments||no|
+|`--yaml-no-descriptions`|Disable schema description comments||no|
+|`--yaml-no-defaults`|Disable schema default comments||no|
+|`--yaml-no-enums`|Disable schema enum comments||no|
 
 #### Arguments
 
@@ -469,8 +479,13 @@ schemadoc schema2yaml --mode all schema.json example.all.yaml
 
 |Option|Description|Default|Required|
 |---|---|---|---|
+|`--yaml-comments-examples`|Schema examples to include in comments; choices: `none, scalar, all`|`scalar`|no|
+|`--yaml-comments-example-format`|Annotation value format; choices: `inline, block`|`block`|no|
 |`--yaml-indent`|YAML indentation width|`2`|no|
-|`--disable-example-comments`|Disable YAML key comments from schema metadata||no|
+|`--yaml-no-titles`|Disable schema title comments||no|
+|`--yaml-no-descriptions`|Disable schema description comments||no|
+|`--yaml-no-defaults`|Disable schema default comments||no|
+|`--yaml-no-enums`|Disable schema enum comments||no|
 
 #### Arguments
 

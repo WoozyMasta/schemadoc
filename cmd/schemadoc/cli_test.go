@@ -158,6 +158,44 @@ func TestCLI_Schema2Doc(t *testing.T) {
 	}
 }
 
+func TestCLI_YAMLCommentPolicyFlags(t *testing.T) {
+	t.Parallel()
+
+	schemaPath := filepath.Join(t.TempDir(), "schema.json")
+	schema := `{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "value": {
+      "type": "string",
+      "title": "Value",
+      "description": "Value description.",
+      "examples": ["selected"]
+    }
+  }
+}`
+	if err := os.WriteFile(schemaPath, []byte(schema), 0o600); err != nil {
+		t.Fatalf("write schema: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := run([]string{
+		"schema2yaml",
+		"--yaml-no-titles",
+		"--yaml-comments-examples",
+		"none",
+		schemaPath,
+	}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("run exit code = %d, want 0; stderr: %s", code, stderr.String())
+	}
+
+	output := stdout.String()
+	checkNotContainsAny(t, output, []string{"# Value\n", "# Example:"})
+	checkContainsAll(t, output, []string{"# Value description.", "value: selected"})
+}
+
 func TestCLI_Schema2ExamplesAndTemplateAndConfig(t *testing.T) {
 	t.Parallel()
 
@@ -258,6 +296,7 @@ func TestCLI_ConfigExampleOrderAndComments(t *testing.T) {
 
 	output := stdout.String()
 	checkContainsAll(t, output, []string{
+		"# yaml-language-server: $schema=https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/cmd/schemadoc/doc/config.schema.json",
 		"# Schema is working schema path for the whole document pipeline.",
 		"schema: schema.json",
 		"check: false",

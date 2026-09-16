@@ -45,7 +45,7 @@ Generate config examples from schema:
 ```bash
 schemadoc schema2json schema.json config.example.json
 schemadoc schema2yaml schema.json config.example.yaml
-schemadoc schema2yaml --disable-example-comments schema.json clean.yaml
+schemadoc schema2yaml --yaml-comments-examples=none schema.json clean.yaml
 ```
 
 Reflect schema from Go type:

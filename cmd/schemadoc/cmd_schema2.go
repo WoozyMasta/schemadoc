@@ -29,10 +29,7 @@ func (command *schemaToDocCommand) Execute(_ []string) error {
 				IndentType: command.JSONFlags.IndentType,
 				Minify:     command.JSONFlags.Minify,
 			},
-			YAML: yamlOutputOptions{
-				Indent:                 command.YAMLFlags.Indent,
-				DisableExampleComments: command.YAMLFlags.DisableExampleComments,
-			},
+			YAML: yamlOutputFromFlags(command.YAMLFlags),
 		},
 	})
 }
@@ -62,10 +59,7 @@ func (command *schemaToYAMLCommand) Execute(_ []string) error {
 		command.Args.Input,
 		command.Args.Output,
 		exampleOutputOptions{
-			YAML: yamlOutputOptions{
-				Indent:                 command.YAMLFlags.Indent,
-				DisableExampleComments: command.YAMLFlags.DisableExampleComments,
-			},
+			YAML: yamlOutputFromFlags(command.YAMLFlags),
 		},
 	)
 }

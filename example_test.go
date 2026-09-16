@@ -128,7 +128,13 @@ func TestGenerateExampleYAMLDisableCommentsKeepsXOrder(t *testing.T) {
 	})
 
 	gotBytes, err := GenerateExampleYAMLWithOptions(schema, ExampleModeAll, ExampleOptions{
-		DisableExampleComments: true,
+		YAMLComments: YAMLCommentPolicy{
+			Titles:       boolPointer(false),
+			Descriptions: boolPointer(false),
+			Defaults:     boolPointer(false),
+			Enums:        boolPointer(false),
+			Examples:     YAMLCommentExamplesNone,
+		},
 	})
 	if err != nil {
 		t.Fatalf("GenerateExampleYAMLWithOptions: %v", err)
@@ -140,6 +146,111 @@ func TestGenerateExampleYAMLDisableCommentsKeepsXOrder(t *testing.T) {
 		t.Fatalf("unexpected generated yaml:\n%s\nwant:\n%s", got, want)
 	}
 	assertNotContains(t, got, "#")
+}
+
+func TestGenerateExampleYAMLCommentPolicy(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"settings": map[string]any{
+				"type":        "object",
+				"title":       "Settings",
+				"description": "Runtime settings.",
+				"default": map[string]any{
+					"enabled": true,
+					"labels":  []any{"demo"},
+				},
+				"examples": []any{
+					map[string]any{
+						"enabled": false,
+						"labels":  []any{"example"},
+					},
+				},
+			},
+			"mode": map[string]any{
+				"type": "string",
+				"enum": []any{"safe", "fast"},
+			},
+		},
+	})
+
+	gotBytes, err := GenerateExampleYAMLWithOptions(schema, ExampleModeAll, ExampleOptions{
+		YAMLComments: YAMLCommentPolicy{
+			Examples:      YAMLCommentExamplesAll,
+			ExampleFormat: YAMLCommentFormatBlock,
+		},
+	})
+	if err != nil {
+		t.Fatalf("GenerateExampleYAML: %v", err)
+	}
+	got := string(gotBytes)
+	for _, marker := range []string{
+		"# Settings",
+		"# Runtime settings.",
+		"# Default:",
+		"#   enabled: true",
+		"# Example:",
+		"#   enabled: false",
+		"# Allowed values: safe, fast",
+		"settings:",
+	} {
+		assertContains(t, got, marker)
+	}
+
+	withoutExamples, err := GenerateExampleYAMLWithOptions(schema, ExampleModeAll, ExampleOptions{
+		YAMLComments: YAMLCommentPolicy{
+			Titles:       boolPointer(false),
+			Descriptions: boolPointer(true),
+			Defaults:     boolPointer(false),
+			Enums:        boolPointer(true),
+			Examples:     YAMLCommentExamplesNone,
+		},
+	})
+	if err != nil {
+		t.Fatalf("GenerateExampleYAMLWithOptions: %v", err)
+	}
+	withoutExamplesText := string(withoutExamples)
+	assertNotContains(t, withoutExamplesText, "# Settings")
+	assertContains(t, withoutExamplesText, "# Runtime settings.")
+	assertNotContains(t, withoutExamplesText, "# Default:")
+	assertNotContains(t, withoutExamplesText, "# Example:")
+	assertContains(t, withoutExamplesText, "# Allowed values: safe, fast")
+	assertContains(t, withoutExamplesText, "enabled: false")
+}
+
+func TestGenerateExampleYAMLCommentPolicyExamplesAndValues(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"value": map[string]any{
+				"type":    "string",
+				"example": "legacy",
+				"examples": []any{
+					"",
+				},
+				"enum": []any{"", false, 0},
+			},
+		},
+	})
+
+	gotBytes, err := GenerateExampleYAMLWithOptions(schema, ExampleModeAll, ExampleOptions{
+		YAMLComments: YAMLCommentPolicy{
+			Examples:      YAMLCommentExamplesAll,
+			ExampleFormat: YAMLCommentFormatInline,
+		},
+	})
+	if err != nil {
+		t.Fatalf("GenerateExampleYAMLWithOptions: %v", err)
+	}
+	got := string(gotBytes)
+	assertContains(t, got, `# Example: ""`)
+	assertContains(t, got, `# Allowed values: "", false, 0`)
+	assertNotContains(t, got, "legacy")
+	assertContains(t, got, "value: \"\"")
 }
 
 func TestGenerateExampleJSONModeValidation(t *testing.T) {

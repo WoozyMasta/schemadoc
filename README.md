@@ -82,7 +82,10 @@ exampleYAML, err := schemadoc.GenerateExampleWithOptions(
     schemadoc.ExampleFormatYAML,
     schemadoc.ExampleOptions{
         YAMLIndent:             2,
-        DisableExampleComments: false,
+        YAMLComments: schemadoc.YAMLCommentPolicy{
+            Examples:      schemadoc.YAMLCommentExamplesScalar,
+            ExampleFormat: schemadoc.YAMLCommentFormatBlock,
+        },
     },
 )
 if err != nil {

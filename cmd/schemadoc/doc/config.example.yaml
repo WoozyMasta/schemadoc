@@ -1,29 +1,26 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/cmd/schemadoc/doc/config.schema.json
 
 # Schema is working schema path for the whole document pipeline.
-# `build` writes mod2schema output to this file, `merge` mutates this
-# file in place, and schema2* stages read from this file as input.
-# Use relative path for repository-local workflows, or absolute path
-# for CI/temp directories.
+# `build` writes mod2schema output to this file, `merge` mutates this file in place,
+# and schema2* stages read from this file as input.
+# Use relative path for repository-local workflows, or absolute path for CI/temp directories.
 # Example: schema.json
 schema: schema.json
 # Check enables validation mode for all stages in the document.
-# When true, build compares generated outputs with existing files and
-# fails on first mismatch instead of rewriting files. This is intended for
-# CI to ensure generated files are up to date.
+# When true, build compares generated outputs with existing files
+# and fails on first mismatch instead of rewriting files.
+# This is intended for CI to ensure generated files are up to date.
 check: false
-# Mod2Schema reflects one Go type into JSON Schema and writes result to
-# `schema`.
-# When declared, this stage always runs first. Use it when schema must be
-# generated from source code before merge/export stages.
+# Mod2Schema reflects one Go type into JSON Schema and writes result to `schema`.
+# When declared, this stage always runs first.
+# Use it when schema must be generated from source code before merge/export stages.
 mod2schema:
   # Module selects reflection source.
   # Local mode: existing directory on disk with go.mod.
-  # Remote mode: module path with explicit version suffix
-  # (`@vX.Y.Z` or `@latest`).
+  # Remote mode: module path with explicit version suffix (`@vX.Y.Z` or `@latest`).
   # Default: .
   # Example: ../project
-  module: .
+  module: ../project
   # Package is import path where target type is declared.
   # Keep empty when type is declared in module root package.
   # Example: github.com/acme/project/pkg/config
@@ -31,8 +28,7 @@ mod2schema:
   # Type is root Go type name to reflect into schema.
   # Example: Config
   type: Config
-  # KeyNamer controls fallback field-name strategy when struct field has no
-  # explicit `json` tag.
+  # KeyNamer controls fallback field-name strategy when struct field has no explicit `json` tag.
   # Default: none
   # Allowed values: none, snake, kebab, lower
   key_namer: none
@@ -50,14 +46,12 @@ mod2schema:
     # Minify enables compact one-line JSON output without indentation.
     minify: false
 # Merge applies import/patch actions over current `schema` file.
-# When both mod2schema and merge are declared, merge always runs after
-# mod2schema. Use it to import shared definitions or patch fragments from
-# other schema files.
+# When both mod2schema and merge are declared, merge always runs after mod2schema.
+# Use it to import shared definitions or patch fragments from other schema files.
 merge:
   # Patches lists low-level merge actions applied in order.
-  # Each patch copies or merges one source node from another schema file
-  # into current `schema`. Items are applied top-to-bottom; later patches
-  # can overwrite results of earlier patches.
+  # Each patch copies or merges one source node from another schema file into current `schema`.
+  # Items are applied top-to-bottom; later patches can overwrite results of earlier patches.
   patches:
     - # File is source schema path used by this action.
       # Example: schemas/common.schema.json
@@ -90,27 +84,24 @@ merge:
   # Imports lists high-level definition imports applied in order.
   # Each item imports entries from source defs object (for example `/$defs`)
   # into target defs object in current `schema` (also usually `/$defs`).
-  # This is the convenient way to "pull shared type definitions" from other
-  # schema files without writing many manual patches.
+  # This is the convenient way to "pull shared type definitions" from other schema files without writing many manual patches.
   imports:
     - # File is source schema path from which definitions are imported.
       # Example: schemas/common.schema.json
       file: schemas/common.schema.json
       # SourceDefs selects source object used as definition map.
-      # Import reads all direct child keys from this pointer and treats each key
-      # as one definition name to import.
+      # Import reads all direct child keys from this pointer and treats each key as one definition name to import.
       # Default: /$defs
       # Example: /components/schemas
-      source_defs: /$defs
+      source_defs: /components/schemas
       # TargetDefs selects destination object for imported definitions.
       # Use this when project keeps reusable definitions outside default `/$defs`
       # or when imported definitions must be isolated under dedicated subtree.
       # Default: /$defs
       # Example: /components/schemas
-      target_defs: /$defs
+      target_defs: /components/schemas
       # Rename configures how imported definition names are transformed.
-      # Useful when source and target schemas use different naming conventions or
-      # when name collisions must be avoided.
+      # Useful when source and target schemas use different naming conventions or when name collisions must be avoided.
       rename:
         # Mode selects rename strategy.
         #   - `none` keeps original names.
@@ -129,8 +120,7 @@ merge:
   # PruneUnreachableDefs removes unreachable `$defs` entries after merge.
   prune_unreachable_defs: false
 # Schema2JSON generates JSON example payload from current `schema`.
-# This stage is useful for machine-readable fixtures and JSON examples in
-# repositories, tests, and CI artifacts.
+# This stage is useful for machine-readable fixtures and JSON examples in repositories, tests, and CI artifacts.
 schema2json:
   # Output is output file path.
   # When empty, build derives output from `schema` path:
@@ -157,10 +147,9 @@ schema2json:
 # Use this stage for user-facing reference docs committed to repository.
 schema2doc:
   # Output is markdown output path.
-  # When empty, build derives output from `schema` path:
-  #   - template `list` -> `<schema-base>.list.md`
-  #   - template `table` -> `<schema-base>.table.md`
-  #   - template `html` -> `<schema-base>.html`
+  # When empty, build derives output from `schema` path and template metadata.
+  # Builtin list and table templates keep `.list` and `.table` suffixes;
+  # custom templates use their declared `output.extension` directly.
   output: <string>
   # Template selects built-in document template.
   # Default: list
@@ -220,10 +209,28 @@ schema2doc:
     # Indent sets YAML indentation width for one nesting level.
     # Default: 2
     indent: 2
-    # DisableExampleComments disables schema-driven comments above YAML keys.
-    # When false, generator writes comments from schema metadata (description,
-    # default, example, enum).
-    disable_example_comments: false
+    # Comments configures schema-driven comments above YAML keys.
+    comments:
+      # Titles enables comments sourced from schema titles.
+      # Default: true
+      titles: true
+      # Descriptions enables comments sourced from schema descriptions.
+      # Default: true
+      descriptions: true
+      # Defaults enables comments sourced from schema defaults.
+      # Default: true
+      defaults: true
+      # Enums enables comments listing schema enum values.
+      # Default: true
+      enums: true
+      # Examples selects scalar, all, or no schema examples.
+      # Default: scalar
+      # Allowed values: none, scalar, all
+      examples: scalar
+      # ExampleFormat selects inline or block annotation value formatting.
+      # Default: block
+      # Allowed values: inline, block
+      example_format: block
 # Schema2YAML generates YAML example payload from current `schema`.
 # This stage is useful for human-readable config examples and snippets.
 schema2yaml:
@@ -240,7 +247,25 @@ schema2yaml:
     # Indent sets YAML indentation width for one nesting level.
     # Default: 2
     indent: 2
-    # DisableExampleComments disables schema-driven comments above YAML keys.
-    # When false, generator writes comments from schema metadata (description,
-    # default, example, enum).
-    disable_example_comments: false
+    # Comments configures schema-driven comments above YAML keys.
+    comments:
+      # Titles enables comments sourced from schema titles.
+      # Default: true
+      titles: true
+      # Descriptions enables comments sourced from schema descriptions.
+      # Default: true
+      descriptions: true
+      # Defaults enables comments sourced from schema defaults.
+      # Default: true
+      defaults: true
+      # Enums enables comments listing schema enum values.
+      # Default: true
+      enums: true
+      # Examples selects scalar, all, or no schema examples.
+      # Default: scalar
+      # Allowed values: none, scalar, all
+      examples: scalar
+      # ExampleFormat selects inline or block annotation value formatting.
+      # Default: block
+      # Allowed values: inline, block
+      example_format: block

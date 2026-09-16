@@ -494,13 +494,9 @@ $defs:
     additionalProperties: false
     description: YAMLOutputOptions configures YAML output formatting and comments.
     properties:
-      disable_example_comments:
-        description: |-
-          DisableExampleComments disables schema-driven comments above YAML keys.
-
-          When false, generator writes comments from schema metadata (description,
-          default, example, enum).
-        type: boolean
+      comments:
+        $ref: '#/$defs/YAMLCommentOptions'
+        description: Comments configures schema-driven comments above YAML keys.
         x-order: "2"
       indent:
         default: 2
@@ -508,6 +504,48 @@ $defs:
         minimum: 1
         type: integer
         x-order: "1"
+    type: object
+  YAMLCommentOptions:
+    additionalProperties: false
+    description: YAMLCommentOptions configures independent schema annotation comments.
+    properties:
+      titles:
+        default: true
+        description: Titles enables comments sourced from schema titles.
+        type: boolean
+        x-order: "1"
+      descriptions:
+        default: true
+        description: Descriptions enables comments sourced from schema descriptions.
+        type: boolean
+        x-order: "2"
+      defaults:
+        default: true
+        description: Defaults enables comments sourced from schema defaults.
+        type: boolean
+        x-order: "3"
+      enums:
+        default: true
+        description: Enums enables comments listing schema enum values.
+        type: boolean
+        x-order: "4"
+      examples:
+        default: scalar
+        description: Examples selects scalar, all, or no schema examples.
+        enum:
+          - none
+          - scalar
+          - all
+        type: string
+        x-order: "5"
+      example_format:
+        default: block
+        description: ExampleFormat selects inline or block annotation value formatting.
+        enum:
+          - inline
+          - block
+        type: string
+        x-order: "6"
     type: object
 $id: https://github.com/woozymasta/schemadoc/cmd/schemadoc/buildcfg/config
 $ref: '#/$defs/Config'

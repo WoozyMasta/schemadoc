@@ -56,8 +56,13 @@ type jsonFormatFlags struct {
 
 // yamlExampleFlags groups YAML example output flags.
 type yamlExampleFlags struct {
-	Indent                 int  `long:"yaml-indent"              description:"YAML indentation width" default:"2" validate-min:"1"`
-	DisableExampleComments bool `long:"disable-example-comments" description:"Disable YAML key comments from schema metadata"`
+	CommentExamples string `long:"yaml-comments-examples"       description:"Schema examples to include in comments" default:"scalar" choices:"none;scalar;all"`
+	CommentFormat   string `long:"yaml-comments-example-format" description:"Annotation value format" default:"block" choices:"inline;block"`
+	Indent          int    `long:"yaml-indent"                  description:"YAML indentation width" default:"2" validate-min:"1"`
+	NoTitles        bool   `long:"yaml-no-titles"               description:"Disable schema title comments"`
+	NoDescriptions  bool   `long:"yaml-no-descriptions"         description:"Disable schema description comments"`
+	NoDefaults      bool   `long:"yaml-no-defaults"             description:"Disable schema default comments"`
+	NoEnums         bool   `long:"yaml-no-enums"                description:"Disable schema enum comments"`
 }
 
 // markdownExampleFlags groups embedded example mode and format flags.

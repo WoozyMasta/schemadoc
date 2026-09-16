@@ -5,22 +5,22 @@
       "description": "Config describes one build pipeline document.",
       "properties": {
         "check": {
-          "description": "Check enables validation mode for all stages in the document.\n\nWhen true, build compares generated outputs with existing files and\nfails on first mismatch instead of rewriting files. This is intended for\nCI to ensure generated files are up to date.",
+          "description": "Check enables validation mode for all stages in the document.\n\nWhen true, build compares generated outputs with existing files\nand fails on first mismatch instead of rewriting files.\nThis is intended for CI to ensure generated files are up to date.",
           "type": "boolean",
           "x-order": "2"
         },
         "merge": {
           "$ref": "#/$defs/MergeStage",
-          "description": "Merge applies import/patch actions over current `schema` file.\n\nWhen both mod2schema and merge are declared, merge always runs after\nmod2schema. Use it to import shared definitions or patch fragments from\nother schema files.",
+          "description": "Merge applies import/patch actions over current `schema` file.\n\nWhen both mod2schema and merge are declared, merge always runs after mod2schema.\nUse it to import shared definitions or patch fragments from other schema files.",
           "x-order": "20"
         },
         "mod2schema": {
           "$ref": "#/$defs/Mod2SchemaStage",
-          "description": "Mod2Schema reflects one Go type into JSON Schema and writes result to\n`schema`.\n\nWhen declared, this stage always runs first. Use it when schema must be\ngenerated from source code before merge/export stages.",
+          "description": "Mod2Schema reflects one Go type into JSON Schema and writes result to `schema`.\n\nWhen declared, this stage always runs first.\nUse it when schema must be generated from source code before merge/export stages.",
           "x-order": "10"
         },
         "schema": {
-          "description": "Schema is working schema path for the whole document pipeline.\n\n`build` writes mod2schema output to this file, `merge` mutates this\nfile in place, and schema2* stages read from this file as input.\nUse relative path for repository-local workflows, or absolute path\nfor CI/temp directories.",
+          "description": "Schema is working schema path for the whole document pipeline.\n\n`build` writes mod2schema output to this file, `merge` mutates this file in place,\nand schema2* stages read from this file as input.\nUse relative path for repository-local workflows, or absolute path for CI/temp directories.",
           "examples": [
             "schema.json",
             "build/schema/config.schema.json"
@@ -36,7 +36,7 @@
         },
         "schema2json": {
           "$ref": "#/$defs/Schema2JSONStage",
-          "description": "Schema2JSON generates JSON example payload from current `schema`.\n\nThis stage is useful for machine-readable fixtures and JSON examples in\nrepositories, tests, and CI artifacts.",
+          "description": "Schema2JSON generates JSON example payload from current `schema`.\n\nThis stage is useful for machine-readable fixtures and JSON examples in repositories, tests, and CI artifacts.",
           "x-order": "30"
         },
         "schema2yaml": {
@@ -106,12 +106,12 @@
         },
         "rename": {
           "$ref": "#/$defs/MergeImportRename",
-          "description": "Rename configures how imported definition names are transformed.\n\nUseful when source and target schemas use different naming conventions or\nwhen name collisions must be avoided.",
+          "description": "Rename configures how imported definition names are transformed.\n\nUseful when source and target schemas use different naming conventions or when name collisions must be avoided.",
           "x-order": "4"
         },
         "source_defs": {
           "default": "/$defs",
-          "description": "SourceDefs selects source object used as definition map.\n\nImport reads all direct child keys from this pointer and treats each key\nas one definition name to import.",
+          "description": "SourceDefs selects source object used as definition map.\n\nImport reads all direct child keys from this pointer and treats each key as one definition name to import.",
           "examples": [
             "/components/schemas"
           ],
@@ -247,7 +247,7 @@
       "description": "MergeStage describes merge execution over working schema.",
       "properties": {
         "imports": {
-          "description": "Imports lists high-level definition imports applied in order.\n\nEach item imports entries from source defs object (for example `/$defs`)\ninto target defs object in current `schema` (also usually `/$defs`).\nThis is the convenient way to \"pull shared type definitions\" from other\nschema files without writing many manual patches.",
+          "description": "Imports lists high-level definition imports applied in order.\n\nEach item imports entries from source defs object (for example `/$defs`)\ninto target defs object in current `schema` (also usually `/$defs`).\nThis is the convenient way to \"pull shared type definitions\" from other schema files without writing many manual patches.",
           "items": {
             "$ref": "#/$defs/MergeImport"
           },
@@ -255,7 +255,7 @@
           "x-order": "2"
         },
         "patches": {
-          "description": "Patches lists low-level merge actions applied in order.\n\nEach patch copies or merges one source node from another schema file\ninto current `schema`. Items are applied top-to-bottom; later patches\ncan overwrite results of earlier patches.",
+          "description": "Patches lists low-level merge actions applied in order.\n\nEach patch copies or merges one source node from another schema file into current `schema`.\nItems are applied top-to-bottom; later patches can overwrite results of earlier patches.",
           "items": {
             "$ref": "#/$defs/MergePatch"
           },
@@ -281,7 +281,7 @@
         },
         "key_namer": {
           "default": "none",
-          "description": "KeyNamer controls fallback field-name strategy when struct field has no\nexplicit `json` tag.",
+          "description": "KeyNamer controls fallback field-name strategy when struct field has no explicit `json` tag.",
           "enum": [
             "none",
             "snake",
@@ -293,7 +293,7 @@
         },
         "module": {
           "default": ".",
-          "description": "Module selects reflection source.\n\nLocal mode: existing directory on disk with go.mod.\nRemote mode: module path with explicit version suffix\n(`@vX.Y.Z` or `@latest`).",
+          "description": "Module selects reflection source.\n\nLocal mode: existing directory on disk with go.mod.\nRemote mode: module path with explicit version suffix (`@vX.Y.Z` or `@latest`).",
           "examples": [
             "../project",
             "github.com/acme/project@v1.2.3"
@@ -384,7 +384,7 @@
           "x-order": "7"
         },
         "output": {
-          "description": "Output is markdown output path.\n\nWhen empty, build derives output from `schema` path:\n  - template `list` -> `<schema-base>.list.md`\n  - template `table` -> `<schema-base>.table.md`\n  - template `html` -> `<schema-base>.html`",
+          "description": "Output is markdown output path.\n\nWhen empty, build derives output from `schema` path and template metadata.\nBuiltin list and table templates keep `.list` and `.table` suffixes;\ncustom templates use their declared `output.extension` directly.",
           "type": "string",
           "x-order": "1"
         },
@@ -490,13 +490,65 @@
       },
       "type": "object"
     },
+    "YAMLCommentOptions": {
+      "additionalProperties": false,
+      "description": "YAMLCommentOptions configures independent schema annotation comments.",
+      "properties": {
+        "defaults": {
+          "default": true,
+          "description": "Defaults enables comments sourced from schema defaults.",
+          "type": "boolean",
+          "x-order": "3"
+        },
+        "descriptions": {
+          "default": true,
+          "description": "Descriptions enables comments sourced from schema descriptions.",
+          "type": "boolean",
+          "x-order": "2"
+        },
+        "enums": {
+          "default": true,
+          "description": "Enums enables comments listing schema enum values.",
+          "type": "boolean",
+          "x-order": "4"
+        },
+        "example_format": {
+          "default": "block",
+          "description": "ExampleFormat selects inline or block annotation value formatting.",
+          "enum": [
+            "inline",
+            "block"
+          ],
+          "type": "string",
+          "x-order": "6"
+        },
+        "examples": {
+          "default": "scalar",
+          "description": "Examples selects scalar, all, or no schema examples.",
+          "enum": [
+            "none",
+            "scalar",
+            "all"
+          ],
+          "type": "string",
+          "x-order": "5"
+        },
+        "titles": {
+          "default": true,
+          "description": "Titles enables comments sourced from schema titles.",
+          "type": "boolean",
+          "x-order": "1"
+        }
+      },
+      "type": "object"
+    },
     "YAMLOutputOptions": {
       "additionalProperties": false,
       "description": "YAMLOutputOptions configures YAML output formatting and comments.",
       "properties": {
-        "disable_example_comments": {
-          "description": "DisableExampleComments disables schema-driven comments above YAML keys.\n\nWhen false, generator writes comments from schema metadata (description,\ndefault, example, enum).",
-          "type": "boolean",
+        "comments": {
+          "$ref": "#/$defs/YAMLCommentOptions",
+          "description": "Comments configures schema-driven comments above YAML keys.",
           "x-order": "2"
         },
         "indent": {

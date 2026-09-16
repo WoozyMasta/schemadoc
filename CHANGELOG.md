@@ -25,6 +25,13 @@ and this project adheres to [Semantic Versioning][].
   composition, keyword access, and annotation precedence.
 * Example generation now selects validated candidates
   and reports structured materialization failures.
+* YAML example comments now use independent controls for titles,
+  descriptions, defaults, enums, examples, and annotation formatting.
+
+### Removed
+
+* `DisableExampleComments` from the Go API and build configuration.
+* `--disable-example-comments` CLI flag.
 
 ## [0.7.1][] - 2026-09-05
 

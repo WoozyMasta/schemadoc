@@ -43,14 +43,24 @@ type jsonOutputOptions struct {
 
 // yamlOutputOptions stores YAML formatting/comment options for CLI output.
 type yamlOutputOptions struct {
-	Indent                 int
-	DisableExampleComments bool
+	Comments *yamlCommentOptions
+	Indent   int
+}
+
+// yamlCommentOptions stores independent schema annotation comment settings.
+type yamlCommentOptions struct {
+	Examples     string
+	Format       string
+	Titles       bool
+	Descriptions bool
+	Defaults     bool
+	Enums        bool
 }
 
 // exampleOutputOptions stores JSON/YAML example output options.
 type exampleOutputOptions struct {
-	JSON jsonOutputOptions
 	YAML yamlOutputOptions
+	JSON jsonOutputOptions
 }
 
 // runModuleToMarkdown executes module-to-markdown flow without temporary schema files.
@@ -200,13 +210,45 @@ func addYAMLSchemaComment(content, schemaBytes []byte, sourcePath string) []byte
 
 // toExampleOptions converts CLI options to schemadoc example options.
 func toExampleOptions(options exampleOutputOptions) schemadoc.ExampleOptions {
-	return schemadoc.ExampleOptions{
-		JSONIndent:             options.JSON.Indent,
-		JSONIndentType:         options.JSON.IndentType,
-		JSONMinify:             options.JSON.Minify,
-		YAMLIndent:             options.YAML.Indent,
-		DisableExampleComments: options.YAML.DisableExampleComments,
+	result := schemadoc.ExampleOptions{
+		JSONIndent:     options.JSON.Indent,
+		JSONIndentType: options.JSON.IndentType,
+		JSONMinify:     options.JSON.Minify,
+		YAMLIndent:     options.YAML.Indent,
 	}
+	if options.YAML.Comments != nil {
+		comments := options.YAML.Comments
+		result.YAMLComments = schemadoc.YAMLCommentPolicy{
+			Titles:        boolPointer(comments.Titles),
+			Descriptions:  boolPointer(comments.Descriptions),
+			Defaults:      boolPointer(comments.Defaults),
+			Enums:         boolPointer(comments.Enums),
+			Examples:      schemadoc.YAMLCommentExamples(comments.Examples),
+			ExampleFormat: schemadoc.YAMLCommentFormat(comments.Format),
+		}
+	}
+
+	return result
+}
+
+// yamlOutputFromFlags converts shared CLI YAML flags to renderer options.
+func yamlOutputFromFlags(flags yamlExampleFlags) yamlOutputOptions {
+	return yamlOutputOptions{
+		Indent: flags.Indent,
+		Comments: &yamlCommentOptions{
+			Titles:       !flags.NoTitles,
+			Descriptions: !flags.NoDescriptions,
+			Defaults:     !flags.NoDefaults,
+			Enums:        !flags.NoEnums,
+			Examples:     flags.CommentExamples,
+			Format:       flags.CommentFormat,
+		},
+	}
+}
+
+// boolPointer returns a stable pointer for a CLI boolean option.
+func boolPointer(value bool) *bool {
+	return &value
 }
 
 // formatJSONOutput applies JSON indentation/minify settings to JSON bytes.
