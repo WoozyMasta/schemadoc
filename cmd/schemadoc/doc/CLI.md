@@ -234,7 +234,7 @@ schemadoc mod2doc --type Config --key-namer snake . > model.snake.md
 
 |Option|Description|Default|Required|
 |---|---|---|---|
-|`-m`, `--mode`|Embedded example mode for markdown output; choices: `all, required`|`all`|no|
+|`-m`, `--mode`|Embedded example mode; choices: `all, required`|`all`|no|
 |`-F`, `--format`|Embedded example format (omit to disable embedding); choices: `json, yaml`||no|
 
 #### Template Select
@@ -243,14 +243,14 @@ schemadoc mod2doc --type Config --key-namer snake . > model.snake.md
 |---|---|---|---|
 |`-t`, `--template`|Built-in template style; choices: `list, table, html`|`list`|no|
 
-#### Markdown Render
+#### Document Render
 
 |Option|Description|Default|Required|
 |---|---|---|---|
-|`-f`, `--template-file`|Path to custom markdown template (.gotmpl)||no|
-|`-T`, `--title`|Markdown document title|`schema reference`|no|
+|`-f`, `--template-file`|Path to custom document template (.gotmpl)||no|
+|`-T`, `--title`|Document title|`schema reference`|no|
 |`-d`, `--description`|Optional top-level document description under title||no|
-|`-l`, `--list-marker`|List marker used in generated markdown lists; choices: `-, *`|`*`|no|
+|`-l`, `--list-marker`|List marker used in generated lists; choices: `-, *`|`*`|no|
 |`-w`, `--wrap`|Wrap width for plain text descriptions|`80`|no|
 |`--hide-extra-keywords`|Hide non-standard schema keywords in Attributes||no|
 |`--show-internal-keywords`|Show renderer-specific schema keywords in Attributes||no|
@@ -281,7 +281,7 @@ schemadoc mod2doc --type Config --key-namer snake . > model.snake.md
 |Name|Description|Required|
 |---|---|---|
 |`module`|Local module directory or remote module@version (optional; default: .)|no|
-|`output`|Output markdown file path (optional; stdout when omitted)|no|
+|`output`|Output document file path (optional; stdout when omitted)|no|
 
 ### mod2schema
 
@@ -333,7 +333,7 @@ schemadoc mod2schema --type Config --key-namer snake github.com/acme/project@lat
 
 Generate docs from JSON Schema
 
-Generate Markdown or HTML documentation from JSON Schema.
+Generate documentation from JSON Schema using the selected template.
 Reads schema from a file or stdin and writes output to a file or stdout.
 Use --format json|yaml to append an example payload.
 
@@ -361,7 +361,7 @@ schemadoc schema2doc --mode required --format yaml schema.json > schema.with-exa
 
 |Option|Description|Default|Required|
 |---|---|---|---|
-|`-m`, `--mode`|Embedded example mode for markdown output; choices: `all, required`|`all`|no|
+|`-m`, `--mode`|Embedded example mode; choices: `all, required`|`all`|no|
 |`-F`, `--format`|Embedded example format (omit to disable embedding); choices: `json, yaml`||no|
 
 #### Template Select
@@ -370,14 +370,14 @@ schemadoc schema2doc --mode required --format yaml schema.json > schema.with-exa
 |---|---|---|---|
 |`-t`, `--template`|Built-in template style; choices: `list, table, html`|`list`|no|
 
-#### Markdown Render
+#### Document Render
 
 |Option|Description|Default|Required|
 |---|---|---|---|
-|`-f`, `--template-file`|Path to custom markdown template (.gotmpl)||no|
-|`-T`, `--title`|Markdown document title|`schema reference`|no|
+|`-f`, `--template-file`|Path to custom document template (.gotmpl)||no|
+|`-T`, `--title`|Document title|`schema reference`|no|
 |`-d`, `--description`|Optional top-level document description under title||no|
-|`-l`, `--list-marker`|List marker used in generated markdown lists; choices: `-, *`|`*`|no|
+|`-l`, `--list-marker`|List marker used in generated lists; choices: `-, *`|`*`|no|
 |`-w`, `--wrap`|Wrap width for plain text descriptions|`80`|no|
 |`--hide-extra-keywords`|Hide non-standard schema keywords in Attributes||no|
 |`--show-internal-keywords`|Show renderer-specific schema keywords in Attributes||no|
@@ -408,7 +408,7 @@ schemadoc schema2doc --mode required --format yaml schema.json > schema.with-exa
 |Name|Description|Required|
 |---|---|---|
 |`input`|Input schema file path (optional; stdin when omitted)|no|
-|`output`|Output markdown file path (optional; stdout when omitted)|no|
+|`output`|Output document file path (optional; stdout when omitted)|no|
 
 ### schema2json
 

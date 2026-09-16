@@ -3,7 +3,7 @@
 // Source: github.com/woozymasta/schemadoc
 
 /*
-Package schemadoc renders CommonMark documentation from JSON Schema documents.
+Package schemadoc renders documentation and examples from JSON Schema documents.
 
 The package focuses on deterministic markdown output for generated schemas and
 project configuration models. It supports built-in templates ("list", "table")

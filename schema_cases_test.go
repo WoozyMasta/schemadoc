@@ -5,9 +5,13 @@
 package schemadoc
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"reflect"
 	"testing"
+
+	"go.yaml.in/yaml/v3"
 )
 
 func TestSchemaCorpusManifest(t *testing.T) {
@@ -110,6 +114,91 @@ func TestSchemaCorpusGeneratedExamplesValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIntegrationCorpusOutputsAreDeterministic(t *testing.T) {
+	t.Parallel()
+
+	for _, fixture := range loadSchemaCorpus(t) {
+		if fixture.Group != "integration" {
+			continue
+		}
+
+		fixture := fixture
+		t.Run(fixture.Name, func(t *testing.T) {
+			t.Parallel()
+
+			schema := fixture.readSchemaCorpusSchema(t)
+			jsonFirst := generateCorpusExample(t, schema, ExampleFormatJSON)
+			jsonSecond := generateCorpusExample(t, schema, ExampleFormatJSON)
+			if !bytes.Equal(jsonFirst, jsonSecond) {
+				t.Fatal("JSON examples are not deterministic")
+			}
+
+			yamlFirst := generateCorpusExample(t, schema, ExampleFormatYAML)
+			yamlSecond := generateCorpusExample(t, schema, ExampleFormatYAML)
+			if !bytes.Equal(yamlFirst, yamlSecond) {
+				t.Fatal("YAML examples are not deterministic")
+			}
+
+			jsonValue := decodeCorpusInstance(t, jsonFirst, false)
+			yamlValue := decodeCorpusInstance(t, yamlFirst, true)
+			if !reflect.DeepEqual(jsonValue, yamlValue) {
+				t.Fatalf("JSON and YAML examples differ: JSON=%#v YAML=%#v", jsonValue, yamlValue)
+			}
+
+			for _, templateName := range []string{"list", "table", "html"} {
+				options := Options{TemplateName: templateName}
+				first, err := Render(schema, options)
+				if err != nil {
+					t.Fatalf("Render(%s): %v", templateName, err)
+				}
+				second, err := Render(schema, options)
+				if err != nil {
+					t.Fatalf("Render(%s) second run: %v", templateName, err)
+				}
+				if first != second {
+					t.Fatalf("%s document is not deterministic", templateName)
+				}
+			}
+		})
+	}
+}
+
+func generateCorpusExample(t *testing.T, schema []byte, format ExampleFormat) []byte {
+	t.Helper()
+
+	example, err := GenerateExample(schema, ExampleModeAll, format)
+	if err != nil {
+		t.Fatalf("GenerateExample(%s): %v", format, err)
+	}
+
+	return example
+}
+
+func decodeCorpusInstance(t *testing.T, content []byte, isYAML bool) any {
+	t.Helper()
+
+	var value any
+	var err error
+	if isYAML {
+		err = yaml.Unmarshal(content, &value)
+	} else {
+		err = json.Unmarshal(content, &value)
+	}
+	if err != nil {
+		t.Fatalf("decode %s instance: %v", map[bool]string{true: "YAML", false: "JSON"}[isYAML], err)
+	}
+
+	canonical, err := json.Marshal(value)
+	if err != nil {
+		t.Fatalf("canonicalize instance: %v", err)
+	}
+	if err := json.Unmarshal(canonical, &value); err != nil {
+		t.Fatalf("decode canonical instance: %v", err)
+	}
+
+	return value
 }
 
 func TestSchemaCorpusNegativeMaterialization(t *testing.T) {

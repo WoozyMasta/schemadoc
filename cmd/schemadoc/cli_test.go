@@ -681,6 +681,14 @@ MANUAL(1)
 			t.Fatalf("expected derived output %q: %v", path, err)
 		}
 	}
+
+	docWithoutExample, err := os.ReadFile(base + ".list.md")
+	if err != nil {
+		t.Fatalf("read derived document: %v", err)
+	}
+	if strings.Contains(string(docWithoutExample), "## Example ") {
+		t.Fatal("schema2doc without format unexpectedly rendered an example")
+	}
 }
 
 func firstReader(reader io.Reader) io.Reader {

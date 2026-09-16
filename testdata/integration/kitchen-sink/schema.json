@@ -9,9 +9,50 @@
       "type": "string",
       "examples": ["demo"]
     },
+    "kind": {
+      "const": "kitchen-sink"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["safe", "fast"],
+      "default": "safe"
+    },
     "settings": {
       "$ref": "#/$defs/Settings",
       "x-order": 1
+    },
+    "policy": {
+      "$ref": "#/$defs/Policy",
+      "description": "A referenced policy with a sibling description.",
+      "x-order": 2
+    },
+    "legacy": {
+      "$ref": "#/definitions/LegacyValue",
+      "x-order": 3
+    },
+    "choice": {
+      "anyOf": [
+        {
+          "const": "automatic"
+        },
+        {
+          "type": "integer",
+          "minimum": 1
+        }
+      ]
+    },
+    "variant": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["alpha"]
+        },
+        {
+          "type": "string",
+          "enum": ["beta"]
+        }
+      ],
+      "examples": ["alpha"]
     },
     "items": {
       "type": "array",
@@ -26,7 +67,30 @@
       "items": {
         "type": "boolean"
       },
+      "examples": [["demo", 1, true]],
       "minItems": 2
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "examples": [["one", "two"]]
+    },
+    "metadata": {
+      "type": "object",
+      "default": {
+        "source": "fixture",
+        "enabled": true
+      },
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
     },
     "labels": {
       "type": "object",
@@ -38,12 +102,19 @@
       }
     }
   },
+  "description": "Line one\nLine two with a tab\t and trailing spaces  \n\n```yaml\nkey: value\n```\n\n<em>HTML-looking text</em> # marker",
   "patternProperties": {
     "^x-": {
       "type": "string"
     }
   },
   "additionalProperties": false,
+  "definitions": {
+    "LegacyValue": {
+      "type": "string",
+      "const": "legacy"
+    }
+  },
   "$defs": {
     "Settings": {
       "type": "object",
@@ -60,6 +131,33 @@
           "multipleOf": 0.1
         }
       }
+    },
+    "Policy": {
+      "allOf": [
+        {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "default-policy"
+            }
+          }
+        },
+        {
+          "allOf": [
+            {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }

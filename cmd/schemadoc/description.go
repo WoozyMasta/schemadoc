@@ -30,7 +30,7 @@ merge schema fragments, and run multi-step jobs from config.`)
 
 	setCommandDescription(parser, &options.SchemaToDoc,
 		"Generate docs from JSON Schema",
-		`Generate Markdown or HTML documentation from JSON Schema.
+		`Generate documentation from JSON Schema using the selected template.
 Reads schema from a file or stdin and writes output to a file or stdout.
 Use --format json|yaml to append an example payload.`,
 		flags.Example().

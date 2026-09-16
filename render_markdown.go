@@ -413,17 +413,18 @@ func normalizeMarkdownSpacing(text string) string {
 		trimmed := strings.TrimSpace(line)
 
 		if marker, width, ok := markdownFence(trimmed); ok {
-			if !inFence {
+			switch {
+			case !inFence:
 				inFence, fenceMarker, fenceWidth = true, marker, width
 				writeLine(line)
 				needsBlankAfterFence = false
 				blankCount = 0
-			} else if marker == fenceMarker && width >= fenceWidth {
+			case marker == fenceMarker && width >= fenceWidth:
 				inFence = false
 				writeLine(line)
 				needsBlankAfterFence = true
 				blankCount = 0
-			} else {
+			default:
 				writeLine(line)
 			}
 		} else {

@@ -167,7 +167,7 @@
       "properties": {
         "array": {
           "default": "replace",
-          "description": "Array selects array behavior for deep-merge operations.",
+          "description": "Array selects array behavior for deep-merge operations.\nIt controls whether arrays are replaced, appended, or appended uniquely.",
           "enum": [
             "replace",
             "append",
@@ -189,7 +189,7 @@
         },
         "object": {
           "default": "merge",
-          "description": "Object selects object behavior for deep-merge operations.",
+          "description": "Object selects object behavior for deep-merge operations.\nIt controls whether source object members are merged or replace the target.",
           "enum": [
             "merge",
             "replace"
@@ -344,7 +344,6 @@
           "x-order": "12"
         },
         "format": {
-          "default": "json",
           "description": "Format selects embedded example format for doc template.\n\nEmpty value disables embedded example block.",
           "enum": [
             "json",
@@ -365,7 +364,7 @@
         },
         "list_marker": {
           "default": "*",
-          "description": "ListMarker controls unordered list marker normalization in rendered markdown.",
+          "description": "ListMarker controls unordered list marker normalization in rendered documents.",
           "enum": [
             "-",
             "*"
@@ -384,7 +383,7 @@
           "x-order": "7"
         },
         "output": {
-          "description": "Output is markdown output path.\n\nWhen empty, build derives output from `schema` path and template metadata.\nBuiltin list and table templates keep `.list` and `.table` suffixes;\ncustom templates use their declared `output.extension` directly.",
+          "description": "Output is document output path.\n\nWhen empty, build derives output from `schema` path and template metadata.\nBuiltin list and table templates keep `.list` and `.table` suffixes;\ncustom templates use their declared `output.extension` directly.",
           "type": "string",
           "x-order": "1"
         },

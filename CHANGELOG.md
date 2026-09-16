@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning][].
   now render both the root content and named definitions.
 * Definition reference discovery now covers schema-bearing dependency,
   property-name, composition, array, and dynamic-reference keywords.
+* `schema2doc.format` documentation now matches runtime behavior:
+  embedded examples remain disabled until a format is selected.
 
 ### Removed
 

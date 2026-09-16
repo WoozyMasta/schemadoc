@@ -7,7 +7,7 @@ package main
 // cliOptions describes schemadoc CLI flags and subcommands.
 type cliOptions struct {
 	Config           configCommand           `command:"config"      description:"Generate config example"`
-	Template         templateCommand         `command:"template"    description:"Print built-in markdown template"`
+	Template         templateCommand         `command:"template"    description:"Print built-in template"`
 	SchemaMerge      schemaMergeCommand      `command:"merge"       description:"Merge JSON Schema documents"`
 	Build            buildCommand            `command:"build"       description:"Run jobs from config file"`
 	ModuleToSchema   moduleToSchemaCommand   `command:"mod2schema"  description:"Generate JSON Schema from Go type"`
@@ -25,12 +25,12 @@ type moduleReflectFlags struct {
 	JSONSchemaVersion string `long:"jsonschema-version" description:"Override github.com/invopop/jsonschema version for helper module (for example: v0.14.0)"`
 }
 
-// markdownRenderFlags groups markdown rendering flags.
+// markdownRenderFlags groups document rendering flags.
 type markdownRenderFlags struct {
-	TemplatePath         string `long:"template-file"          description:"Path to custom markdown template (.gotmpl)"           short:"f"`
-	Title                string `long:"title"                  description:"Markdown document title"                              short:"T" default:"schema reference"`
+	TemplatePath         string `long:"template-file"          description:"Path to custom document template (.gotmpl)"           short:"f"`
+	Title                string `long:"title"                  description:"Document title"                                       short:"T" default:"schema reference"`
 	Description          string `long:"description"            description:"Optional top-level document description under title"  short:"d"`
-	ListMarker           string `long:"list-marker"            description:"List marker used in generated markdown lists"         short:"l" default:"*" choices:"-;*"`
+	ListMarker           string `long:"list-marker"            description:"List marker used in generated lists"                  short:"l" default:"*" choices:"-;*"`
 	WrapWidth            int    `long:"wrap"                   description:"Wrap width for plain text descriptions"               short:"w" default:"80" validate-min:"1"`
 	HideExtraKeywords    bool   `long:"hide-extra-keywords"    description:"Hide non-standard schema keywords in Attributes"`
 	ShowInternalKeywords bool   `long:"show-internal-keywords" description:"Show renderer-specific schema keywords in Attributes"`
@@ -67,23 +67,23 @@ type yamlExampleFlags struct {
 
 // markdownExampleFlags groups embedded example mode and format flags.
 type markdownExampleFlags struct {
-	Mode   string `short:"m" long:"mode"   choices:"all;required" description:"Embedded example mode for markdown output" default:"all"`
+	Mode   string `short:"m" long:"mode"   choices:"all;required" description:"Embedded example mode" default:"all"`
 	Format string `short:"F" long:"format" choices:"json;yaml"    description:"Embedded example format (omit to disable embedding)"`
 }
 
-// moduleToMarkdownCommand wraps module-to-schema and schema-to-markdown flows.
+// moduleToMarkdownCommand wraps module-to-schema and schema-to-doc flows.
 type moduleToMarkdownCommand struct {
 	runner *cliRunner
 
 	ModuleFlags moduleReflectFlags `group:"Module Reflection"`
 	Args        struct {
 		Module string `positional-arg-name:"module" description:"Local module directory or remote module@version (optional; default: .)" default:"."`
-		Output string `positional-arg-name:"output" description:"Output markdown file path (optional; stdout when omitted)"`
+		Output string `positional-arg-name:"output" description:"Output document file path (optional; stdout when omitted)"`
 	} `positional-args:"yes"`
 
 	ExampleFlags  markdownExampleFlags `group:"Embedded Example"`
 	TemplateFlags templateSelectFlags  `group:"Template Select"`
-	RenderFlags   markdownRenderFlags  `group:"Markdown Render"`
+	RenderFlags   markdownRenderFlags  `group:"Document Render"`
 	JSONFlags     jsonFormatFlags      `group:"JSON Output"`
 	YAMLFlags     yamlExampleFlags     `group:"YAML Output"`
 }
@@ -105,12 +105,12 @@ type schemaToDocCommand struct {
 	runner *cliRunner
 	Args   struct {
 		Input  string `positional-arg-name:"input"  description:"Input schema file path (optional; stdin when omitted)"`
-		Output string `positional-arg-name:"output" description:"Output markdown file path (optional; stdout when omitted)"`
+		Output string `positional-arg-name:"output" description:"Output document file path (optional; stdout when omitted)"`
 	} `positional-args:"yes"`
 
 	ExampleFlags  markdownExampleFlags `group:"Embedded Example"`
 	TemplateFlags templateSelectFlags  `group:"Template Select"`
-	RenderFlags   markdownRenderFlags  `group:"Markdown Render"`
+	RenderFlags   markdownRenderFlags  `group:"Document Render"`
 	JSONFlags     jsonFormatFlags      `group:"JSON Output"`
 	YAMLFlags     yamlExampleFlags     `group:"YAML Output"`
 }
@@ -149,7 +149,7 @@ type configCommand struct {
 	Mode string `description:"Example generation mode" short:"m" long:"mode" default:"all" choices:"all;required"`
 }
 
-// templateCommand exports built-in markdown template.
+// templateCommand exports built-in template.
 type templateCommand struct {
 	runner *cliRunner
 	Args   struct {

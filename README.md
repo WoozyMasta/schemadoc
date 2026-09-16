@@ -15,10 +15,13 @@ and generate schema from Go types through [CLI][].
 
 The module is split by responsibility:
 
-* package `schemadoc` renders docs and examples from JSON Schema
+* package `schemadoc` builds a dialect-aware effective schema view,
+  resolves local references without network access, and renders docs/examples
+* structured schema paths keep property identity unambiguous
+  for keys such as `.`, `[]`, `/`, and `~`
 * package `merge` helper for merging schema fragments with deterministic rules
 * package `modschema` reflects Go types into JSON Schema
-* CLI `cmd/schemadoc` orchestrates these workflows automation pipeline
+* CLI `cmd/schemadoc` orchestrates these workflows in an automation pipeline
 
 Real generated examples are available in [Generated Test Data][].
 For example:

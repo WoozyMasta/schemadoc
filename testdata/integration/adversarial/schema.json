@@ -28,6 +28,10 @@
       "type": "string",
       "description": "tilde key"
     },
+    "a~b/c": {
+      "type": "string",
+      "description": "combined JSON Pointer-sensitive key"
+    },
     "# heading": {
       "type": "string",
       "description": "line one\nline two\n# not a heading"
