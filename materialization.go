@@ -1005,10 +1005,12 @@ func numericBounds(schema effectiveSchema) (float64, float64, bool, bool, bool, 
 	return lower, upper, lowerExclusive, upperExclusive, hasLower, hasUpper
 }
 
-// synthesizeArray first materializes every mandatory tuple position,
+// synthesizeArray materializes a useful array within the declared item bounds,
 // then satisfies contains and item-count requirements without exceeding maxItems.
-// Each index receives the conjunction of all applicable item schemas,
-// so heterogeneous tuple positions are not accidentally validated as homogeneous.
+// Tuple positions constrain the indexes that are present;
+// they do not impose a minimum length.
+// Each emitted index receives the conjunction of all applicable item schemas,
+// so heterogeneous tuple positions are not treated as homogeneous.
 func (materializer *exampleMaterializer) synthesizeArray(schema effectiveSchema, path schemaPath) ([]any, error) {
 	items, err := schema.arrayItems(materializer.semantic)
 	if err != nil {
@@ -1036,17 +1038,12 @@ func (materializer *exampleMaterializer) synthesizeArray(schema effectiveSchema,
 	}
 
 	prefixLength := arrayPrefixLength(items)
-	if prefixLength > maximum {
-		return nil, newMaterializationError(
-			MaterializationCodeUnsatisfiable,
-			MaterializationCategoryUnsatisfiableSchema,
-			materializationKeywordPath(path, "maxItems"),
-			ErrMaterializationUnsatisfiable,
-		)
-	}
+	// Tuple and prefix schemas constrain existing positions only.
+	// Limit the illustrative prefix to maxItems
+	// instead of treating omitted positions as a contradiction.
+	prefixLength = min(prefixLength, maximum)
 	result := make([]any, 0)
 	for index := range prefixLength {
-		// Tuple positions are mandatory even when no minimum length is declared.
 		item, hasItem, err := arrayItemSchemaAt(items, index)
 		if err != nil {
 			return nil, err
@@ -1060,6 +1057,13 @@ func (materializer *exampleMaterializer) synthesizeArray(schema effectiveSchema,
 			path,
 		)
 		if err != nil {
+			// A tuple position is optional unless minItems reaches it.
+			// If its schema cannot produce a value, retain the valid shorter prefix
+			// and let final validation decide whether the minimum is still met.
+			if len(result) >= minimum {
+				break
+			}
+
 			return nil, err
 		}
 		result = append(result, value)
@@ -1106,11 +1110,13 @@ func (materializer *exampleMaterializer) synthesizeArray(schema effectiveSchema,
 	}
 
 	for _, requirement := range contains {
-		// Prefer an existing match; only append or replace a non-prefix item
-		// when the requirement still lacks enough matching values.
+		// Prefer an existing match;
+		// when the requirement still lacks enough matching values
+		// append or replace an emitted item.
 		for containsCount(materializer.semantic, requirement.Schema, result, path) < requirement.Minimum {
 			if len(result) >= maximum {
-				if index := replaceableArrayItemIndex(result, prefixLength, materializer.semantic, requirement.Schema, path); index >= 0 {
+				replaced := false
+				for _, index := range replaceableArrayItemIndices(result, materializer.semantic, requirement.Schema, path) {
 					item, hasItem, err := arrayItemSchemaAt(items, index)
 					if err != nil {
 						return nil, err
@@ -1119,10 +1125,19 @@ func (materializer *exampleMaterializer) synthesizeArray(schema effectiveSchema,
 					candidateSchema := combineOptionalArraySchemas(item, hasItem, requirement.Schema)
 					value, err := materializer.materializeArrayValue(candidateSchema, true, result[:index], schema, path)
 					if err != nil {
-						return nil, err
+						if isMaterializationReferenceError(err) {
+							return nil, err
+						}
+
+						continue
 					}
 
 					result[index] = value
+					replaced = true
+					break
+				}
+
+				if replaced {
 					continue
 				}
 
@@ -1158,8 +1173,9 @@ func (materializer *exampleMaterializer) synthesizeArray(schema effectiveSchema,
 	}
 
 	for len(result) < minimum {
-		// Trailing positions use items/additionalItems first.
-		// In modern drafts, unevaluatedItems is the fallback for positions outside prefixItems.
+		// Positions beyond an emitted tuple prefix use items/additionalItems first.
+		// In modern drafts, unevaluatedItems is the fallback
+		// for indexes outside prefixItems when no items schema applies.
 		item, hasItem, err := arrayItemSchemaAt(items, len(result))
 		if err != nil {
 			return nil, err
@@ -1181,15 +1197,6 @@ func (materializer *exampleMaterializer) synthesizeArray(schema effectiveSchema,
 	}
 
 	if len(result) > maximum {
-		// Only non-tuple values may be trimmed; tuple prefix positions are fixed.
-		if prefixLength > maximum {
-			return nil, newMaterializationError(
-				MaterializationCodeUnsatisfiable,
-				MaterializationCategoryUnsatisfiableSchema,
-				materializationKeywordPath(path, "maxItems"),
-				ErrMaterializationUnsatisfiable,
-			)
-		}
 		result = result[:maximum]
 	}
 
@@ -1218,8 +1225,9 @@ func (materializer *exampleMaterializer) synthesizeArray(schema effectiveSchema,
 	return result, nil
 }
 
-// arrayPrefixLength returns the longest tuple prefix across simultaneous terms.
-// A longer prefix in any term makes those indexes mandatory for the combined schema.
+// arrayPrefixLength returns the longest described tuple prefix across simultaneous terms.
+// The result is an illustrative generation limit;
+// it does not imply that every position must be present in the instance.
 func arrayPrefixLength(items []effectiveArrayItems) int {
 	length := 0
 	for _, current := range items {
@@ -1380,22 +1388,23 @@ func containsCount(view *schemaSemanticView, schema effectiveSchema, values []an
 	return count
 }
 
-// replaceableArrayItemIndex finds a non-prefix,
-// non-matching item that can be replaced while preserving the mandatory tuple prefix.
-func replaceableArrayItemIndex(
+// replaceableArrayItemIndices returns non-matching emitted items in reverse order
+// so contains replacement remains deterministic
+// while allowing an earlier tuple position when a later position is incompatible.
+func replaceableArrayItemIndices(
 	values []any,
-	prefixLength int,
 	view *schemaSemanticView,
 	schema effectiveSchema,
 	path schemaPath,
-) int {
-	for index := len(values) - 1; index >= prefixLength; index-- {
+) []int {
+	indices := make([]int, 0, len(values))
+	for index := range slices.Backward(values) {
 		if validateEffectiveInstance(view, schema, values[index], path.appendArrayItem()) != nil {
-			return index
+			indices = append(indices, index)
 		}
 	}
 
-	return -1
+	return indices
 }
 
 // arrayContainsContradiction detects an impossible contains interval.

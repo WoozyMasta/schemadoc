@@ -533,6 +533,71 @@ func TestMaterializationArraysAndTupleSemantics(t *testing.T) {
 			want: "[\n  \"<string>\",\n  0\n]",
 		},
 		{
+			name: "modern tuple may be shorter than prefix",
+			schema: map[string]any{
+				"type": "array",
+				"prefixItems": []any{
+					map[string]any{"type": "string"},
+					map[string]any{"type": "integer"},
+				},
+				"maxItems": 1,
+			},
+			want: "[\n  \"<string>\"\n]",
+		},
+		{
+			name: "legacy tuple may be shorter than tuple",
+			schema: map[string]any{
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"type":    "array",
+				"items": []any{
+					map[string]any{"type": "string"},
+					map[string]any{"type": "integer"},
+				},
+				"maxItems": 1,
+			},
+			want: "[\n  \"<string>\"\n]",
+		},
+		{
+			name: "tuple minimum does not require unmaterializable positions",
+			schema: map[string]any{
+				"type": "array",
+				"prefixItems": []any{
+					map[string]any{"type": "string"},
+					false,
+				},
+				"items":    false,
+				"minItems": 1,
+			},
+			want: "[\n  \"<string>\"\n]",
+		},
+		{
+			name: "tuple minimum uses valid trailing schema",
+			schema: map[string]any{
+				"type": "array",
+				"prefixItems": []any{
+					map[string]any{"type": "string"},
+					map[string]any{"type": "integer"},
+				},
+				"items":    map[string]any{"type": "boolean"},
+				"minItems": 3,
+				"maxItems": 3,
+			},
+			want: "[\n  \"<string>\",\n  0,\n  false\n]",
+		},
+		{
+			name: "contains replaces compatible tuple position",
+			schema: map[string]any{
+				"type": "array",
+				"prefixItems": []any{
+					map[string]any{"type": "string"},
+					map[string]any{"type": "integer"},
+				},
+				"contains": map[string]any{"const": "match"},
+				"maxItems": 2,
+			},
+			want: "[\n  \"match\",\n  0\n]",
+		},
+		{
 			name: "unique items meet minimum",
 			schema: map[string]any{
 				"type":        "array",
@@ -584,6 +649,50 @@ func TestMaterializationArraysAndTupleSemantics(t *testing.T) {
 			}
 			if strings.TrimSpace(string(got)) != test.want {
 				t.Fatalf("example = %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
+func TestMaterializationRejectsTupleMinimumWithoutTrailingItems(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		schema map[string]any
+	}{
+		{
+			name: "modern items false",
+			schema: map[string]any{
+				"type": "array",
+				"prefixItems": []any{
+					map[string]any{"type": "string"},
+				},
+				"items":    false,
+				"minItems": 2,
+			},
+		},
+		{
+			name: "draft 7 additional items false",
+			schema: map[string]any{
+				"$schema": "http://json-schema.org/draft-07/schema#",
+				"type":    "array",
+				"items": []any{
+					map[string]any{"type": "string"},
+				},
+				"additionalItems": false,
+				"minItems":        2,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := GenerateExampleJSON(minimalSchemaBytes(t, test.schema), ExampleModeAll)
+			if !errors.Is(err, ErrMaterializationUnsatisfiable) {
+				t.Fatalf("GenerateExampleJSON error = %v, want unsatisfiable", err)
 			}
 		})
 	}
