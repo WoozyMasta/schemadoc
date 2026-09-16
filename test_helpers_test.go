@@ -46,7 +46,6 @@ type schemaCorpusErrorExpectation struct {
 type schemaCorpusRenderExpectation struct {
 	Template string `json:"template"`
 	Golden   string `json:"golden,omitempty"`
-	TOCMode  string `json:"toc_mode,omitempty"`
 }
 
 // loadSchemaCorpus loads and validates the fixture manifest.

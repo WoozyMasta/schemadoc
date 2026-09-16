@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning][].
   descriptions, defaults, enums, examples, and annotation formatting.
 * YAML example comments now follow effective schemas
   for dynamic map keys and tuple array positions.
+* Schemas with root content and `$defs`/`definitions`
+  now render both the root content and named definitions.
+* Definition reference discovery now covers schema-bearing dependency,
+  property-name, composition, array, and dynamic-reference keywords.
 
 ### Removed
 

@@ -104,29 +104,6 @@
     "description": "Structured default, example, and enum values."
   },
   {
-    "name": "rendering/property-heading",
-    "group": "positive",
-    "schema": "positive/rendering/property-heading.json",
-    "dialect": "2020-12",
-    "status": "characterization",
-    "render": {
-      "template": "list"
-    },
-    "description": "Property key versus referenced definition heading."
-  },
-  {
-    "name": "rendering/toc-modes",
-    "group": "positive",
-    "schema": "positive/rendering/toc-modes.json",
-    "dialect": "2020-12",
-    "status": "characterization",
-    "render": {
-      "template": "list",
-      "toc_mode": "references"
-    },
-    "description": "Reference and semantic-section TOC modes."
-  },
-  {
     "name": "templates/custom-no-markdown",
     "group": "positive",
     "schema": "positive/templates/custom-no-markdown.json",

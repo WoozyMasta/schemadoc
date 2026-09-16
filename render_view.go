@@ -6,6 +6,7 @@ package schemadoc
 
 import (
 	"errors"
+	"maps"
 	"path"
 	"slices"
 	"sort"
@@ -42,12 +43,12 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 
 	rootName := rootDefinitionName(doc.Ref)
 	definitions := renderDefinitions(doc, rootName)
-	defOrder := definitionOrder(definitions, rootName)
+	rootDefinition := renderRootDefinitionName(rootName, definitions)
+	defOrder := definitionOrder(definitions, rootDefinition)
 	if len(defOrder) == 0 {
 		return renderView{}, errors.New("schema has no definitions to render")
 	}
 
-	rootDefinition := defOrder[0]
 	definitionPaths := buildDefinitionPaths(definitions, rootDefinition)
 
 	view := renderView{
@@ -573,14 +574,8 @@ func definitionEdges(node schemaValue) []definitionEdge {
 	}
 
 	properties := nodeProperties(node)
-	if len(properties) == 0 {
-		return nil
-	}
-
 	edgeMap := make(map[string]definitionEdge)
-	for _, name := range sortedSchemaValueKeys(properties) {
-		collectDefinitionEdges(properties[name], schemaPath{}.appendProperty(name), edgeMap)
-	}
+	collectDefinitionEdges(node, schemaPath{}, edgeMap)
 
 	if len(edgeMap) == 0 {
 		return nil
@@ -637,8 +632,10 @@ func collectDefinitionEdges(schema schemaValue, path schemaPath, edgeMap map[str
 	}
 
 	object := schema.Object
-	if target := rootDefinitionName(asString(object["$ref"])); target != "" {
-		addDefinitionEdge(edgeMap, path, target)
+	for _, keyword := range []string{"$ref", "$dynamicRef", "$recursiveRef"} {
+		if target := rootDefinitionName(asString(object[keyword])); target != "" {
+			addDefinitionEdge(edgeMap, path, target)
+		}
 	}
 
 	for _, keyword := range []string{"allOf", "anyOf", "oneOf"} {
@@ -670,6 +667,16 @@ func collectDefinitionEdges(schema schemaValue, path schemaPath, edgeMap map[str
 			collectDefinitionEdges(nested[key], path.appendProperty(key), edgeMap)
 		}
 	}
+
+	for _, keyword := range []string{"dependentSchemas", "dependencies"} {
+		if nested := mapSchemaValues(object[keyword]); len(nested) > 0 {
+			for _, key := range sortedSchemaValueKeys(nested) {
+				collectDefinitionEdges(nested[key], path.appendProperty(key), edgeMap)
+			}
+		}
+	}
+
+	collectDefinitionEdgesAny(object["propertyNames"], path, edgeMap)
 }
 
 // collectDefinitionEdgesAny unwraps arrays and forwards schema-like values to edge collector.
@@ -692,7 +699,7 @@ func collectDefinitionEdgesAny(raw any, path schemaPath, edgeMap map[string]defi
 // addDefinitionEdge stores one unique edge key in edge map.
 func addDefinitionEdge(edgeMap map[string]definitionEdge, path schemaPath, target string) {
 	target = strings.TrimSpace(target)
-	if len(path.segments) == 0 || target == "" {
+	if target == "" {
 		return
 	}
 
@@ -738,18 +745,69 @@ func sortedSchemaValueKeys(values map[string]schemaValue) []string {
 	return out
 }
 
-// renderDefinitions returns definitions map and synthesizes root when schema has none.
+// renderDefinitions preserves root content alongside named definitions.
 func renderDefinitions(doc schemaDocument, rootName string) map[string]schemaValue {
-	if len(doc.Defs) > 0 {
-		return doc.Defs
-	}
+	definitions := make(map[string]schemaValue, len(doc.Defs)+1)
+	maps.Copy(definitions, doc.Defs)
 
 	name := strings.TrimSpace(rootName)
-	if name == "" {
-		name = "Root"
+	if len(definitions) == 0 && name != "" {
+		definitions[name] = doc.Root
+		return definitions
 	}
 
-	return map[string]schemaValue{name: doc.Root}
+	if len(definitions) == 0 || hasRenderableRootContent(doc.Root) {
+		definitions["Root"] = doc.Root
+	}
+
+	return definitions
+}
+
+// renderRootDefinitionName selects the section that represents the schema root.
+func renderRootDefinitionName(rootName string, definitions map[string]schemaValue) string {
+	if _, ok := definitions["Root"]; ok {
+		return "Root"
+	}
+
+	if name := strings.TrimSpace(rootName); name != "" {
+		return name
+	}
+
+	if _, ok := definitions["Config"]; ok {
+		return "Config"
+	}
+
+	names := make([]string, 0, len(definitions))
+	for name := range definitions {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	if len(names) > 0 {
+		return names[0]
+	}
+
+	return "Root"
+}
+
+// hasRenderableRootContent reports whether root has content beyond document metadata.
+func hasRenderableRootContent(root schemaValue) bool {
+	if root.Bool != nil {
+		return true
+	}
+	if root.Object == nil {
+		return false
+	}
+
+	for key := range root.Object {
+		switch key {
+		case "$schema", "$id", "id", "$ref", "$dynamicRef", "$recursiveRef", "$defs", "definitions":
+			continue
+		default:
+			return true
+		}
+	}
+
+	return false
 }
 
 // draftSupportText formats draft support marker for markdown metadata block.

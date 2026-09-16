@@ -134,6 +134,83 @@ func TestRenderXOrderControlsTOCAndPropertyHeadings(t *testing.T) {
 	}
 }
 
+func TestRenderRootContentWithDefinitions(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"title": "Root configuration",
+		"type":  "object",
+		"properties": map[string]any{
+			"name": map[string]any{
+				"type":        "string",
+				"description": "Root content remains visible.",
+			},
+		},
+		"$defs": map[string]any{
+			"Unused": map[string]any{
+				"type": "object",
+			},
+		},
+	})
+
+	output, err := Render(schema, Options{TemplateName: "list"})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	for _, marker := range []string{
+		"## Root",
+		"### Root.name",
+		"Root content remains visible.",
+		"## Unused",
+	} {
+		assertContains(t, output, marker)
+	}
+}
+
+func TestRenderReferenceGraphIncludesSchemaBearingKeywords(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object",
+		"allOf": []any{
+			map[string]any{"$ref": "#/$defs/Composition"},
+		},
+		"items": map[string]any{
+			"$ref": "#/$defs/ArrayItem",
+		},
+		"propertyNames": map[string]any{
+			"$ref": "#/$defs/PropertyName",
+		},
+		"dependentSchemas": map[string]any{
+			"enabled": map[string]any{"$ref": "#/$defs/Dependent"},
+		},
+		"dependencies": map[string]any{
+			"legacy": map[string]any{"$ref": "#/$defs/Dependency"},
+		},
+		"$defs": map[string]any{
+			"Composition":  map[string]any{"type": "object"},
+			"ArrayItem":    map[string]any{"type": "object"},
+			"PropertyName": map[string]any{"type": "string"},
+			"Dependent":    map[string]any{"type": "object"},
+			"Dependency":   map[string]any{"type": "object"},
+		},
+	})
+
+	output, err := Render(schema, Options{TemplateName: "list"})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	for _, name := range []string{
+		"Composition",
+		"ArrayItem",
+		"PropertyName",
+		"Dependent",
+		"Dependency",
+	} {
+		assertContains(t, output, "["+name+"](#"+strings.ToLower(name)+")")
+	}
+}
+
 func TestRenderHidesInternalKeywordsByDefault(t *testing.T) {
 	t.Parallel()
 
