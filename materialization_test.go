@@ -5,6 +5,7 @@
 package schemadoc
 
 import (
+	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
@@ -28,6 +29,18 @@ func TestMaterializationCandidateOrderAndValidation(t *testing.T) {
 				"enum":     []any{3, 6},
 			},
 			want: "3",
+		},
+		{
+			name: "numeric const keeps values differing above float precision distinct",
+			schema: map[string]any{
+				"type":  "integer",
+				"const": json.Number("9007199254740993"),
+				"enum": []any{
+					json.Number("9007199254740992"),
+					json.Number("9007199254740993"),
+				},
+			},
+			want: "9007199254740993",
 		},
 		{
 			name: "valid example before default",
@@ -68,6 +81,45 @@ func TestMaterializationCandidateOrderAndValidation(t *testing.T) {
 			}
 			if strings.TrimSpace(string(got)) != test.want {
 				t.Fatalf("example = %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
+func TestEqualJSONValueUsesExactNumericEquality(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		left, right any
+		want        bool
+	}{
+		{
+			name:  "different lexical decimal forms",
+			left:  json.Number("1"),
+			right: json.Number("1.0"),
+			want:  true,
+		},
+		{
+			name:  "large adjacent integers",
+			left:  json.Number("9007199254740993"),
+			right: json.Number("9007199254740992"),
+			want:  false,
+		},
+		{
+			name:  "number and string",
+			left:  json.Number("1"),
+			right: "1",
+			want:  false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := equalJSONValue(test.left, test.right); got != test.want {
+				t.Fatalf("equalJSONValue(%#v, %#v) = %t, want %t", test.left, test.right, got, test.want)
 			}
 		})
 	}
@@ -134,6 +186,64 @@ func TestMaterializationScalarConstraints(t *testing.T) {
 				"exclusiveMaximum": 3,
 			},
 			want: "2",
+		},
+		{
+			name: "multipleOf decimal",
+			schema: map[string]any{
+				"type":       "number",
+				"minimum":    json.Number("0.2"),
+				"maximum":    json.Number("0.25"),
+				"multipleOf": json.Number("0.1"),
+			},
+			want: "0.2",
+		},
+		{
+			name: "multipleOf hundredth",
+			schema: map[string]any{
+				"type":       "number",
+				"minimum":    json.Number("0.03"),
+				"maximum":    json.Number("0.03"),
+				"multipleOf": json.Number("0.01"),
+			},
+			want: "0.03",
+		},
+		{
+			name: "multipleOf scientific notation",
+			schema: map[string]any{
+				"type":       "number",
+				"minimum":    json.Number("1e-2"),
+				"maximum":    json.Number("1e-2"),
+				"multipleOf": json.Number("1e-2"),
+			},
+			want: "0.01",
+		},
+		{
+			name: "large integer bound",
+			schema: map[string]any{
+				"type":    "integer",
+				"minimum": json.Number("9007199254740993"),
+				"maximum": json.Number("9007199254740993"),
+			},
+			want: "9007199254740993",
+		},
+		{
+			name: "negative decimal bounds",
+			schema: map[string]any{
+				"type":    "number",
+				"minimum": json.Number("-2.5"),
+				"maximum": json.Number("-2.5"),
+			},
+			want: "-2.5",
+		},
+		{
+			name: "exclusive decimal bounds",
+			schema: map[string]any{
+				"type":             "number",
+				"exclusiveMinimum": json.Number("1"),
+				"maximum":          json.Number("1.1"),
+				"multipleOf":       json.Number("0.1"),
+			},
+			want: "1.1",
 		},
 	}
 

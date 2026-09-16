@@ -5,10 +5,11 @@
 package schemadoc
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
-	"math"
+	"math/big"
 	"regexp"
 	"slices"
 	"strconv"
@@ -85,6 +86,14 @@ type candidateValidationError struct {
 	path    string
 	keyword string
 	reason  string
+}
+
+// exactNumericBounds stores the combined inclusive/exclusive numeric interval.
+type exactNumericBounds struct {
+	lower, upper       *big.Rat
+	lowerExclusive     bool
+	upperExclusive     bool
+	hasLower, hasUpper bool
 }
 
 // Error implements error.
@@ -388,8 +397,8 @@ func (materializer *exampleMaterializer) synthesizeNumber(schema effectiveSchema
 	candidates := numberCandidates(schema)
 	for _, candidate := range candidates {
 		if effectiveSchemaType(schema) == "integer" {
-			number, ok := asNumber(candidate)
-			if !ok || math.Trunc(number) != number {
+			number, ok := asExactNumber(candidate)
+			if !ok || !number.IsInt() {
 				continue
 			}
 		}
@@ -892,34 +901,48 @@ func simplePatternValue(pattern string) (string, bool) {
 
 // numberCandidates returns stable boundary and multipleOf candidates.
 func numberCandidates(schema effectiveSchema) []any {
-	result := []any{0, 1, -1}
+	result := []any{json.Number("0"), json.Number("1"), json.Number("-1")}
 	integer := effectiveSchemaType(schema) == "integer"
-	lower, upper, lowerExclusive, upperExclusive, hasLower, hasUpper := numericBounds(schema)
-
-	if hasLower {
-		candidate := lower
-		if integer {
-			candidate = math.Ceil(candidate)
-			if lowerExclusive && candidate <= lower {
-				candidate++
-			}
-		} else if lowerExclusive {
-			candidate = math.Nextafter(candidate, math.Inf(1))
+	bounds := numericBounds(schema)
+	appendNumber := func(result []any, value *big.Rat) []any {
+		encoded, ok := exactNumberJSON(value)
+		if !ok {
+			return result
 		}
-		result = append(result, candidate)
+
+		return append(result, encoded)
 	}
 
-	if hasUpper {
-		candidate := upper
+	if bounds.hasLower {
+		candidate := new(big.Rat).Set(bounds.lower)
 		if integer {
-			candidate = math.Floor(candidate)
-			if upperExclusive && candidate >= upper {
-				candidate--
+			candidate.SetInt(exactRatCeil(candidate))
+			if bounds.lowerExclusive && candidate.Cmp(bounds.lower) <= 0 {
+				candidate.Add(candidate, big.NewRat(1, 1))
 			}
-		} else if upperExclusive {
-			candidate = math.Nextafter(candidate, math.Inf(-1))
+		} else if bounds.lowerExclusive {
+			candidate.Add(candidate, exactDecimalUnit(candidate))
 		}
-		result = append(result, candidate)
+		result = appendNumber(result, candidate)
+	}
+
+	if bounds.hasUpper {
+		candidate := new(big.Rat).Set(bounds.upper)
+		if integer {
+			candidate.SetInt(exactRatFloor(candidate))
+			if bounds.upperExclusive && candidate.Cmp(bounds.upper) >= 0 {
+				candidate.Sub(candidate, big.NewRat(1, 1))
+			}
+		} else if bounds.upperExclusive {
+			candidate.Sub(candidate, exactDecimalUnit(candidate))
+		}
+		result = appendNumber(result, candidate)
+	}
+
+	if bounds.hasLower && bounds.hasUpper && bounds.lower.Cmp(bounds.upper) < 0 && !integer {
+		midpoint := new(big.Rat).Add(bounds.lower, bounds.upper)
+		midpoint.Quo(midpoint, big.NewRat(2, 1))
+		result = appendNumber(result, midpoint)
 	}
 
 	for _, term := range schema.terms {
@@ -927,27 +950,32 @@ func numberCandidates(schema effectiveSchema) []any {
 			continue
 		}
 
-		multiple, ok := asNumber(term.Object["multipleOf"])
-		if !ok || multiple <= 0 {
+		multiple, ok := asExactNumber(term.Object["multipleOf"])
+		if !ok || multiple.Sign() <= 0 {
 			continue
 		}
 
-		result = append(result, multiple, -multiple)
+		result = appendNumber(result, multiple)
+		result = appendNumber(result, new(big.Rat).Neg(multiple))
 
-		if hasLower {
-			factor := math.Ceil(lower / multiple)
-			if lowerExclusive && factor*multiple <= lower {
-				factor++
+		if bounds.hasLower {
+			factor := exactRatCeil(new(big.Rat).Quo(bounds.lower, multiple))
+			candidate := new(big.Rat).Mul(multiple, new(big.Rat).SetInt(factor))
+			if bounds.lowerExclusive && candidate.Cmp(bounds.lower) <= 0 {
+				factor.Add(factor, big.NewInt(1))
+				candidate.Mul(multiple, new(big.Rat).SetInt(factor))
 			}
-			result = append(result, factor*multiple)
+			result = appendNumber(result, candidate)
 		}
 
-		if hasUpper {
-			factor := math.Floor(upper / multiple)
-			if upperExclusive && factor*multiple >= upper {
-				factor--
+		if bounds.hasUpper {
+			factor := exactRatFloor(new(big.Rat).Quo(bounds.upper, multiple))
+			candidate := new(big.Rat).Mul(multiple, new(big.Rat).SetInt(factor))
+			if bounds.upperExclusive && candidate.Cmp(bounds.upper) >= 0 {
+				factor.Sub(factor, big.NewInt(1))
+				candidate.Mul(multiple, new(big.Rat).SetInt(factor))
 			}
-			result = append(result, factor*multiple)
+			result = appendNumber(result, candidate)
 		}
 	}
 
@@ -955,54 +983,131 @@ func numberCandidates(schema effectiveSchema) []any {
 }
 
 // numericBounds returns the combined inclusive/exclusive numeric interval.
-func numericBounds(schema effectiveSchema) (float64, float64, bool, bool, bool, bool) {
-	lower, upper := math.Inf(-1), math.Inf(1)
-	lowerExclusive, upperExclusive := false, false
-	hasLower, hasUpper := false, false
+func numericBounds(schema effectiveSchema) exactNumericBounds {
+	bounds := exactNumericBounds{}
 
 	for _, term := range schema.terms {
 		if term.Object == nil {
 			continue
 		}
 
-		if value, ok := asNumber(term.Object["minimum"]); ok {
+		if value, ok := asExactNumber(term.Object["minimum"]); ok {
 			exclusive := false
 			if flag, isBool := term.Object["exclusiveMinimum"].(bool); isBool {
 				exclusive = flag
-			} else if bound, isNumber := asNumber(term.Object["exclusiveMinimum"]); isNumber {
+			} else if bound, isNumber := asExactNumber(term.Object["exclusiveMinimum"]); isNumber {
 				value, exclusive = bound, true
 			}
-			if !hasLower || value > lower || (value == lower && exclusive && !lowerExclusive) {
-				lower, hasLower = value, true
-				lowerExclusive = exclusive
-			}
-		} else if value, ok := asNumber(term.Object["exclusiveMinimum"]); ok {
-			if !hasLower || value > lower || (value == lower && !lowerExclusive) {
-				lower, hasLower = value, true
-				lowerExclusive = true
-			}
+			updateLowerBound(&bounds, value, exclusive)
+		} else if value, ok := asExactNumber(term.Object["exclusiveMinimum"]); ok {
+			updateLowerBound(&bounds, value, true)
 		}
 
-		if value, ok := asNumber(term.Object["maximum"]); ok {
+		if value, ok := asExactNumber(term.Object["maximum"]); ok {
 			exclusive := false
 			if flag, isBool := term.Object["exclusiveMaximum"].(bool); isBool {
 				exclusive = flag
-			} else if bound, isNumber := asNumber(term.Object["exclusiveMaximum"]); isNumber {
+			} else if bound, isNumber := asExactNumber(term.Object["exclusiveMaximum"]); isNumber {
 				value, exclusive = bound, true
 			}
-			if !hasUpper || value < upper || (value == upper && exclusive && !upperExclusive) {
-				upper, hasUpper = value, true
-				upperExclusive = exclusive
-			}
-		} else if value, ok := asNumber(term.Object["exclusiveMaximum"]); ok {
-			if !hasUpper || value < upper || (value == upper && !upperExclusive) {
-				upper, hasUpper = value, true
-				upperExclusive = true
-			}
+			updateUpperBound(&bounds, value, exclusive)
+		} else if value, ok := asExactNumber(term.Object["exclusiveMaximum"]); ok {
+			updateUpperBound(&bounds, value, true)
 		}
 	}
 
-	return lower, upper, lowerExclusive, upperExclusive, hasLower, hasUpper
+	return bounds
+}
+
+// updateLowerBound keeps the strictest lower numeric bound.
+func updateLowerBound(bounds *exactNumericBounds, value *big.Rat, exclusive bool) {
+	comparison := 0
+	if bounds.hasLower {
+		comparison = value.Cmp(bounds.lower)
+	}
+	if !bounds.hasLower || comparison > 0 ||
+		(comparison == 0 && exclusive && !bounds.lowerExclusive) {
+		bounds.lower, bounds.hasLower = value, true
+		bounds.lowerExclusive = exclusive
+	}
+}
+
+// updateUpperBound keeps the strictest upper numeric bound.
+func updateUpperBound(bounds *exactNumericBounds, value *big.Rat, exclusive bool) {
+	comparison := 0
+	if bounds.hasUpper {
+		comparison = value.Cmp(bounds.upper)
+	}
+	if !bounds.hasUpper || comparison < 0 ||
+		(comparison == 0 && exclusive && !bounds.upperExclusive) {
+		bounds.upper, bounds.hasUpper = value, true
+		bounds.upperExclusive = exclusive
+	}
+}
+
+// exactRatCeil returns the least integer greater than or equal to value.
+func exactRatCeil(value *big.Rat) *big.Int {
+	quotient, remainder := new(big.Int), new(big.Int)
+	quotient.QuoRem(value.Num(), value.Denom(), remainder)
+	if remainder.Sign() > 0 {
+		quotient.Add(quotient, big.NewInt(1))
+	}
+
+	return quotient
+}
+
+// exactRatFloor returns the greatest integer less than or equal to value.
+func exactRatFloor(value *big.Rat) *big.Int {
+	quotient, remainder := new(big.Int), new(big.Int)
+	quotient.QuoRem(value.Num(), value.Denom(), remainder)
+	if remainder.Sign() < 0 {
+		quotient.Sub(quotient, big.NewInt(1))
+	}
+
+	return quotient
+}
+
+// exactDecimalUnit returns one decimal place smaller than value's precision.
+func exactDecimalUnit(value *big.Rat) *big.Rat {
+	scale, ok := exactDecimalScale(value.Denom())
+	if !ok {
+		return big.NewRat(1, 1000000)
+	}
+
+	unit := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(scale)), nil)
+	return new(big.Rat).SetFrac(big.NewInt(1), unit)
+}
+
+// exactNumberJSON serializes a finite decimal rational as a JSON number.
+func exactNumberJSON(value *big.Rat) (json.Number, bool) {
+	scale, ok := exactDecimalScale(value.Denom())
+	if !ok {
+		return "", false
+	}
+
+	return json.Number(value.FloatString(scale)), true
+}
+
+// exactDecimalScale returns the minimum decimal scale for a finite rational.
+func exactDecimalScale(value *big.Int) (int, bool) {
+	denominator := new(big.Int).Set(value)
+	twoScale := 0
+	for denominator.Bit(0) == 0 {
+		denominator.Rsh(denominator, 1)
+		twoScale++
+	}
+
+	fiveScale := 0
+	five := big.NewInt(5)
+	for new(big.Int).Mod(denominator, five).Sign() == 0 {
+		denominator.Quo(denominator, five)
+		fiveScale++
+	}
+	if denominator.Cmp(big.NewInt(1)) != 0 {
+		return 0, false
+	}
+
+	return max(twoScale, fiveScale), true
 }
 
 // synthesizeArray materializes a useful array within the declared item bounds,
@@ -1593,58 +1698,60 @@ func validateStringTerm(object map[string]any, value any, path schemaPath) error
 
 // validateNumberTerm validates basic numeric interval constraints.
 func validateNumberTerm(object map[string]any, value any, path schemaPath) error {
-	number, ok := asNumber(value)
+	number, ok := asExactNumber(value)
 	if !ok {
 		return nil
 	}
 
-	if minimum, ok := asNumber(object["minimum"]); ok {
+	if minimum, ok := asExactNumber(object["minimum"]); ok {
 		exclusive := false
 		if flag, isBool := object["exclusiveMinimum"].(bool); isBool {
 			exclusive = flag
-		} else if bound, isNumber := asNumber(object["exclusiveMinimum"]); isNumber {
+		} else if bound, isNumber := asExactNumber(object["exclusiveMinimum"]); isNumber {
 			minimum = bound
 			exclusive = true
 		}
 
-		if (exclusive && number <= minimum) || (!exclusive && number < minimum) {
+		comparison := number.Cmp(minimum)
+		if (exclusive && comparison <= 0) || (!exclusive && comparison < 0) {
 			return newCandidateValidationError(
 				materializationKeywordPath(path, "minimum"),
 				"minimum",
 				"number is below minimum")
 		}
-	} else if minimum, ok := asNumber(object["exclusiveMinimum"]); ok && number <= minimum {
+	} else if minimum, ok := asExactNumber(object["exclusiveMinimum"]); ok && number.Cmp(minimum) <= 0 {
 		return newCandidateValidationError(
 			materializationKeywordPath(path, "exclusiveMinimum"),
 			"exclusiveMinimum",
 			"number is below exclusive minimum")
 	}
 
-	if maximum, ok := asNumber(object["maximum"]); ok {
+	if maximum, ok := asExactNumber(object["maximum"]); ok {
 		exclusive := false
 		if flag, isBool := object["exclusiveMaximum"].(bool); isBool {
 			exclusive = flag
-		} else if bound, isNumber := asNumber(object["exclusiveMaximum"]); isNumber {
+		} else if bound, isNumber := asExactNumber(object["exclusiveMaximum"]); isNumber {
 			maximum = bound
 			exclusive = true
 		}
 
-		if (exclusive && number >= maximum) || (!exclusive && number > maximum) {
+		comparison := number.Cmp(maximum)
+		if (exclusive && comparison >= 0) || (!exclusive && comparison > 0) {
 			return newCandidateValidationError(
 				materializationKeywordPath(path, "maximum"),
 				"maximum",
 				"number is above maximum")
 		}
-	} else if maximum, ok := asNumber(object["exclusiveMaximum"]); ok && number >= maximum {
+	} else if maximum, ok := asExactNumber(object["exclusiveMaximum"]); ok && number.Cmp(maximum) >= 0 {
 		return newCandidateValidationError(
 			materializationKeywordPath(path, "exclusiveMaximum"),
 			"exclusiveMaximum",
 			"number is above exclusive maximum")
 	}
 
-	if multiple, ok := asNumber(object["multipleOf"]); ok && multiple > 0 {
-		quotient := number / multiple
-		if math.Abs(quotient-math.Round(quotient)) > 1e-9 {
+	if multiple, ok := asExactNumber(object["multipleOf"]); ok && multiple.Sign() > 0 {
+		quotient := new(big.Rat).Quo(number, multiple)
+		if !quotient.IsInt() {
 			return newCandidateValidationError(
 				materializationKeywordPath(path, "multipleOf"),
 				"multipleOf",
@@ -2033,12 +2140,12 @@ func matchesJSONType(value any, name string) bool {
 		return ok
 
 	case "number":
-		_, ok := asNumber(value)
+		_, ok := asExactNumber(value)
 		return ok
 
 	case "integer":
-		number, ok := asNumber(value)
-		return ok && math.Trunc(number) == number
+		number, ok := asExactNumber(value)
+		return ok && number.IsInt()
 
 	default:
 		return false
@@ -2047,9 +2154,9 @@ func matchesJSONType(value any, name string) bool {
 
 // equalJSONValue compares decoded JSON values while normalizing numeric types.
 func equalJSONValue(left, right any) bool {
-	if leftNumber, leftOK := asNumber(left); leftOK {
-		rightNumber, rightOK := asNumber(right)
-		return rightOK && leftNumber == rightNumber
+	if leftNumber, leftOK := asExactNumber(left); leftOK {
+		rightNumber, rightOK := asExactNumber(right)
+		return rightOK && leftNumber.Cmp(rightNumber) == 0
 	}
 
 	switch leftTyped := left.(type) {
@@ -2099,12 +2206,18 @@ func containsJSONValue(values []any, target any) bool {
 
 // integerKeyword reads a non-negative integer keyword.
 func integerKeyword(object map[string]any, keyword string) (int, bool) {
-	value, ok := asNumber(object[keyword])
-	if !ok || value < 0 || math.Trunc(value) != value {
+	value, ok := asExactNumber(object[keyword])
+	if !ok || value.Sign() < 0 || !value.IsInt() || !value.Num().IsInt64() {
 		return 0, false
 	}
 
-	return int(value), true
+	integer := value.Num().Int64()
+	maximum := int64(^uint(0) >> 1)
+	if integer > maximum {
+		return 0, false
+	}
+
+	return int(integer), true
 }
 
 // hasSchemaKeyword reports whether any effective term declares a keyword.
@@ -2334,26 +2447,29 @@ func numericConstraintsDefinitelyUnsatisfiable(schema effectiveSchema) bool {
 		return false
 	}
 
-	lower, upper, lowerExclusive, upperExclusive, hasLower, hasUpper := numericBounds(schema)
-	if hasLower && hasUpper && (lower > upper || (lower == upper && (lowerExclusive || upperExclusive))) {
+	bounds := numericBounds(schema)
+	if bounds.hasLower && bounds.hasUpper &&
+		(bounds.lower.Cmp(bounds.upper) > 0 ||
+			(bounds.lower.Cmp(bounds.upper) == 0 &&
+				(bounds.lowerExclusive || bounds.upperExclusive))) {
 		return true
 	}
 
-	if typeName == "integer" && hasLower && hasUpper {
-		first := math.Ceil(lower)
-		if lowerExclusive && first <= lower {
-			first++
+	if typeName == "integer" && bounds.hasLower && bounds.hasUpper {
+		first := exactRatCeil(bounds.lower)
+		if bounds.lowerExclusive && new(big.Rat).SetInt(first).Cmp(bounds.lower) <= 0 {
+			first.Add(first, big.NewInt(1))
 		}
-		last := math.Floor(upper)
-		if upperExclusive && last >= upper {
-			last--
+		last := exactRatFloor(bounds.upper)
+		if bounds.upperExclusive && new(big.Rat).SetInt(last).Cmp(bounds.upper) >= 0 {
+			last.Sub(last, big.NewInt(1))
 		}
-		if first > last {
+		if first.Cmp(last) > 0 {
 			return true
 		}
 	}
 
-	if !hasLower || !hasUpper {
+	if !bounds.hasLower || !bounds.hasUpper {
 		return false
 	}
 
@@ -2362,20 +2478,22 @@ func numericConstraintsDefinitelyUnsatisfiable(schema effectiveSchema) bool {
 			continue
 		}
 
-		multiple, ok := asNumber(term.Object["multipleOf"])
-		if !ok || multiple <= 0 {
+		multiple, ok := asExactNumber(term.Object["multipleOf"])
+		if !ok || multiple.Sign() <= 0 {
 			continue
 		}
 
-		first := math.Ceil(lower / multiple)
-		if lowerExclusive && first*multiple <= lower {
-			first++
+		first := exactRatCeil(new(big.Rat).Quo(bounds.lower, multiple))
+		firstCandidate := new(big.Rat).Mul(multiple, new(big.Rat).SetInt(first))
+		if bounds.lowerExclusive && firstCandidate.Cmp(bounds.lower) <= 0 {
+			first.Add(first, big.NewInt(1))
 		}
-		last := math.Floor(upper / multiple)
-		if upperExclusive && last*multiple >= upper {
-			last--
+		last := exactRatFloor(new(big.Rat).Quo(bounds.upper, multiple))
+		lastCandidate := new(big.Rat).Mul(multiple, new(big.Rat).SetInt(last))
+		if bounds.upperExclusive && lastCandidate.Cmp(bounds.upper) >= 0 {
+			last.Sub(last, big.NewInt(1))
 		}
-		if first > last {
+		if first.Cmp(last) > 0 {
 			return true
 		}
 	}

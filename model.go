@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/big"
 	"sort"
 	"strconv"
 	"strings"
@@ -346,6 +347,69 @@ func asNumber(value any) (float64, bool) {
 	default:
 		return 0, false
 	}
+}
+
+// asExactNumber converts JSON numeric values to an exact rational number.
+// Strings are intentionally excluded
+// because JSON numeric equality does not coerce strings into numbers.
+func asExactNumber(value any) (*big.Rat, bool) {
+	switch typed := value.(type) {
+	case json.Number:
+		return exactNumberFromText(typed.String())
+
+	case float64:
+		if math.IsNaN(typed) || math.IsInf(typed, 0) {
+			return nil, false
+		}
+		return exactNumberFromText(strconv.FormatFloat(typed, 'g', -1, 64))
+
+	case float32:
+		floatValue := float64(typed)
+		if math.IsNaN(floatValue) || math.IsInf(floatValue, 0) {
+			return nil, false
+		}
+		return exactNumberFromText(strconv.FormatFloat(floatValue, 'g', -1, 32))
+
+	case int:
+		return new(big.Rat).SetInt64(int64(typed)), true
+	case int8:
+		return new(big.Rat).SetInt64(int64(typed)), true
+	case int16:
+		return new(big.Rat).SetInt64(int64(typed)), true
+	case int32:
+		return new(big.Rat).SetInt64(int64(typed)), true
+	case int64:
+		return new(big.Rat).SetInt64(typed), true
+	case uint:
+		return exactUnsignedNumber(uint64(typed)), true
+	case uint8:
+		return exactUnsignedNumber(uint64(typed)), true
+	case uint16:
+		return exactUnsignedNumber(uint64(typed)), true
+	case uint32:
+		return exactUnsignedNumber(uint64(typed)), true
+	case uint64:
+		return exactUnsignedNumber(typed), true
+
+	default:
+		return nil, false
+	}
+}
+
+// exactNumberFromText parses a decimal or scientific JSON number exactly.
+func exactNumberFromText(text string) (*big.Rat, bool) {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return nil, false
+	}
+
+	number, ok := new(big.Rat).SetString(text)
+	return number, ok
+}
+
+// exactUnsignedNumber converts an unsigned integer without an intermediate float.
+func exactUnsignedNumber(value uint64) *big.Rat {
+	return new(big.Rat).SetInt(new(big.Int).SetUint64(value))
 }
 
 // sortedKeys returns deterministic sorted keys for string map.
