@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning][].
 * Schema path identity is now structured
   and local JSON Pointer resolution is strict, deterministic, and network-free.
 * Draft 5 aliases use Draft 4-compatible semantic handling.
+* Effective schema access now centralizes dialect-aware `$ref`,
+  composition, keyword access, and annotation precedence.
 
 ## [0.7.1][] - 2026-09-05
 

@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"maps"
 	"math"
 	"sort"
 	"strconv"
@@ -69,7 +68,7 @@ var exampleScalarPlaceholders = map[string]any{
 
 // exampleBuilder converts normalized schema tree into example values.
 type exampleBuilder struct {
-	resolver            *localSchemaResolver
+	semantic            *schemaSemanticView
 	activeRefs          map[string]int
 	mode                ExampleMode
 	disableYAMLComments bool
@@ -124,7 +123,7 @@ func GenerateExampleYAMLWithOptions(
 	builder := exampleBuilder{
 		mode:                mode,
 		activeRefs:          make(map[string]int),
-		resolver:            newLocalSchemaResolverPointer(doc.Raw),
+		semantic:            newSchemaSemanticViewPointer(doc),
 		disableYAMLComments: normalizedOptions.DisableExampleComments,
 	}
 
@@ -208,7 +207,7 @@ func generateExampleValue(schemaBytes []byte, mode ExampleMode) (any, error) {
 	builder := exampleBuilder{
 		mode:       mode,
 		activeRefs: make(map[string]int),
-		resolver:   newLocalSchemaResolverPointer(doc.Raw),
+		semantic:   newSchemaSemanticViewPointer(doc),
 	}
 
 	return builder.buildNode(doc.Root), nil
@@ -376,97 +375,29 @@ func (builder *exampleBuilder) buildArrayFromObject(object map[string]any) []any
 	return []any{}
 }
 
-// collectObjectShape returns merged object properties and required keys for node.
+// collectObjectShape returns effective object properties and required keys for node.
 func (builder *exampleBuilder) collectObjectShape(node schemaValue) (map[string]schemaValue, []string) {
-	if node.Object == nil {
+	if builder.semantic == nil {
 		return nil, nil
 	}
 
-	if resolved, release, handled := builder.resolvedObjectForReference(node.Object); handled {
-		if release != nil {
-			defer release()
-		}
-
-		if resolved == nil {
-			return nil, nil
-		}
-
-		return builder.collectObjectShape(schemaValue{Object: resolved})
+	effective, err := builder.semantic.effective(node)
+	if err != nil {
+		return nil, nil
 	}
 
-	return builder.collectObjectShapeFromObject(node.Object)
-}
-
-// collectObjectShapeFromObject merges local properties and allOf object overlays.
-func (builder *exampleBuilder) collectObjectShapeFromObject(object map[string]any) (map[string]schemaValue, []string) {
-	properties := mapSchemaValues(object["properties"])
-	required := asStringSlice(object["required"])
-
-	for _, raw := range asSlice(object["allOf"]) {
-		schema, ok := toSchemaValue(raw)
-		if !ok {
-			continue
-		}
-
-		nestedProperties, nestedRequired := builder.collectObjectShape(schema)
-		properties = mergePropertySchemas(properties, nestedProperties)
-		required = mergeRequiredKeys(required, nestedRequired)
+	properties, err := effective.properties(builder.semantic)
+	if err != nil {
+		return nil, nil
 	}
 
-	return properties, required
-}
-
-// mergePropertySchemas merges schema property maps while preserving existing keys.
-func mergePropertySchemas(left, right map[string]schemaValue) map[string]schemaValue {
-	if len(left) == 0 && len(right) == 0 {
-		return nil
+	values := make(map[string]schemaValue)
+	for name, property := range properties {
+		values[name] = property.asSchemaValue()
 	}
+	required := effective.required()
 
-	if len(left) == 0 {
-		out := make(map[string]schemaValue, len(right))
-		maps.Copy(out, right)
-
-		return out
-	}
-
-	out := make(map[string]schemaValue, len(left)+len(right))
-	maps.Copy(out, left)
-
-	for key, value := range right {
-		if _, exists := out[key]; exists {
-			continue
-		}
-
-		out[key] = value
-	}
-
-	return out
-}
-
-// mergeRequiredKeys appends unique required keys while preserving first-seen order.
-func mergeRequiredKeys(left, right []string) []string {
-	if len(left) == 0 && len(right) == 0 {
-		return nil
-	}
-
-	seen := make(map[string]struct{}, len(left)+len(right))
-	out := make([]string, 0, len(left)+len(right))
-
-	for _, key := range append(left, right...) {
-		key = strings.TrimSpace(key)
-		if key == "" {
-			continue
-		}
-
-		if _, exists := seen[key]; exists {
-			continue
-		}
-
-		seen[key] = struct{}{}
-		out = append(out, key)
-	}
-
-	return out
+	return values, required
 }
 
 // requiredPropertyOrder returns deterministic order for required properties only.
@@ -510,17 +441,20 @@ func (builder *exampleBuilder) buildCompositionFallback(object map[string]any) (
 	return nil, false
 }
 
-// resolvedObjectForReference resolves local ref and merges sibling override keywords.
+// resolvedObjectForReference resolves local ref through the effective schema view.
 func (builder *exampleBuilder) resolvedObjectForReference(object map[string]any) (map[string]any, func(), bool) {
 	ref := asString(object["$ref"])
 	if ref == "" {
 		return nil, nil, false
 	}
 
-	stripAndContinue := stripReferenceKeyword(object)
-	resolved, ok := builder.resolveLocalReference(ref)
-	if !ok || resolved.Object == nil {
-		return stripAndContinue, nil, true
+	if builder.semantic == nil {
+		return stripReferenceKeyword(object), nil, true
+	}
+
+	effective, err := builder.semantic.effective(schemaValue{Object: object})
+	if err != nil {
+		return stripReferenceKeyword(object), nil, true
 	}
 
 	release, ok := builder.enterReference(ref)
@@ -528,13 +462,12 @@ func (builder *exampleBuilder) resolvedObjectForReference(object map[string]any)
 		return nil, nil, true
 	}
 
-	return mergeSchemaObjects(resolved.Object, object), release, true
-}
+	resolved := effective.asSchemaValue()
+	if resolved.Object == nil {
+		return nil, release, true
+	}
 
-// resolveLocalReference resolves a local JSON Pointer against the root schema.
-func (builder *exampleBuilder) resolveLocalReference(ref string) (schemaValue, bool) {
-	value, err := builder.resolver.resolve(ref)
-	return value, err == nil
+	return resolved.Object, release, true
 }
 
 // enterReference registers active local ref and returns release callback.
@@ -650,22 +583,6 @@ func stripReferenceKeyword(object map[string]any) map[string]any {
 	return out
 }
 
-// mergeSchemaObjects merges resolved reference object with sibling keyword overrides.
-func mergeSchemaObjects(base, overlay map[string]any) map[string]any {
-	out := make(map[string]any, len(base)+len(overlay))
-	maps.Copy(out, base)
-
-	for key, value := range overlay {
-		if key == "$ref" {
-			continue
-		}
-
-		out[key] = value
-	}
-
-	return out
-}
-
 // cloneJSONValue deep-copies maps and slices used as generated payload values.
 func cloneJSONValue(value any) any {
 	switch typed := value.(type) {
@@ -735,15 +652,22 @@ func marshalExampleYAMLNode(node *yaml.Node, indent int) ([]byte, error) {
 
 // annotateYAMLNode assigns schema title/description comments to YAML map keys.
 func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaValue) {
-	resolved, release := builder.resolveSchemaValue(schema)
-	if release != nil {
-		defer release()
+	if builder.semantic == nil {
+		return
+	}
+
+	effective, err := builder.semantic.effective(schema)
+	if err != nil {
+		return
 	}
 
 	switch node.Kind {
 	case yaml.MappingNode:
-		properties := nodeProperties(resolved)
-		reorderMappingNodeBySchema(node, properties)
+		properties, err := effective.properties(builder.semantic)
+		if err != nil {
+			return
+		}
+		reorderMappingNodeByEffectiveSchema(node, properties)
 
 		for index := 0; index+1 < len(node.Content); index += 2 {
 			keyNode := node.Content[index]
@@ -755,27 +679,27 @@ func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaVa
 			}
 
 			if !builder.disableYAMLComments {
-				if comment := schemaKeyComment(property); comment != "" {
+				if comment := schemaKeyCommentEffective(property); comment != "" {
 					keyNode.HeadComment = comment
 				}
 			}
 
-			builder.annotateYAMLNode(valueNode, property)
+			builder.annotateYAMLNode(valueNode, property.asSchemaValue())
 		}
 	case yaml.SequenceNode:
-		if len(node.Content) == 0 || resolved.Object == nil {
+		if len(node.Content) == 0 {
 			return
 		}
 
-		itemSchema := sequenceItemSchema(resolved)
+		itemSchema := effectiveArrayItemSchema(effective, builder.semantic)
 		for _, item := range node.Content {
 			builder.annotateYAMLNode(item, itemSchema)
 		}
 	}
 }
 
-// reorderMappingNodeBySchema reorders mapping keys by schema `x-order`.
-func reorderMappingNodeBySchema(node *yaml.Node, properties map[string]schemaValue) {
+// reorderMappingNodeByEffectiveSchema reorders keys using effective x-order annotations.
+func reorderMappingNodeByEffectiveSchema(node *yaml.Node, properties map[string]effectiveSchema) {
 	if node == nil || node.Kind != yaml.MappingNode || len(node.Content) < 4 {
 		return
 	}
@@ -788,7 +712,7 @@ func reorderMappingNodeBySchema(node *yaml.Node, properties map[string]schemaVal
 		keys = append(keys, key)
 	}
 
-	orderedKeys := sortKeysBySchemaOrder(keys, properties)
+	orderedKeys := sortKeysByEffectiveSchemaOrder(keys, properties)
 	if len(orderedKeys) != len(keys) {
 		return
 	}
@@ -803,11 +727,50 @@ func reorderMappingNodeBySchema(node *yaml.Node, properties map[string]schemaVal
 		orderedContent = append(orderedContent, node.Content[pos], node.Content[pos+1])
 	}
 
-	if len(orderedContent) != len(node.Content) {
-		return
+	if len(orderedContent) == len(node.Content) {
+		node.Content = orderedContent
+	}
+}
+
+// sortKeysByEffectiveSchemaOrder sorts keys by effective x-order, then name.
+func sortKeysByEffectiveSchemaOrder(keys []string, properties map[string]effectiveSchema) []string {
+	type effectiveKeyOrder struct {
+		key      string
+		order    float64
+		hasOrder bool
 	}
 
-	node.Content = orderedContent
+	list := make([]effectiveKeyOrder, 0, len(keys))
+	for _, key := range keys {
+		item := effectiveKeyOrder{key: key, order: math.MaxFloat64}
+		property, ok := properties[key]
+		if ok {
+			if value, exists := property.annotation("x-order"); exists {
+				if order, valid := asNumber(value); valid {
+					item.order = order
+					item.hasOrder = true
+				}
+			}
+		}
+		list = append(list, item)
+	}
+
+	sort.SliceStable(list, func(i, j int) bool {
+		left, right := list[i], list[j]
+		if left.hasOrder && right.hasOrder && left.order != right.order {
+			return left.order < right.order
+		}
+		if left.hasOrder != right.hasOrder {
+			return left.hasOrder
+		}
+		return left.key < right.key
+	})
+
+	out := make([]string, 0, len(list))
+	for _, item := range list {
+		out = append(out, item.key)
+	}
+	return out
 }
 
 // sortKeysBySchemaOrder sorts keys by `x-order`, then by key name.
@@ -868,40 +831,20 @@ func sortKeysBySchemaOrder(keys []string, properties map[string]schemaValue) []s
 	return out
 }
 
-// resolveSchemaValue expands local references for schema node and preserves release callback.
-func (builder *exampleBuilder) resolveSchemaValue(schema schemaValue) (schemaValue, func()) {
-	if schema.Object == nil {
-		return schema, nil
-	}
-
-	resolved, release, handled := builder.resolvedObjectForReference(schema.Object)
-	if !handled {
-		return schema, nil
-	}
-
-	if resolved == nil {
-		return schemaValue{}, release
-	}
-
-	return schemaValue{Object: resolved}, release
-}
-
-// sequenceItemSchema selects best schema for sequence item annotations.
-func sequenceItemSchema(schema schemaValue) schemaValue {
-	if schema.Object == nil {
+// effectiveArrayItemSchema selects the first applicable item schema for comments.
+func effectiveArrayItemSchema(schema effectiveSchema, view *schemaSemanticView) schemaValue {
+	items, err := schema.arrayItems(view)
+	if err != nil {
 		return schemaValue{}
 	}
-
-	if item, ok := toSchemaValue(schema.Object["items"]); ok {
-		return item
+	if len(items) == 0 {
+		return schemaValue{}
 	}
-
-	prefixItems := asSlice(schema.Object["prefixItems"])
-	for _, raw := range prefixItems {
-		item, ok := toSchemaValue(raw)
-		if ok {
-			return item
-		}
+	if items[0].PrefixItems != nil && len(*items[0].PrefixItems) > 0 {
+		return (*items[0].PrefixItems)[0].asSchemaValue()
+	}
+	if items[0].Items != nil {
+		return items[0].Items.asSchemaValue()
 	}
 
 	return schemaValue{}
@@ -962,6 +905,26 @@ func schemaKeyComment(schema schemaValue) string {
 	}
 
 	return normalizeYAMLComment(strings.Join(lines, "\n"))
+}
+
+// schemaKeyCommentEffective builds comments using presentation annotation precedence.
+func schemaKeyCommentEffective(schema effectiveSchema) string {
+	titleValue, _ := schema.annotation("title")
+	descriptionValue, _ := schema.annotation("description")
+
+	title := strings.TrimSpace(asString(titleValue))
+	description := strings.TrimSpace(asString(descriptionValue))
+	object := map[string]any{
+		"title":       title,
+		"description": description,
+	}
+	for _, keyword := range []string{"default", "example", "examples", "enum"} {
+		if value, exists := schema.annotation(keyword); exists {
+			object[keyword] = value
+		}
+	}
+
+	return schemaKeyComment(schemaValue{Object: object})
 }
 
 // schemaExampleValue returns first explicit schema example value.

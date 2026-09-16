@@ -1,0 +1,513 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 WoozyMasta
+// Source: github.com/woozymasta/schemadoc
+
+package schemadoc
+
+import "maps"
+
+// schemaSemanticView expands schema structure while retaining simultaneous constraints.
+type schemaSemanticView struct {
+	resolver localSchemaResolver
+	dialect  schemaDialect
+}
+
+// effectiveSchema is the semantic view of one schema location.
+//
+// Terms are conjunctive: every term applies at the same location.
+// Composition branches remain grouped so a later materializer
+// can evaluate them instead of selecting one syntactically first.
+// Terms describe validation semantics;
+// annotation accessors below describe schemadoc presentation precedence.
+type effectiveSchema struct {
+	terms             []schemaValue
+	compositionGroups []schemaComposition
+}
+
+// schemaComposition is one anyOf or oneOf group preserved for later evaluation.
+type schemaComposition struct {
+	branches []effectiveSchema
+	kind     schemaCompositionKind
+}
+
+// schemaCompositionKind identifies one composition operator.
+type schemaCompositionKind uint8
+
+const (
+	schemaCompositionAnyOf schemaCompositionKind = iota + 1
+	schemaCompositionOneOf
+)
+
+// effectiveArrayItems describes one term's dialect-specific array keywords.
+type effectiveArrayItems = struct {
+	PrefixItems     *[]effectiveSchema
+	Items           *effectiveSchema
+	AdditionalItems *effectiveSchema
+}
+
+// asSchemaValue returns a loss-aware schema representation for legacy callers.
+// Multiple terms are kept under allOf so simultaneous constraints are not overwritten
+// while the semantic accessors remain authoritative.
+func (schema effectiveSchema) asSchemaValue() schemaValue {
+	if len(schema.terms) == 1 && len(schema.compositionGroups) == 0 {
+		return schema.terms[0]
+	}
+
+	allOfBranches := make([]any, 0, len(schema.terms)+len(schema.compositionGroups))
+	for _, term := range schema.terms {
+		allOfBranches = append(allOfBranches, rawSchemaValue(term))
+	}
+
+	for _, keyword := range []string{"anyOf", "oneOf"} {
+		for _, effectiveBranches := range schema.compositions(keyword) {
+			branches := make([]any, 0, len(effectiveBranches))
+			for _, branch := range effectiveBranches {
+				branches = append(branches, rawSchemaValue(branch.asSchemaValue()))
+			}
+			allOfBranches = append(allOfBranches, map[string]any{keyword: branches})
+		}
+	}
+
+	object := map[string]any{"allOf": allOfBranches}
+	return schemaValue{Object: object}
+}
+
+// rawSchemaValue converts a normalized schema value back to JSON-like data.
+func rawSchemaValue(value schemaValue) any {
+	if value.Bool != nil {
+		return *value.Bool
+	}
+
+	return value.Object
+}
+
+// newSchemaSemanticView creates a semantic view for one parsed document.
+func newSchemaSemanticView(doc schemaDocument) schemaSemanticView {
+	return schemaSemanticView{
+		resolver: newLocalSchemaResolver(doc.Raw),
+		dialect:  doc.Dialect,
+	}
+}
+
+// newSchemaSemanticViewPointer creates a view suitable for an example builder.
+func newSchemaSemanticViewPointer(doc schemaDocument) *schemaSemanticView {
+	view := newSchemaSemanticView(doc)
+	return &view
+}
+
+// effective expands one schema value into a keyword-aware semantic view.
+func (view *schemaSemanticView) effective(node schemaValue) (effectiveSchema, error) {
+	return view.expand(node, make(map[string]struct{}))
+}
+
+// expand resolves references and composition without flattening constraints.
+func (view *schemaSemanticView) expand(node schemaValue, active map[string]struct{}) (effectiveSchema, error) {
+	if node.Bool != nil {
+		return effectiveSchema{terms: []schemaValue{node}}, nil
+	}
+	if node.Object == nil {
+		return effectiveSchema{}, nil
+	}
+
+	object := node.Object
+	ref := asString(object["$ref"])
+	if ref != "" {
+		if _, exists := active[ref]; exists {
+			return effectiveSchema{}, &schemaReferenceError{
+				Kind:      schemaReferenceCycle,
+				Reference: ref,
+			}
+		}
+
+		active[ref] = struct{}{}
+		target, err := view.resolver.lookup(ref)
+		if err != nil {
+			delete(active, ref)
+			return effectiveSchema{}, err
+		}
+
+		resolved, err := view.expand(target, active)
+		delete(active, ref)
+		if err != nil {
+			return effectiveSchema{}, err
+		}
+
+		if !view.refSiblingsApply() {
+			return resolved, nil
+		}
+
+		local := schemaValue{Object: withoutSchemaKeywords(object, "$ref")}
+		localView, err := view.expandLocal(local, active)
+		if err != nil {
+			return effectiveSchema{}, err
+		}
+
+		return combineEffectiveSchemas(resolved, localView), nil
+	}
+
+	return view.expandLocal(node, active)
+}
+
+// expandLocal expands composition keywords from one non-reference object.
+func (view *schemaSemanticView) expandLocal(node schemaValue, active map[string]struct{}) (effectiveSchema, error) {
+	if node.Object == nil {
+		return effectiveSchema{terms: []schemaValue{node}}, nil
+	}
+
+	object := node.Object
+	local := schemaValue{Object: withoutSchemaKeywords(object, "allOf", "anyOf", "oneOf")}
+	result := effectiveSchema{terms: []schemaValue{local}}
+
+	for _, raw := range asSlice(object["allOf"]) {
+		branch, ok := toSchemaValue(raw)
+		if !ok {
+			continue
+		}
+
+		expanded, err := view.expand(branch, active)
+		if err != nil {
+			return effectiveSchema{}, err
+		}
+		result = combineEffectiveSchemas(result, expanded)
+	}
+
+	for _, keyword := range []string{"anyOf", "oneOf"} {
+		branches := make([]effectiveSchema, 0)
+		for _, raw := range asSlice(object[keyword]) {
+			branch, ok := toSchemaValue(raw)
+			if !ok {
+				continue
+			}
+
+			expanded, err := view.expand(branch, active)
+			if err != nil {
+				return effectiveSchema{}, err
+			}
+			branches = append(branches, expanded)
+		}
+		if len(branches) > 0 {
+			result.compositionGroups = append(result.compositionGroups, schemaComposition{
+				kind:     compositionKind(keyword),
+				branches: branches,
+			})
+		}
+	}
+
+	return result, nil
+}
+
+// refSiblingsApply reports whether this dialect treats $ref as an applicator.
+func (view *schemaSemanticView) refSiblingsApply() bool {
+	return view.dialect == schemaDialect201909 || view.dialect == schemaDialect202012
+}
+
+// legacyArraySemantics reports whether tuple items and additionalItems apply.
+func (view *schemaSemanticView) legacyArraySemantics() bool {
+	return view.dialect == schemaDialectUnknown ||
+		view.dialect == schemaDialectDraft4Compatible ||
+		view.dialect == schemaDialectDraft6 ||
+		view.dialect == schemaDialectDraft7
+}
+
+// combineEffectiveSchemas joins two conjunctive views without overwriting terms.
+func combineEffectiveSchemas(left, right effectiveSchema) effectiveSchema {
+	combined := effectiveSchema{
+		terms:             make([]schemaValue, 0, len(left.terms)+len(right.terms)),
+		compositionGroups: make([]schemaComposition, 0, len(left.compositionGroups)+len(right.compositionGroups)),
+	}
+	combined.terms = append(combined.terms, left.terms...)
+	combined.terms = append(combined.terms, right.terms...)
+	combined.compositionGroups = append(combined.compositionGroups, left.compositionGroups...)
+	combined.compositionGroups = append(combined.compositionGroups, right.compositionGroups...)
+
+	return combined
+}
+
+// properties returns property schemas combined by name without losing terms.
+func (schema effectiveSchema) properties(view *schemaSemanticView) (map[string]effectiveSchema, error) {
+	properties := make(map[string]effectiveSchema)
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		for name, raw := range mapSchemaValues(term.Object["properties"]) {
+			expanded, err := view.expand(raw, make(map[string]struct{}))
+			if err != nil {
+				return nil, err
+			}
+
+			if current, exists := properties[name]; exists {
+				properties[name] = combineEffectiveSchemas(current, expanded)
+			} else {
+				properties[name] = expanded
+			}
+		}
+	}
+
+	return properties, nil
+}
+
+// required returns a stable union because all terms apply simultaneously.
+func (schema effectiveSchema) required() []string {
+	seen := make(map[string]struct{})
+	var result []string
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		for _, name := range asStringSlice(term.Object["required"]) {
+			if _, exists := seen[name]; exists {
+				continue
+			}
+
+			seen[name] = struct{}{}
+			result = append(result, name)
+		}
+	}
+
+	return result
+}
+
+// annotation returns the last declared annotation in semantic source order.
+// This is presentation precedence, not a validation merge rule.
+func (schema effectiveSchema) annotation(keyword string) (any, bool) {
+	var value any
+	found := false
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+		if candidate, exists := term.Object[keyword]; exists {
+			value, found = candidate, true
+		}
+	}
+
+	return value, found
+}
+
+// types returns every declared type constraint in semantic source order.
+//
+//nolint:unused // Reserved for the materializer's constraint evaluator.
+func (schema effectiveSchema) types() []any {
+	return schema.keywordValues("type")
+}
+
+// consts returns every declared const constraint in semantic source order.
+//
+//nolint:unused // Reserved for the materializer's constraint evaluator.
+func (schema effectiveSchema) consts() []any {
+	return schema.keywordValues("const")
+}
+
+// enums returns every declared enum constraint in semantic source order.
+//
+//nolint:unused // Reserved for the materializer's constraint evaluator.
+func (schema effectiveSchema) enums() []any {
+	return schema.keywordValues("enum")
+}
+
+// keywordValues returns raw values for a keyword from all conjunctive terms.
+//
+//nolint:unused // Reserved for the materializer's constraint evaluator.
+func (schema effectiveSchema) keywordValues(keyword string) []any {
+	values := make([]any, 0)
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		if value, exists := term.Object[keyword]; exists {
+			values = append(values, value)
+		}
+	}
+
+	return values
+}
+
+// arrayItems returns dialect-specific item views for each simultaneous term.
+func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveArrayItems, error) {
+	items := make([]effectiveArrayItems, 0)
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		current := effectiveArrayItems{}
+		if !view.legacyArraySemantics() {
+			if prefix := asSlice(term.Object["prefixItems"]); len(prefix) > 0 {
+				expanded, err := expandSchemaSlice(view, prefix)
+				if err != nil {
+					return nil, err
+				}
+				current.PrefixItems = &expanded
+			}
+		}
+
+		if rawItems, exists := term.Object["items"]; exists {
+			if tuple, ok := rawItems.([]any); ok {
+				if view.legacyArraySemantics() {
+					expanded, err := expandSchemaSlice(view, tuple)
+					if err != nil {
+						return nil, err
+					}
+					current.PrefixItems = &expanded
+				}
+			} else if item, ok := toSchemaValue(rawItems); ok {
+				expanded, err := view.expand(item, make(map[string]struct{}))
+				if err == nil {
+					current.Items = &expanded
+				} else {
+					return nil, err
+				}
+			}
+		}
+
+		if view.legacyArraySemantics() {
+			if rawAdditional, exists := term.Object["additionalItems"]; exists {
+				if additional, ok := toSchemaValue(rawAdditional); ok {
+					expanded, err := view.expand(additional, make(map[string]struct{}))
+					if err == nil {
+						current.AdditionalItems = &expanded
+					} else {
+						return nil, err
+					}
+				}
+			}
+		}
+		items = append(items, current)
+	}
+
+	return items, nil
+}
+
+// additionalProperties returns all applicable additional-property schemas.
+//
+//nolint:unused // Reserved for object materialization.
+func (schema effectiveSchema) additionalProperties(view *schemaSemanticView) ([]effectiveSchema, error) {
+	return schema.expandKeywordSchemas(view, "additionalProperties")
+}
+
+// propertyNames returns all applicable property-name schemas.
+//
+//nolint:unused // Reserved for object materialization.
+func (schema effectiveSchema) propertyNames(view *schemaSemanticView) ([]effectiveSchema, error) {
+	return schema.expandKeywordSchemas(view, "propertyNames")
+}
+
+// patternProperties returns deterministic pattern-property schema maps.
+//
+//nolint:unused // Reserved for object materialization.
+func (schema effectiveSchema) patternProperties(view *schemaSemanticView) ([]map[string]effectiveSchema, error) {
+	result := make([]map[string]effectiveSchema, 0)
+	for _, term := range schema.terms {
+		patterns := make(map[string]effectiveSchema)
+		if term.Object == nil {
+			continue
+		}
+
+		for pattern, raw := range mapSchemaValues(term.Object["patternProperties"]) {
+			expanded, err := view.expand(raw, make(map[string]struct{}))
+			if err == nil {
+				patterns[pattern] = expanded
+			} else {
+				return nil, err
+			}
+		}
+		if len(patterns) > 0 {
+			result = append(result, patterns)
+		}
+	}
+
+	return result, nil
+}
+
+// compositions returns preserved anyOf/oneOf groups in source order.
+//
+//nolint:unused // Used by the materializer and schema compatibility bridge.
+func (schema effectiveSchema) compositions(kind string) [][]effectiveSchema {
+	result := make([][]effectiveSchema, 0)
+	for _, composition := range schema.compositionGroups {
+		if composition.kind == compositionKind(kind) {
+			result = append(result, composition.branches)
+		}
+	}
+
+	return result
+}
+
+// compositionKind converts a composition keyword to its internal kind.
+func compositionKind(keyword string) schemaCompositionKind {
+	if keyword == "oneOf" {
+		return schemaCompositionOneOf
+	}
+
+	return schemaCompositionAnyOf
+}
+
+// expandKeywordSchemas expands schema-valued occurrences of one keyword.
+//
+//nolint:unused // Reserved for object keyword consumers.
+func (schema effectiveSchema) expandKeywordSchemas(view *schemaSemanticView, keyword string) ([]effectiveSchema, error) {
+	result := make([]effectiveSchema, 0)
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		value, exists := toSchemaValue(term.Object[keyword])
+		if !exists {
+			continue
+		}
+
+		expanded, err := view.expand(value, make(map[string]struct{}))
+		if err == nil {
+			result = append(result, expanded)
+		} else {
+			return nil, err
+		}
+	}
+
+	return result, nil
+}
+
+// expandSchemaSlice expands valid schema values from one raw array.
+func expandSchemaSlice(view *schemaSemanticView, raw []any) ([]effectiveSchema, error) {
+	result := make([]effectiveSchema, 0, len(raw))
+	for _, item := range raw {
+		node, ok := toSchemaValue(item)
+		if !ok {
+			continue
+		}
+
+		expanded, err := view.expand(node, make(map[string]struct{}))
+		if err == nil {
+			result = append(result, expanded)
+		} else {
+			return nil, err
+		}
+	}
+
+	return result, nil
+}
+
+// withoutSchemaKeywords copies an object while removing selected schema keywords.
+func withoutSchemaKeywords(object map[string]any, keywords ...string) map[string]any {
+	if len(keywords) == 0 {
+		return object
+	}
+
+	removed := make(map[string]struct{}, len(keywords))
+	for _, keyword := range keywords {
+		removed[keyword] = struct{}{}
+	}
+
+	result := make(map[string]any, len(object))
+	maps.Copy(result, object)
+	for keyword := range removed {
+		delete(result, keyword)
+	}
+
+	return result
+}

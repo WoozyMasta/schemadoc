@@ -88,10 +88,6 @@ func TestLocalSchemaResolverErrors(t *testing.T) {
 		})
 	}
 
-	_, err := resolver.resolve("#/$defs/cycleA")
-	if !errors.Is(err, ErrSchemaReferenceCycle) {
-		t.Fatalf("cycle error = %v, want errors.Is(..., %v)", err, ErrSchemaReferenceCycle)
-	}
 }
 
 func TestDetectDraftMapsDraft5ToDraft4Compatible(t *testing.T) {

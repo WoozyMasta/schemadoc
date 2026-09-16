@@ -75,22 +75,14 @@ func (err *schemaReferenceError) Is(target error) bool {
 
 // localSchemaResolver resolves local JSON Pointer references in one document.
 type localSchemaResolver struct {
-	root   any
-	active map[string]struct{}
+	root any
 }
 
 // newLocalSchemaResolver creates a resolver without network access.
 func newLocalSchemaResolver(root any) localSchemaResolver {
 	return localSchemaResolver{
-		root:   root,
-		active: make(map[string]struct{}),
+		root: root,
 	}
-}
-
-// newLocalSchemaResolverPointer creates a resolver suitable for a long-lived builder.
-func newLocalSchemaResolverPointer(root any) *localSchemaResolver {
-	resolver := newLocalSchemaResolver(root)
-	return &resolver
 }
 
 // lookup resolves one local JSON Pointer without following a target $ref.
@@ -147,38 +139,6 @@ func (resolver localSchemaResolver) lookup(ref string) (schemaValue, error) {
 	}
 
 	return value, nil
-}
-
-// resolve follows local $ref chains and reports cycles without recursion leaks.
-func (resolver *localSchemaResolver) resolve(ref string) (schemaValue, error) {
-	ref = strings.TrimSpace(ref)
-	if resolver.active == nil {
-		resolver.active = make(map[string]struct{})
-	}
-	if _, exists := resolver.active[ref]; exists {
-		return schemaValue{}, &schemaReferenceError{
-			Kind:      schemaReferenceCycle,
-			Reference: ref,
-		}
-	}
-
-	resolver.active[ref] = struct{}{}
-	defer delete(resolver.active, ref)
-
-	value, err := resolver.lookup(ref)
-	if err != nil {
-		return schemaValue{}, err
-	}
-	if value.Object == nil {
-		return value, nil
-	}
-
-	next := asString(value.Object["$ref"])
-	if next == "" {
-		return value, nil
-	}
-
-	return resolver.resolve(next)
 }
 
 // parseLocalJSONPointer validates and decodes a local JSON Pointer reference.
