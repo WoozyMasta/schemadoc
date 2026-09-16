@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "urn:schemadoc:draft-2019-09-tuple",
+  "type": "array",
+  "items": [
+    {
+      "type": "string",
+      "minLength": 1
+    },
+    {
+      "type": "integer"
+    }
+  ],
+  "additionalItems": false,
+  "contains": {
+    "type": "string",
+    "minLength": 1
+  },
+  "minContains": 1,
+  "maxContains": 1,
+  "unevaluatedItems": false
+}

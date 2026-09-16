@@ -42,6 +42,22 @@ const (
 	schemaCompositionOneOf
 )
 
+// schemaArrayCapabilities describe independent array-keyword capabilities.
+//
+// Draft 2019-09 keeps the tuple form of items
+// while adding the newer contains-count and unevaluated-items keywords.
+// Draft 2020-12 changes the tuple syntax,
+// so these capabilities cannot be represented by one legacy flag.
+type schemaArrayCapabilities struct {
+	TupleItems             bool
+	AdditionalItems        bool
+	PrefixItems            bool
+	SchemaItems            bool
+	ContainsBounds         bool
+	UnevaluatedItems       bool
+	ContainsEvaluatesItems bool
+}
+
 // effectiveArrayItems describes one term's dialect-specific array keywords.
 type effectiveArrayItems = struct {
 	PrefixItems     *[]effectiveSchema
@@ -214,12 +230,36 @@ func (view *schemaSemanticView) refSiblingsApply() bool {
 	return view.dialect == schemaDialect201909 || view.dialect == schemaDialect202012
 }
 
-// legacyArraySemantics reports whether tuple items and additionalItems apply.
-func (view *schemaSemanticView) legacyArraySemantics() bool {
-	return view.dialect == schemaDialectUnknown ||
-		view.dialect == schemaDialectDraft4Compatible ||
-		view.dialect == schemaDialectDraft6 ||
-		view.dialect == schemaDialectDraft7
+// arrayCapabilities returns the independent array semantics for the dialect.
+// Unknown schemas retain the historical Draft 7-compatible behavior.
+func (view *schemaSemanticView) arrayCapabilities() schemaArrayCapabilities {
+	switch view.dialect {
+	case schemaDialect201909:
+		return schemaArrayCapabilities{
+			TupleItems:             true,
+			AdditionalItems:        true,
+			SchemaItems:            true,
+			ContainsBounds:         true,
+			UnevaluatedItems:       true,
+			ContainsEvaluatesItems: false,
+		}
+
+	case schemaDialect202012:
+		return schemaArrayCapabilities{
+			PrefixItems:            true,
+			SchemaItems:            true,
+			ContainsBounds:         true,
+			UnevaluatedItems:       true,
+			ContainsEvaluatesItems: true,
+		}
+
+	default:
+		return schemaArrayCapabilities{
+			TupleItems:      true,
+			AdditionalItems: true,
+			SchemaItems:     true,
+		}
+	}
 }
 
 // combineEffectiveSchemas joins two conjunctive views without overwriting terms.
@@ -425,6 +465,7 @@ func (schema effectiveSchema) keywordValues(keyword string) []any {
 
 // arrayItems returns dialect-specific item views for each simultaneous term.
 func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveArrayItems, error) {
+	capabilities := view.arrayCapabilities()
 	items := make([]effectiveArrayItems, 0)
 	for _, term := range schema.terms {
 		if term.Object == nil {
@@ -433,7 +474,7 @@ func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveA
 
 		current := effectiveArrayItems{}
 		applicable := false
-		if !view.legacyArraySemantics() {
+		if capabilities.PrefixItems {
 			if prefix := asSlice(term.Object["prefixItems"]); len(prefix) > 0 {
 				expanded, err := expandSchemaSlice(view, prefix)
 				if err != nil {
@@ -446,7 +487,7 @@ func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveA
 
 		if rawItems, exists := term.Object["items"]; exists {
 			if tuple, ok := rawItems.([]any); ok {
-				if view.legacyArraySemantics() {
+				if capabilities.TupleItems {
 					expanded, err := expandSchemaSlice(view, tuple)
 					if err != nil {
 						return nil, err
@@ -454,7 +495,12 @@ func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveA
 					current.PrefixItems = &expanded
 					applicable = true
 				}
-			} else if item, ok := toSchemaValue(rawItems); ok {
+			} else if capabilities.SchemaItems {
+				item, ok := toSchemaValue(rawItems)
+				if !ok {
+					continue
+				}
+
 				expanded, err := view.expand(item, make(map[string]struct{}))
 				if err == nil {
 					current.Items = &expanded
@@ -465,7 +511,7 @@ func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveA
 			}
 		}
 
-		if view.legacyArraySemantics() {
+		if capabilities.AdditionalItems {
 			if rawAdditional, exists := term.Object["additionalItems"]; exists {
 				if additional, ok := toSchemaValue(rawAdditional); ok {
 					expanded, err := view.expand(additional, make(map[string]struct{}))
@@ -488,6 +534,7 @@ func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveA
 
 // arrayContains returns all active contains requirements in source order.
 func (schema effectiveSchema) arrayContains(view *schemaSemanticView) ([]effectiveArrayContains, error) {
+	capabilities := view.arrayCapabilities()
 	result := make([]effectiveArrayContains, 0)
 	for _, term := range schema.terms {
 		if term.Object == nil {
@@ -511,7 +558,7 @@ func (schema effectiveSchema) arrayContains(view *schemaSemanticView) ([]effecti
 		minimum := 1
 		maximum := 0
 		hasMaximum := false
-		if !view.legacyArraySemantics() {
+		if capabilities.ContainsBounds {
 			if value, ok := integerKeyword(term.Object, "minContains"); ok {
 				minimum = value
 			}
@@ -534,7 +581,7 @@ func (schema effectiveSchema) arrayContains(view *schemaSemanticView) ([]effecti
 
 // unevaluatedItems returns active modern unevaluated-item schemas.
 func (schema effectiveSchema) unevaluatedItems(view *schemaSemanticView) ([]effectiveSchema, error) {
-	if view.legacyArraySemantics() {
+	if !view.arrayCapabilities().UnevaluatedItems {
 		return nil, nil
 	}
 

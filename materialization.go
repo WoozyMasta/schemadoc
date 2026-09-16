@@ -1870,7 +1870,7 @@ func validateEffectiveUnevaluatedItems(
 	path schemaPath,
 ) error {
 	items, ok := value.([]any)
-	if !ok || view.legacyArraySemantics() {
+	if !ok || !view.arrayCapabilities().UnevaluatedItems {
 		return nil
 	}
 
@@ -1895,7 +1895,9 @@ func validateEffectiveUnevaluatedItems(
 	for index, item := range items {
 		// Prefix/items schemas and successful contains matches both mark
 		// an item as evaluated for the purpose of unevaluatedItems.
-		if arrayItemEvaluated(ordinary, index) || arrayItemMatchesContains(view, contains, item, path) {
+		containsEvaluated := view.arrayCapabilities().ContainsEvaluatesItems &&
+			arrayItemMatchesContains(view, contains, item, path)
+		if arrayItemEvaluated(ordinary, index) || containsEvaluated {
 			continue
 		}
 

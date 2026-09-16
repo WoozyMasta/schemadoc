@@ -219,7 +219,7 @@ func TestEffectiveSchemaExposesDialectSpecificArrayItems(t *testing.T) {
 	if err != nil {
 		t.Fatalf("legacy items: %v", err)
 	}
-	if len(legacyItems) != 1 || !legacyView.legacyArraySemantics() || legacyItems[0].PrefixItems == nil || len(*legacyItems[0].PrefixItems) != 2 {
+	if len(legacyItems) != 1 || !legacyView.arrayCapabilities().TupleItems || legacyItems[0].PrefixItems == nil || len(*legacyItems[0].PrefixItems) != 2 {
 		t.Fatalf("legacy items = %+v", legacyItems)
 	}
 
@@ -237,8 +237,166 @@ func TestEffectiveSchemaExposesDialectSpecificArrayItems(t *testing.T) {
 	if err != nil {
 		t.Fatalf("modern items: %v", err)
 	}
-	if len(modernItems) != 1 || modernView.legacyArraySemantics() || modernItems[0].PrefixItems == nil || len(*modernItems[0].PrefixItems) != 1 || modernItems[0].Items == nil {
+	if len(modernItems) != 1 || modernView.arrayCapabilities().TupleItems || modernItems[0].PrefixItems == nil || len(*modernItems[0].PrefixItems) != 1 || modernItems[0].Items == nil {
 		t.Fatalf("modern items = %+v", modernItems)
+	}
+}
+
+func TestEffectiveSchemaArrayCapabilityMatrix(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                   string
+		dialect                string
+		tupleItems             bool
+		additionalItems        bool
+		prefixItems            bool
+		containsBounds         bool
+		unevaluatedItems       bool
+		containsEvaluatesItems bool
+	}{
+		{
+			name:            "draft 7",
+			dialect:         "http://json-schema.org/draft-07/schema",
+			tupleItems:      true,
+			additionalItems: true,
+		},
+		{
+			name:             "draft 2019-09",
+			dialect:          "https://json-schema.org/draft/2019-09/schema",
+			tupleItems:       true,
+			additionalItems:  true,
+			containsBounds:   true,
+			unevaluatedItems: true,
+		},
+		{
+			name:                   "draft 2020-12",
+			dialect:                "https://json-schema.org/draft/2020-12/schema",
+			prefixItems:            true,
+			containsBounds:         true,
+			unevaluatedItems:       true,
+			containsEvaluatesItems: true,
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc := parseTestSchemaDocument(t, `{"$schema":"`+test.dialect+`"}`)
+			view := newSchemaSemanticView(doc)
+			capabilities := view.arrayCapabilities()
+			want := schemaArrayCapabilities{
+				TupleItems:             test.tupleItems,
+				AdditionalItems:        test.additionalItems,
+				PrefixItems:            test.prefixItems,
+				SchemaItems:            true,
+				ContainsBounds:         test.containsBounds,
+				UnevaluatedItems:       test.unevaluatedItems,
+				ContainsEvaluatesItems: test.containsEvaluatesItems,
+			}
+			if !reflect.DeepEqual(capabilities, want) {
+				t.Fatalf("array capabilities = %+v, want %+v", capabilities, want)
+			}
+		})
+	}
+}
+
+func TestEffectiveSchemaDraft2019ArrayKeywords(t *testing.T) {
+	t.Parallel()
+
+	doc := parseTestSchemaDocument(t, `{
+		"$schema": "https://json-schema.org/draft/2019-09/schema",
+		"items": [{"type": "string"}, {"type": "integer"}],
+		"additionalItems": false,
+		"contains": {"type": "string"},
+		"minContains": 1,
+		"maxContains": 2,
+		"unevaluatedItems": {"type": "boolean"}
+	}`)
+	view := newSchemaSemanticView(doc)
+	effective, err := view.effective(doc.Root)
+	if err != nil {
+		t.Fatalf("effective: %v", err)
+	}
+
+	items, err := effective.arrayItems(&view)
+	if err != nil {
+		t.Fatalf("array items: %v", err)
+	}
+	if len(items) != 1 || items[0].PrefixItems == nil || items[0].Items != nil || items[0].AdditionalItems == nil {
+		t.Fatalf("array items = %+v, want 2019-09 tuple semantics", items)
+	}
+
+	contains, err := effective.arrayContains(&view)
+	if err != nil {
+		t.Fatalf("array contains: %v", err)
+	}
+	if len(contains) != 1 || contains[0].Minimum != 1 || !contains[0].HasMaximum || contains[0].Maximum != 2 {
+		t.Fatalf("array contains = %+v, want min=1 max=2", contains)
+	}
+
+	unevaluated, err := effective.unevaluatedItems(&view)
+	if err != nil {
+		t.Fatalf("unevaluated items: %v", err)
+	}
+	if len(unevaluated) != 1 {
+		t.Fatalf("unevaluated items = %+v, want one schema", unevaluated)
+	}
+	if view.arrayCapabilities().ContainsEvaluatesItems {
+		t.Fatal("draft 2019-09 contains must not mark items evaluated")
+	}
+}
+
+func TestEffectiveSchemaContainsUnevaluatedItemsDialectDifference(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		schema string
+		valid  bool
+	}{
+		{
+			name: "draft 2019-09",
+			schema: `{
+				"$schema": "https://json-schema.org/draft/2019-09/schema",
+				"type": "array",
+				"items": [{"type": "string"}],
+				"contains": {"type": "string", "minLength": 2},
+				"unevaluatedItems": false
+			}`,
+		},
+		{
+			name: "draft 2020-12",
+			schema: `{
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"type": "array",
+				"prefixItems": [{"type": "string"}],
+				"contains": {"type": "string", "minLength": 2},
+				"unevaluatedItems": false
+			}`,
+			valid: true,
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc := parseTestSchemaDocument(t, test.schema)
+			view := newSchemaSemanticView(doc)
+			effective, err := view.effective(doc.Root)
+			if err != nil {
+				t.Fatalf("effective: %v", err)
+			}
+
+			err = validateEffectiveInstance(&view, effective, []any{"a", "bb"}, schemaPath{})
+			if (err == nil) != test.valid {
+				t.Fatalf("validate instance error = %v, valid = %t", err, test.valid)
+			}
+		})
 	}
 }
 

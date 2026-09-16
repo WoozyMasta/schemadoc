@@ -104,6 +104,14 @@
     "description": "Legacy tuple items and additionalItems."
   },
   {
+    "name": "arrays/draft-2019-09-tuple",
+    "group": "positive",
+    "schema": "positive/arrays/draft-2019-09-tuple.json",
+    "dialect": "2019-09",
+    "status": "characterization",
+    "description": "Draft 2019-09 tuple, contains, and unevaluatedItems semantics."
+  },
+  {
     "name": "annotations/structured-values",
     "group": "positive",
     "schema": "positive/annotations/structured-values.json",
