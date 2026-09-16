@@ -385,3 +385,114 @@ func TestMaterializationRejectsContradictoryObjectBounds(t *testing.T) {
 		t.Fatalf("GenerateExampleJSON error = %v, want unsatisfiable", err)
 	}
 }
+
+func TestMaterializationArraysAndTupleSemantics(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		schema map[string]any
+		want   string
+	}{
+		{
+			name: "modern heterogeneous tuple",
+			schema: map[string]any{
+				"type": "array",
+				"prefixItems": []any{
+					map[string]any{"type": "string"},
+					map[string]any{"type": "integer"},
+				},
+				"items":    map[string]any{"type": "boolean"},
+				"minItems": 2,
+			},
+			want: "[\n  \"<string>\",\n  0\n]",
+		},
+		{
+			name: "legacy heterogeneous tuple",
+			schema: map[string]any{
+				"$schema": "http://json-schema.org/draft-04/schema#",
+				"type":    "array",
+				"items": []any{
+					map[string]any{"type": "string"},
+					map[string]any{"type": "integer"},
+				},
+				"additionalItems": false,
+				"minItems":        2,
+				"maxItems":        2,
+			},
+			want: "[\n  \"<string>\",\n  0\n]",
+		},
+		{
+			name: "unique items meet minimum",
+			schema: map[string]any{
+				"type":        "array",
+				"items":       map[string]any{"type": "integer"},
+				"minItems":    3,
+				"uniqueItems": true,
+			},
+			want: "[\n  0,\n  1,\n  2\n]",
+		},
+		{
+			name: "contains is satisfied",
+			schema: map[string]any{
+				"type":     "array",
+				"contains": map[string]any{"const": "match"},
+				"items":    map[string]any{"type": "string"},
+				"maxItems": 1,
+			},
+			want: "[\n  \"match\"\n]",
+		},
+		{
+			name: "zero contains maximum permits empty array",
+			schema: map[string]any{
+				"type":        "array",
+				"contains":    map[string]any{},
+				"items":       map[string]any{"type": "string"},
+				"minContains": 0,
+				"maxContains": 0,
+			},
+			want: "[]",
+		},
+		{
+			name: "zero maximum does not materialize trailing items",
+			schema: map[string]any{
+				"type":     "array",
+				"items":    false,
+				"maxItems": 0,
+			},
+			want: "[]",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := GenerateExampleJSON(minimalSchemaBytes(t, test.schema), ExampleModeAll)
+			if err != nil {
+				t.Fatalf("GenerateExampleJSON: %v", err)
+			}
+			if strings.TrimSpace(string(got)) != test.want {
+				t.Fatalf("example = %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
+func TestMaterializationRejectsUnevaluatedItemsViolation(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "array",
+		"prefixItems": []any{
+			map[string]any{"type": "string"},
+		},
+		"unevaluatedItems": false,
+		"minItems":         2,
+	})
+
+	_, err := GenerateExampleJSON(schema, ExampleModeAll)
+	if !errors.Is(err, ErrMaterializationUnsatisfiable) {
+		t.Fatalf("GenerateExampleJSON error = %v, want unsatisfiable", err)
+	}
+}

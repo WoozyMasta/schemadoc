@@ -46,6 +46,14 @@ type effectiveArrayItems = struct {
 	AdditionalItems *effectiveSchema
 }
 
+// effectiveArrayContains describes one simultaneous contains requirement.
+type effectiveArrayContains struct {
+	Schema     effectiveSchema
+	Minimum    int
+	Maximum    int
+	HasMaximum bool
+}
+
 // asSchemaValue returns a loss-aware schema representation for legacy callers.
 // Multiple terms are kept under allOf so simultaneous constraints are not overwritten
 // while the semantic accessors remain authoritative.
@@ -384,6 +392,61 @@ func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveA
 	}
 
 	return items, nil
+}
+
+// arrayContains returns all active contains requirements in source order.
+func (schema effectiveSchema) arrayContains(view *schemaSemanticView) ([]effectiveArrayContains, error) {
+	result := make([]effectiveArrayContains, 0)
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		raw, exists := term.Object["contains"]
+		if !exists {
+			continue
+		}
+
+		contains, ok := toSchemaValue(raw)
+		if !ok {
+			continue
+		}
+		expanded, err := view.expand(contains, make(map[string]struct{}))
+		if err != nil {
+			return nil, err
+		}
+
+		minimum := 1
+		maximum := 0
+		hasMaximum := false
+		if !view.legacyArraySemantics() {
+			if value, ok := integerKeyword(term.Object, "minContains"); ok {
+				minimum = value
+			}
+			if value, ok := integerKeyword(term.Object, "maxContains"); ok {
+				maximum = value
+				hasMaximum = true
+			}
+		}
+
+		result = append(result, effectiveArrayContains{
+			Schema:     expanded,
+			Minimum:    minimum,
+			Maximum:    maximum,
+			HasMaximum: hasMaximum,
+		})
+	}
+
+	return result, nil
+}
+
+// unevaluatedItems returns active modern unevaluated-item schemas.
+func (schema effectiveSchema) unevaluatedItems(view *schemaSemanticView) ([]effectiveSchema, error) {
+	if view.legacyArraySemantics() {
+		return nil, nil
+	}
+
+	return schema.expandKeywordSchemas(view, "unevaluatedItems")
 }
 
 // additionalProperties returns all applicable additional-property schemas.

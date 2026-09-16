@@ -361,7 +361,10 @@ func (materializer *exampleMaterializer) synthesizeComposition(schema effectiveS
 	)
 }
 
-// synthesizeObject materializes declared properties and one safe dynamic entry.
+// synthesizeObject builds an object in two phases: declared fields first,
+// then at most one dynamic field when all-mode needs a representative map entry.
+// Declared fields remain authoritative;
+// a field is removed only when another conjunctive object term makes its presence invalid.
 func (materializer *exampleMaterializer) synthesizeObject(
 	schema effectiveSchema,
 	properties map[string]effectiveSchema,
@@ -372,6 +375,7 @@ func (materializer *exampleMaterializer) synthesizeObject(
 ) (map[string]any, error) {
 	requiredSet := make(map[string]struct{}, len(required))
 	for _, name := range required {
+		// A required field cannot be skipped, including when its schema is false.
 		requiredSet[name] = struct{}{}
 		property, ok := properties[name]
 		if !ok {
@@ -395,6 +399,7 @@ func (materializer *exampleMaterializer) synthesizeObject(
 
 	values := make(map[string]schemaValue, len(properties))
 	for name, property := range properties {
+		// False optional properties describe forbidden names, not values to emit.
 		if isFalseEffectiveSchema(property) {
 			continue
 		}
@@ -427,6 +432,7 @@ func (materializer *exampleMaterializer) synthesizeObject(
 	}
 
 	if hasMaximum && len(keys) > maximum {
+		// Keep every required field and fill the remaining budget in schema order.
 		selected := make([]string, 0, maximum)
 		for _, name := range keys {
 			if _, ok := requiredSet[name]; ok {
@@ -465,6 +471,8 @@ func (materializer *exampleMaterializer) synthesizeObject(
 	additional, hasAdditional := combinedEffectiveSchema(additionalProperties)
 	if materializer.mode == ExampleModeAll && hasAdditional &&
 		!isFalseEffectiveSchema(additional) && (len(result) == 0 || len(result) < minimum) {
+		// A dynamic key is illustrative only.
+		// Candidate validation must satisfy propertyNames, patternProperties, and additionalProperties together.
 		for _, name := range dynamicPropertyNames(propertyNames, materializer.semantic, path) {
 			if _, declared := properties[name]; declared {
 				continue
@@ -502,6 +510,7 @@ func (materializer *exampleMaterializer) synthesizeObject(
 	}
 
 	if hasMinimum && len(result) < minimum {
+		// No safe key/value pair was available to meet the lower bound.
 		return nil, newMaterializationError(
 			MaterializationCodeUnsupported,
 			MaterializationCategoryUnsupportedMaterialization,
@@ -513,7 +522,10 @@ func (materializer *exampleMaterializer) synthesizeObject(
 	return result, nil
 }
 
-// pruneInvalidOptionalProperties removes declared fields forbidden by overlapping object terms.
+// pruneInvalidOptionalProperties repairs an initially invalid object
+// by trying to remove optional fields from the end of the deterministic order.
+// A minProperties failure is deferred because a dynamic field may still satisfy it;
+// required fields are never removed.
 func pruneInvalidOptionalProperties(
 	view *schemaSemanticView,
 	schema effectiveSchema,
@@ -660,55 +672,28 @@ func scalarPlaceholder(schemaType string) (any, bool) {
 	return value, ok
 }
 
-// synthesizeArray materializes tuple prefixes or one homogeneous item.
+// synthesizeArray first materializes every mandatory tuple position,
+// then satisfies contains and item-count requirements without exceeding maxItems.
+// Each index receives the conjunction of all applicable item schemas,
+// so heterogeneous tuple positions are not accidentally validated as homogeneous.
 func (materializer *exampleMaterializer) synthesizeArray(schema effectiveSchema, path schemaPath) ([]any, error) {
 	items, err := schema.arrayItems(materializer.semantic)
 	if err != nil {
 		return nil, materializationReferenceError(err, path)
 	}
-	if len(items) == 0 {
-		return []any{}, nil
+
+	contains, err := schema.arrayContains(materializer.semantic)
+	if err != nil {
+		return nil, materializationReferenceError(err, path)
 	}
 
-	current := items[0]
-	result := make([]any, 0)
-	if current.PrefixItems != nil {
-		for _, item := range *current.PrefixItems {
-			value, err := materializer.materializeEffective(item, path.appendArrayItem())
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, value)
-		}
-	}
-
-	hasItemExamples := false
-	if current.Items != nil {
-		for _, raw := range current.Items.keywordValues("examples") {
-			for _, example := range asSlice(raw) {
-				if err := validateEffectiveInstance(
-					materializer.semantic,
-					*current.Items,
-					example,
-					path.appendArrayItem(),
-				); err == nil {
-					result = append(result, cloneJSONValue(example))
-					hasItemExamples = true
-				}
-			}
-		}
-
-		if !hasItemExamples {
-			value, err := materializer.materializeEffective(*current.Items, path.appendArrayItem())
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, value)
-		}
+	unevaluated, err := schema.unevaluatedItems(materializer.semantic)
+	if err != nil {
+		return nil, materializationReferenceError(err, path)
 	}
 
 	minimum, maximum := arrayBounds(schema)
-	if minimum > maximum || len(result) > maximum {
+	if minimum > maximum || arrayContainsContradiction(contains) {
 		return nil, newMaterializationError(
 			MaterializationCodeUnsatisfiable,
 			MaterializationCategoryUnsatisfiableSchema,
@@ -717,32 +702,378 @@ func (materializer *exampleMaterializer) synthesizeArray(schema effectiveSchema,
 		)
 	}
 
-	for len(result) < minimum {
-		switch {
-		case current.Items != nil:
-			value, err := materializer.materializeEffective(*current.Items, path.appendArrayItem())
+	prefixLength := arrayPrefixLength(items)
+	if prefixLength > maximum {
+		return nil, newMaterializationError(
+			MaterializationCodeUnsatisfiable,
+			MaterializationCategoryUnsatisfiableSchema,
+			materializationKeywordPath(path, "maxItems"),
+			ErrMaterializationUnsatisfiable,
+		)
+	}
+	result := make([]any, 0)
+	for index := range prefixLength {
+		// Tuple positions are mandatory even when no minimum length is declared.
+		item, hasItem, err := arrayItemSchemaAt(items, index)
+		if err != nil {
+			return nil, err
+		}
+
+		value, err := materializer.materializeArrayValue(
+			item,
+			hasItem,
+			result,
+			schema,
+			path,
+		)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, value)
+	}
+
+	if len(contains) == 0 {
+		// Item examples are useful for ordinary homogeneous arrays.
+		// Contains arrays are built separately so their match-count bounds stay explicit.
+		for _, example := range arrayItemExamples(items) {
+			if len(result) >= maximum {
+				break
+			}
+
+			item, hasItem, err := arrayItemSchemaAt(items, len(result))
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, value)
 
-		case current.AdditionalItems != nil:
-			value, err := materializer.materializeEffective(*current.AdditionalItems, path.appendArrayItem())
-			if err != nil {
-				return nil, err
+			if hasItem && validateEffectiveInstance(materializer.semantic, item, example, path.appendArrayItem()) != nil {
+				continue
 			}
-			result = append(result, value)
+			if !hasUniqueArrayItem(schema, result, example) {
+				continue
+			}
 
-		default:
-			result = append(result, nil)
+			result = append(result, cloneJSONValue(example))
 		}
 	}
 
+	if len(result) == 0 && prefixLength == 0 && len(contains) == 0 && maximum > 0 {
+		item, hasItem, err := arrayItemSchemaAt(items, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		if hasItem {
+			value, err := materializer.materializeArrayValue(item, true, result, schema, path)
+			if err != nil {
+				return nil, err
+			}
+
+			result = append(result, value)
+		}
+	}
+
+	for _, requirement := range contains {
+		// Prefer an existing match; only append or replace a non-prefix item
+		// when the requirement still lacks enough matching values.
+		for containsCount(materializer.semantic, requirement.Schema, result, path) < requirement.Minimum {
+			if len(result) >= maximum {
+				if index := replaceableArrayItemIndex(result, prefixLength, materializer.semantic, requirement.Schema, path); index >= 0 {
+					item, hasItem, err := arrayItemSchemaAt(items, index)
+					if err != nil {
+						return nil, err
+					}
+
+					candidateSchema := combineOptionalArraySchemas(item, hasItem, requirement.Schema)
+					value, err := materializer.materializeArrayValue(candidateSchema, true, result[:index], schema, path)
+					if err != nil {
+						return nil, err
+					}
+
+					result[index] = value
+					continue
+				}
+
+				return nil, newMaterializationError(
+					MaterializationCodeUnsupported,
+					MaterializationCategoryUnsupportedMaterialization,
+					materializationKeywordPath(path, "contains"),
+					ErrUnsupportedMaterialization,
+				)
+			}
+
+			item, hasItem, err := arrayItemSchemaAt(items, len(result))
+			if err != nil {
+				return nil, err
+			}
+
+			candidateSchema := combineOptionalArraySchemas(item, hasItem, requirement.Schema)
+			value, err := materializer.materializeArrayValue(candidateSchema, true, result, schema, path)
+			if err != nil {
+				return nil, err
+			}
+
+			if err := validateEffectiveInstance(materializer.semantic, requirement.Schema, value, path.appendArrayItem()); err != nil {
+				return nil, newMaterializationError(
+					MaterializationCodeUnsupported,
+					MaterializationCategoryUnsupportedMaterialization,
+					materializationKeywordPath(path, "contains"),
+					ErrUnsupportedMaterialization,
+				)
+			}
+			result = append(result, value)
+		}
+	}
+
+	for len(result) < minimum {
+		// Trailing positions use items/additionalItems first.
+		// In modern drafts, unevaluatedItems is the fallback for positions outside prefixItems.
+		item, hasItem, err := arrayItemSchemaAt(items, len(result))
+		if err != nil {
+			return nil, err
+		}
+
+		if !hasItem {
+			item, hasItem, err = combinedOptionalArraySchemas(unevaluated)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		value, err := materializer.materializeArrayValue(item, hasItem, result, schema, path)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, value)
+	}
+
 	if len(result) > maximum {
+		// Only non-tuple values may be trimmed; tuple prefix positions are fixed.
+		if prefixLength > maximum {
+			return nil, newMaterializationError(
+				MaterializationCodeUnsatisfiable,
+				MaterializationCategoryUnsatisfiableSchema,
+				materializationKeywordPath(path, "maxItems"),
+				ErrMaterializationUnsatisfiable,
+			)
+		}
 		result = result[:maximum]
 	}
 
+	if err := validateEffectiveInstance(materializer.semantic, schema, result, path); err != nil {
+		if isMaterializationReferenceError(err) {
+			return nil, err
+		}
+
+		if isDefinitelyUnsatisfiable(schema) {
+			return nil, newMaterializationError(
+				MaterializationCodeUnsatisfiable,
+				MaterializationCategoryUnsatisfiableSchema,
+				validationPath(err, path),
+				ErrMaterializationUnsatisfiable,
+			)
+		}
+
+		return nil, newMaterializationError(
+			MaterializationCodeUnsupported,
+			MaterializationCategoryUnsupportedMaterialization,
+			validationPath(err, path),
+			ErrUnsupportedMaterialization,
+		)
+	}
+
 	return result, nil
+}
+
+// arrayPrefixLength returns the longest tuple prefix across simultaneous terms.
+// A longer prefix in any term makes those indexes mandatory for the combined schema.
+func arrayPrefixLength(items []effectiveArrayItems) int {
+	length := 0
+	for _, current := range items {
+		if current.PrefixItems != nil && len(*current.PrefixItems) > length {
+			length = len(*current.PrefixItems)
+		}
+	}
+
+	return length
+}
+
+// arrayItemSchemaAt combines every item constraint applying at one index.
+// A missing schema from one term means that term imposes no item restriction;
+// only schemas explicitly selected by a term participate in the conjunction.
+func arrayItemSchemaAt(items []effectiveArrayItems, index int) (effectiveSchema, bool, error) {
+	var selected []effectiveSchema
+	for _, current := range items {
+		var item *effectiveSchema
+		switch {
+		case current.PrefixItems != nil && index < len(*current.PrefixItems):
+			item = &(*current.PrefixItems)[index]
+		case current.Items != nil:
+			item = current.Items
+		case current.AdditionalItems != nil:
+			item = current.AdditionalItems
+		}
+
+		if item != nil {
+			selected = append(selected, *item)
+		}
+	}
+
+	return combinedOptionalArraySchemas(selected)
+}
+
+// combinedOptionalArraySchemas combines selected item schemas
+// while preserving the distinction between "no restriction" and an explicit true/false schema.
+func combinedOptionalArraySchemas(schemas []effectiveSchema) (effectiveSchema, bool, error) {
+	if len(schemas) == 0 {
+		return effectiveSchema{}, false, nil
+	}
+
+	combined := schemas[0]
+	for _, schema := range schemas[1:] {
+		combined = combineEffectiveSchemas(combined, schema)
+	}
+
+	return combined, true, nil
+}
+
+// combineOptionalArraySchemas creates the schema required at an index
+// that must satisfy both its ordinary item rule and one contains rule.
+func combineOptionalArraySchemas(item effectiveSchema, hasItem bool, contains effectiveSchema) effectiveSchema {
+	if !hasItem {
+		return contains
+	}
+
+	return combineEffectiveSchemas(item, contains)
+}
+
+// arrayItemExamples returns only homogeneous-item examples.
+// Tuple annotations are consumed at their own index by materializeEffective instead.
+func arrayItemExamples(items []effectiveArrayItems) []any {
+	var result []any
+	for _, current := range items {
+		if current.Items == nil {
+			continue
+		}
+		for _, raw := range current.Items.keywordValues("examples") {
+			result = append(result, asSlice(raw)...)
+		}
+	}
+
+	return result
+}
+
+// hasUniqueArrayItem reports whether a candidate may be appended under uniqueItems.
+func hasUniqueArrayItem(schema effectiveSchema, values []any, candidate any) bool {
+	for _, term := range schema.terms {
+		if term.Object != nil {
+			if unique, ok := term.Object["uniqueItems"].(bool); ok && unique && containsJSONValue(values, candidate) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+// materializeArrayValue builds one item and, if uniqueItems rejects the normal value,
+// tries a bounded scalar alternative that is revalidated by its item schema.
+func (materializer *exampleMaterializer) materializeArrayValue(
+	item effectiveSchema,
+	hasItem bool,
+	values []any,
+	arraySchema effectiveSchema,
+	path schemaPath,
+) (any, error) {
+	var value any
+	var err error
+	if hasItem {
+		value, err = materializer.materializeEffective(item, path.appendArrayItem())
+	} else {
+		value = nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if hasUniqueArrayItem(arraySchema, values, value) {
+		return value, nil
+	}
+
+	for attempt := 1; attempt <= len(values)+16; attempt++ {
+		candidate, ok := uniqueArrayScalarCandidate(effectiveSchemaType(item), attempt)
+		if !ok || containsJSONValue(values, candidate) {
+			continue
+		}
+		if hasItem && validateEffectiveInstance(materializer.semantic, item, candidate, path.appendArrayItem()) != nil {
+			continue
+		}
+		return candidate, nil
+	}
+
+	return nil, newMaterializationError(
+		MaterializationCodeUnsupported,
+		MaterializationCategoryUnsupportedMaterialization,
+		materializationKeywordPath(path, "uniqueItems"),
+		ErrUnsupportedMaterialization,
+	)
+}
+
+// uniqueArrayScalarCandidate returns a bounded alternative only for scalar types
+// whose values can be varied without inventing object or array structure.
+func uniqueArrayScalarCandidate(schemaType string, value int) (any, bool) {
+	switch schemaType {
+	case "string":
+		return fmt.Sprintf("<string>-%d", value), true
+	case "number", "integer":
+		return value, true
+	case "boolean":
+		return value%2 == 0, true
+	case "":
+		return value, true
+	default:
+		return nil, false
+	}
+}
+
+// containsCount counts items that independently validate against one contains schema.
+func containsCount(view *schemaSemanticView, schema effectiveSchema, values []any, path schemaPath) int {
+	count := 0
+	for _, value := range values {
+		if validateEffectiveInstance(view, schema, value, path.appendArrayItem()) == nil {
+			count++
+		}
+	}
+
+	return count
+}
+
+// replaceableArrayItemIndex finds a non-prefix,
+// non-matching item that can be replaced while preserving the mandatory tuple prefix.
+func replaceableArrayItemIndex(
+	values []any,
+	prefixLength int,
+	view *schemaSemanticView,
+	schema effectiveSchema,
+	path schemaPath,
+) int {
+	for index := len(values) - 1; index >= prefixLength; index-- {
+		if validateEffectiveInstance(view, schema, values[index], path.appendArrayItem()) != nil {
+			return index
+		}
+	}
+
+	return -1
+}
+
+// arrayContainsContradiction detects an impossible contains interval.
+func arrayContainsContradiction(requirements []effectiveArrayContains) bool {
+	for _, requirement := range requirements {
+		if requirement.HasMaximum && requirement.Minimum > requirement.Maximum {
+			return true
+		}
+	}
+
+	return false
 }
 
 // hasArrayItems reports whether at least one term declares array semantics.
@@ -804,6 +1135,10 @@ func validateEffectiveInstance(
 		if err := validateSchemaTerm(view, term.Object, value, path); err != nil {
 			return err
 		}
+	}
+
+	if err := validateEffectiveUnevaluatedItems(view, schema, value, path); err != nil {
+		return err
 	}
 
 	for _, group := range schema.compositionGroups {
@@ -1110,7 +1445,8 @@ func validateObjectTerm(view *schemaSemanticView, object map[string]any, value a
 	return nil
 }
 
-// validateArrayTerm validates tuple, homogeneous-item, and length rules.
+// validateArrayTerm validates one term's tuple/item rules and its contains count.
+// Effective unevaluatedItems validation runs after all terms are known.
 func validateArrayTerm(view *schemaSemanticView, object map[string]any, value any, path schemaPath) error {
 	items, ok := value.([]any)
 	if !ok {
@@ -1144,38 +1480,128 @@ func validateArrayTerm(view *schemaSemanticView, object map[string]any, value an
 		}
 	}
 
-	term, err := (effectiveSchema{terms: []schemaValue{{Object: object}}}).arrayItems(view)
+	effective := effectiveSchema{terms: []schemaValue{{Object: object}}}
+	term, err := effective.arrayItems(view)
 	if err != nil {
 		return materializationReferenceError(err, path)
 	}
 
-	if len(term) > 0 {
-		current := term[0]
-		for index, item := range items {
-			var itemSchema *effectiveSchema
+	for index, item := range items {
+		itemSchema, hasItem, err := arrayItemSchemaAt(term, index)
+		if err != nil {
+			return err
+		}
 
-			switch {
-			case current.PrefixItems != nil && index < len(*current.PrefixItems):
-				itemSchema = &(*current.PrefixItems)[index]
-
-			case current.Items != nil:
-				itemSchema = current.Items
-
-			case current.AdditionalItems != nil:
-				itemSchema = current.AdditionalItems
-			}
-
-			if itemSchema == nil {
-				continue
-			}
-
-			if err := validateEffectiveInstance(view, *itemSchema, item, path.appendArrayItem()); err != nil {
+		if hasItem {
+			if err := validateEffectiveInstance(view, itemSchema, item, path.appendArrayItem()); err != nil {
 				return err
 			}
 		}
 	}
 
+	contains, err := effective.arrayContains(view)
+	if err != nil {
+		return materializationReferenceError(err, path)
+	}
+	for _, requirement := range contains {
+		count := containsCount(view, requirement.Schema, items, path)
+		if count < requirement.Minimum {
+			keyword := "contains"
+			if requirement.Minimum != 1 {
+				keyword = "minContains"
+			}
+			return newCandidateValidationError(
+				materializationKeywordPath(path, keyword),
+				keyword,
+				"array does not contain enough matching items")
+		}
+
+		if requirement.HasMaximum && count > requirement.Maximum {
+			return newCandidateValidationError(
+				materializationKeywordPath(path, "maxContains"),
+				"maxContains",
+				"array contains too many matching items")
+		}
+	}
+
 	return nil
+}
+
+// validateEffectiveUnevaluatedItems applies modern unevaluatedItems
+// only after all conjunctive terms are visible,
+// so an item evaluated by another term is not incorrectly treated as unevaluated.
+func validateEffectiveUnevaluatedItems(
+	view *schemaSemanticView,
+	schema effectiveSchema,
+	value any,
+	path schemaPath,
+) error {
+	items, ok := value.([]any)
+	if !ok || view.legacyArraySemantics() {
+		return nil
+	}
+
+	unevaluated, err := schema.unevaluatedItems(view)
+	if err != nil {
+		return materializationReferenceError(err, path)
+	}
+	unevaluatedSchema, hasUnevaluated, _ := combinedOptionalArraySchemas(unevaluated)
+	if !hasUnevaluated {
+		return nil
+	}
+
+	ordinary, err := schema.arrayItems(view)
+	if err != nil {
+		return materializationReferenceError(err, path)
+	}
+	contains, err := schema.arrayContains(view)
+	if err != nil {
+		return materializationReferenceError(err, path)
+	}
+
+	for index, item := range items {
+		// Prefix/items schemas and successful contains matches both mark
+		// an item as evaluated for the purpose of unevaluatedItems.
+		if arrayItemEvaluated(ordinary, index) || arrayItemMatchesContains(view, contains, item, path) {
+			continue
+		}
+
+		if err := validateEffectiveInstance(view, unevaluatedSchema, item, path.appendArrayItem()); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// arrayItemEvaluated reports whether ordinary item keywords cover one index.
+func arrayItemEvaluated(items []effectiveArrayItems, index int) bool {
+	for _, current := range items {
+		if current.PrefixItems != nil && index < len(*current.PrefixItems) {
+			return true
+		}
+		if current.Items != nil || current.AdditionalItems != nil {
+			return true
+		}
+	}
+
+	return false
+}
+
+// arrayItemMatchesContains reports whether one item is evaluated by any contains clause.
+func arrayItemMatchesContains(
+	view *schemaSemanticView,
+	contains []effectiveArrayContains,
+	value any,
+	path schemaPath,
+) bool {
+	for _, requirement := range contains {
+		if validateEffectiveInstance(view, requirement.Schema, value, path.appendArrayItem()) == nil {
+			return true
+		}
+	}
+
+	return false
 }
 
 // objectPatterns compiles patternProperties without applying arbitrary synthesis.
