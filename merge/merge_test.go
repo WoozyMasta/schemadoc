@@ -4,7 +4,11 @@
 
 package merge
 
-import "testing"
+import (
+	"encoding/json"
+	"strings"
+	"testing"
+)
 
 func TestSetNodeAtPointer_CreatesNestedObjects(t *testing.T) {
 	t.Parallel()
@@ -171,5 +175,88 @@ func TestApply_InMemorySource(t *testing.T) {
 
 	if got != "string" {
 		t.Fatalf("node value = %v, want %v", got, "string")
+	}
+}
+
+func TestDecodeMergeEncodePreservesJSONNumbers(t *testing.T) {
+	t.Parallel()
+
+	base, err := Decode([]byte(`{
+  "minimum": 9007199254740993,
+  "decimal": 1.2300,
+  "scientific": 1e+03
+}`), FormatJSON)
+	if err != nil {
+		t.Fatalf("Decode(base): %v", err)
+	}
+
+	overlay, err := Decode([]byte(`{
+  "maximum": 9223372036854775807,
+  "negative_limit": -9223372036854775808,
+  "nearby": 9007199254740994
+}`), FormatJSON)
+	if err != nil {
+		t.Fatalf("Decode(overlay): %v", err)
+	}
+
+	merged, err := Apply(base, []Action{
+		{
+			Type:          NodeOpMerge,
+			Source:        overlay,
+			TargetPointer: "",
+		},
+	}, ApplyOptions{})
+	if err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+
+	encodedJSON, err := Encode(merged, FormatJSON)
+	if err != nil {
+		t.Fatalf("Encode(JSON): %v", err)
+	}
+	for _, value := range []string{
+		"9007199254740993",
+		"9007199254740994",
+		"9223372036854775807",
+		"-9223372036854775808",
+		"1.2300",
+		"1e+03",
+	} {
+		if !strings.Contains(string(encodedJSON), value) {
+			t.Fatalf("encoded JSON %q does not contain %q", encodedJSON, value)
+		}
+	}
+
+	encodedYAML, err := Encode(merged, FormatYAML)
+	if err != nil {
+		t.Fatalf("Encode(YAML): %v", err)
+	}
+	for _, value := range []string{
+		"9007199254740993",
+		"9007199254740994",
+		"9223372036854775807",
+		"-9223372036854775808",
+		"1.2300",
+		"1e+03",
+	} {
+		if !strings.Contains(string(encodedYAML), value) {
+			t.Fatalf("encoded YAML %q does not contain %q", encodedYAML, value)
+		}
+	}
+	if strings.Contains(string(encodedYAML), `"9007199254740993"`) {
+		t.Fatalf("large integer was encoded as a YAML string: %q", encodedYAML)
+	}
+
+	decodedValue, err := decodeJSON(encodedJSON)
+	if err != nil {
+		t.Fatalf("decode encoded JSON: %v", err)
+	}
+	decoded, ok := decodedValue.(map[string]any)
+	if !ok {
+		t.Fatalf("decoded JSON type = %T, want map[string]any", decodedValue)
+	}
+	minimum, ok := decoded["minimum"].(json.Number)
+	if !ok || minimum.String() != "9007199254740993" {
+		t.Fatalf("decoded minimum = %T %q", decoded["minimum"], minimum)
 	}
 }

@@ -5,8 +5,11 @@
 package merge
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -59,11 +62,22 @@ func decodeFile(path string) (any, error) {
 // decodeJSON decodes JSON bytes to dynamic node tree.
 func decodeJSON(content []byte) (any, error) {
 	var node any
-	if err := json.Unmarshal(content, &node); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(content))
+	decoder.UseNumber()
+	if err := decoder.Decode(&node); err != nil {
 		return nil, err
 	}
 
-	return node, nil
+	var extra any
+	err := decoder.Decode(&extra)
+	switch {
+	case errors.Is(err, io.EOF):
+		return node, nil
+	case err == nil:
+		return nil, errors.New("multiple JSON values")
+	default:
+		return nil, err
+	}
 }
 
 // decodeYAML decodes YAML bytes and normalizes map keys to string.
@@ -108,7 +122,12 @@ func normalizeYAMLNode(node any) any {
 func encodeNode(node any, format string) ([]byte, error) {
 	switch strings.ToLower(strings.TrimSpace(format)) {
 	case FormatYAML:
-		encoded, err := yaml.Marshal(node)
+		normalized, err := normalizeJSONNumbersForYAML(node)
+		if err != nil {
+			return nil, fmt.Errorf("normalize yaml numbers: %w", err)
+		}
+
+		encoded, err := yaml.Marshal(normalized)
 		if err != nil {
 			return nil, fmt.Errorf("encode yaml: %w", err)
 		}
@@ -123,5 +142,56 @@ func encodeNode(node any, format string) ([]byte, error) {
 		return append(encoded, '\n'), nil
 	default:
 		return nil, fmt.Errorf("unsupported output format %q", format)
+	}
+}
+
+// normalizeJSONNumbersForYAML keeps json.Number values numeric
+// without converting their lexical representation through float64.
+func normalizeJSONNumbersForYAML(node any) (any, error) {
+	switch typed := node.(type) {
+	case json.Number:
+		if _, err := json.Marshal(typed); err != nil {
+			return nil, err
+		}
+
+		tag := "!!float"
+		if !strings.ContainsAny(typed.String(), ".eE") {
+			tag = "!!int"
+		}
+
+		return &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   tag,
+			Value: typed.String(),
+		}, nil
+
+	case map[string]any:
+		normalized := make(map[string]any, len(typed))
+		for key, value := range typed {
+			item, err := normalizeJSONNumbersForYAML(value)
+			if err != nil {
+				return nil, err
+			}
+
+			normalized[key] = item
+		}
+
+		return normalized, nil
+
+	case []any:
+		normalized := make([]any, len(typed))
+		for index, value := range typed {
+			item, err := normalizeJSONNumbersForYAML(value)
+			if err != nil {
+				return nil, err
+			}
+
+			normalized[index] = item
+		}
+
+		return normalized, nil
+
+	default:
+		return node, nil
 	}
 }

@@ -35,6 +35,77 @@ func writeBytes(stdout io.Writer, outputPath string, content []byte, label strin
 	return nil
 }
 
+// decodeJSONWithNumbers decodes dynamic JSON values without reducing numbers to float64.
+func decodeJSONWithNumbers(content []byte, target any) error {
+	decoder := json.NewDecoder(bytes.NewReader(content))
+	decoder.UseNumber()
+	if err := decoder.Decode(target); err != nil {
+		return err
+	}
+
+	var extra any
+	err := decoder.Decode(&extra)
+	switch {
+	case errors.Is(err, io.EOF):
+		return nil
+	case err == nil:
+		return errors.New("multiple JSON values")
+	default:
+		return err
+	}
+}
+
+// normalizeJSONNumbersForYAML keeps json.Number values numeric
+// without converting their lexical representation through float64.
+func normalizeJSONNumbersForYAML(node any) (any, error) {
+	switch typed := node.(type) {
+	case json.Number:
+		if _, err := json.Marshal(typed); err != nil {
+			return nil, err
+		}
+
+		tag := "!!float"
+		if !strings.ContainsAny(typed.String(), ".eE") {
+			tag = "!!int"
+		}
+
+		return &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   tag,
+			Value: typed.String(),
+		}, nil
+
+	case map[string]any:
+		normalized := make(map[string]any, len(typed))
+		for key, value := range typed {
+			item, err := normalizeJSONNumbersForYAML(value)
+			if err != nil {
+				return nil, err
+			}
+
+			normalized[key] = item
+		}
+
+		return normalized, nil
+
+	case []any:
+		normalized := make([]any, len(typed))
+		for index, value := range typed {
+			item, err := normalizeJSONNumbersForYAML(value)
+			if err != nil {
+				return nil, err
+			}
+
+			normalized[index] = item
+		}
+
+		return normalized, nil
+
+	default:
+		return node, nil
+	}
+}
+
 // writeString writes string content to stdout or file path when provided.
 func writeString(stdout io.Writer, outputPath, content, label string) error {
 	return writeBytes(stdout, outputPath, []byte(content), label)

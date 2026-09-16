@@ -16,8 +16,8 @@ func cloneNode(node any) (any, error) {
 		return nil, fmt.Errorf("clone encode: %w", err)
 	}
 
-	var cloned any
-	if err := json.Unmarshal(raw, &cloned); err != nil {
+	cloned, err := decodeJSON(raw)
+	if err != nil {
 		return nil, fmt.Errorf("clone decode: %w", err)
 	}
 

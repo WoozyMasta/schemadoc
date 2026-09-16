@@ -136,7 +136,7 @@ func compileBuildConfigSchema() (*jsonschema.Schema, error) {
 		return nil, err
 	}
 
-	if err := json.Unmarshal(schemaBytes, &schemaDocument); err != nil {
+	if err := decodeJSONWithNumbers(schemaBytes, &schemaDocument); err != nil {
 		return nil, fmt.Errorf("decode config schema: %w", err)
 	}
 

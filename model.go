@@ -5,8 +5,11 @@
 package schemadoc
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"math"
 	"sort"
 	"strconv"
@@ -134,7 +137,7 @@ func (value schemaValue) isZero() bool {
 // parseDocument decodes raw schema bytes into normalized schemaDocument model.
 func parseDocument(schemaBytes []byte) (schemaDocument, error) {
 	var root any
-	if err := json.Unmarshal(schemaBytes, &root); err != nil {
+	if err := decodeJSONWithNumbers(schemaBytes, &root); err != nil {
 		return schemaDocument{}, fmt.Errorf("%w: %w", ErrDecodeSchema, err)
 	}
 
@@ -162,6 +165,26 @@ func parseDocument(schemaBytes []byte) (schemaDocument, error) {
 	doc.Draft = detectDraft("")
 	doc.Dialect = normalizeSchemaDialect("")
 	return doc, nil
+}
+
+// decodeJSONWithNumbers decodes JSON without reducing numbers to float64.
+func decodeJSONWithNumbers(content []byte, target any) error {
+	decoder := json.NewDecoder(bytes.NewReader(content))
+	decoder.UseNumber()
+	if err := decoder.Decode(target); err != nil {
+		return err
+	}
+
+	var extra any
+	err := decoder.Decode(&extra)
+	switch {
+	case errors.Is(err, io.EOF):
+		return nil
+	case err == nil:
+		return errors.New("multiple JSON values")
+	default:
+		return err
+	}
 }
 
 // mergeDefinitions merges legacy and modern definition maps into one normalized map.

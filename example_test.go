@@ -89,6 +89,38 @@ func TestGenerateExampleYAMLRequiredMode(t *testing.T) {
 	assertNotContains(t, got, "count:")
 }
 
+func TestYAMLNumberSerializationPreservesJSONLexemes(t *testing.T) {
+	t.Parallel()
+
+	node, err := yamlNodeForValue(map[string]any{
+		"large":      json.Number("9007199254740993"),
+		"decimal":    json.Number("1.2300"),
+		"scientific": json.Number("1e+03"),
+	})
+	if err != nil {
+		t.Fatalf("yamlNodeForValue: %v", err)
+	}
+
+	got, err := marshalExampleYAMLNode(node, 2)
+	if err != nil {
+		t.Fatalf("marshalExampleYAMLNode: %v", err)
+	}
+
+	output := string(got)
+	for _, value := range []string{
+		"9007199254740993",
+		"1.2300",
+		"1e+03",
+	} {
+		if !strings.Contains(output, value) {
+			t.Fatalf("YAML output %q does not contain %q", output, value)
+		}
+	}
+	if strings.Contains(output, `"9007199254740993"`) {
+		t.Fatalf("large integer was encoded as a YAML string: %q", output)
+	}
+}
+
 func TestGenerateExampleYAMLCommentsIncludeEnumValues(t *testing.T) {
 	t.Parallel()
 

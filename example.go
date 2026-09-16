@@ -722,7 +722,12 @@ func formatYAMLCommentValue(value any, format YAMLCommentFormat, allowBlock bool
 		return normalizeInlineCommentValue(value)
 	}
 
-	encoded, err := yaml.Marshal(value)
+	node, err := yamlNodeForValue(value)
+	if err != nil {
+		return normalizeInlineCommentValue(value)
+	}
+
+	encoded, err := marshalExampleYAMLNode(node, 2)
 	if err != nil {
 		return normalizeInlineCommentValue(value)
 	}
@@ -833,14 +838,7 @@ func yamlNodeForValue(value any) (*yaml.Node, error) {
 		return yamlScalarNode("!!str", typed), nil
 
 	case json.Number:
-		if int64Value, err := typed.Int64(); err == nil {
-			return yamlScalarNode("!!int", strconv.FormatInt(int64Value, 10)), nil
-		}
-		float64Value, err := typed.Float64()
-		if err != nil {
-			return nil, err
-		}
-		return yamlScalarNode("!!float", strconv.FormatFloat(float64Value, 'g', -1, 64)), nil
+		return yamlNodeForJSONNumber(typed)
 
 	case int:
 		return yamlScalarNode("!!int", strconv.Itoa(typed)), nil
@@ -915,11 +913,25 @@ func yamlNodeForValue(value any) (*yaml.Node, error) {
 			return nil, err
 		}
 		var normalized any
-		if err := json.Unmarshal(data, &normalized); err != nil {
+		if err := decodeJSONWithNumbers(data, &normalized); err != nil {
 			return nil, err
 		}
 		return yamlNodeForValue(normalized)
 	}
+}
+
+// yamlNodeForJSONNumber preserves a JSON number's lexical representation in YAML.
+func yamlNodeForJSONNumber(value json.Number) (*yaml.Node, error) {
+	if _, err := json.Marshal(value); err != nil {
+		return nil, err
+	}
+
+	tag := "!!float"
+	if !strings.ContainsAny(value.String(), ".eE") {
+		tag = "!!int"
+	}
+
+	return yamlScalarNode(tag, value.String()), nil
 }
 
 // yamlScalarNode creates one scalar yaml.Node with explicit tag.

@@ -254,7 +254,7 @@ func boolPointer(value bool) *bool {
 // formatJSONOutput applies JSON indentation/minify settings to JSON bytes.
 func formatJSONOutput(content []byte, options jsonOutputOptions) ([]byte, error) {
 	var decoded any
-	if err := json.Unmarshal(content, &decoded); err != nil {
+	if err := decodeJSONWithNumbers(content, &decoded); err != nil {
 		return nil, err
 	}
 
@@ -314,12 +314,17 @@ func isYAMLOutputPath(path string) bool {
 // formatYAMLOutputFromJSON converts JSON schema bytes to YAML with configured indentation.
 func formatYAMLOutputFromJSON(content []byte, indent int) ([]byte, error) {
 	var decoded any
-	if err := json.Unmarshal(content, &decoded); err != nil {
+	if err := decodeJSONWithNumbers(content, &decoded); err != nil {
 		return nil, err
 	}
 
 	if indent < 1 {
 		indent = 2
+	}
+
+	decoded, err := normalizeJSONNumbersForYAML(decoded)
+	if err != nil {
+		return nil, err
 	}
 
 	var out bytes.Buffer
@@ -449,7 +454,7 @@ func parseMarkdownExampleOptions(
 // extractSchemaDraftURI extracts raw $schema URI from schema payload.
 func extractSchemaDraftURI(schemaBytes []byte) string {
 	var root map[string]any
-	if err := json.Unmarshal(schemaBytes, &root); err != nil {
+	if err := decodeJSONWithNumbers(schemaBytes, &root); err != nil {
 		return ""
 	}
 

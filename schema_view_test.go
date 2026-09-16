@@ -5,6 +5,7 @@
 package schemadoc
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
 	"testing"
@@ -56,7 +57,7 @@ func TestEffectiveSchemaAppliesModernRefSiblings(t *testing.T) {
 		{keyword: "description", want: "overlay description"},
 		{keyword: "default", want: "overlay default"},
 		{keyword: "examples", want: []any{"overlay example"}},
-		{keyword: "x-order", want: float64(2)},
+		{keyword: "x-order", want: json.Number("2")},
 	} {
 		got, ok := effective.annotation(test.keyword)
 		if !ok || !reflect.DeepEqual(got, test.want) {
@@ -139,7 +140,7 @@ func TestEffectiveSchemaRefOverlayKeepsBaseMetadata(t *testing.T) {
 		{keyword: "description", want: "base description"},
 		{keyword: "default", want: "base default"},
 		{keyword: "examples", want: []any{"base example"}},
-		{keyword: "x-order", want: float64(1)},
+		{keyword: "x-order", want: json.Number("1")},
 	} {
 		got, ok := effective.annotation(test.keyword)
 		if !ok || !reflect.DeepEqual(got, test.want) {
