@@ -149,6 +149,28 @@
     }
   },
   {
+    "name": "refs/bad-local-pointer",
+    "group": "negative",
+    "schema": "negative/refs/bad-local-pointer.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unresolved_reference",
+      "path": "#/$ref"
+    }
+  },
+  {
+    "name": "refs/missing-local-reference",
+    "group": "negative",
+    "schema": "negative/refs/missing-local-reference.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unresolved_reference",
+      "path": "#/$ref"
+    }
+  },
+  {
     "name": "refs/external-reference",
     "group": "negative",
     "schema": "negative/refs/external-reference.json",
@@ -209,6 +231,76 @@
     "error": {
       "category": "unsupported_materialization",
       "path": "#/pattern"
+    }
+  },
+  {
+    "name": "scalars/invalid-const",
+    "group": "negative",
+    "schema": "negative/scalars/invalid-const.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsatisfiable_schema"
+    }
+  },
+  {
+    "name": "scalars/enum-no-admissible-member",
+    "group": "negative",
+    "schema": "negative/scalars/enum-no-admissible-member.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsatisfiable_schema"
+    }
+  },
+  {
+    "name": "scalars/length-bounds",
+    "group": "negative",
+    "schema": "negative/scalars/length-bounds.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsatisfiable_schema"
+    }
+  },
+  {
+    "name": "scalars/numeric-bounds",
+    "group": "negative",
+    "schema": "negative/scalars/numeric-bounds.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsatisfiable_schema"
+    }
+  },
+  {
+    "name": "scalars/multiple-of-interval",
+    "group": "negative",
+    "schema": "negative/scalars/multiple-of-interval.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsatisfiable_schema"
+    }
+  },
+  {
+    "name": "objects/required-false",
+    "group": "negative",
+    "schema": "negative/objects/required-false.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsatisfiable_schema"
+    }
+  },
+  {
+    "name": "composition/no-valid-any-of-branch",
+    "group": "negative",
+    "schema": "negative/composition/no-valid-any-of-branch.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsatisfiable_schema"
     }
   },
   {

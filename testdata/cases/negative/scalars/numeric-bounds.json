@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:numeric-bounds",
+  "type": "number",
+  "minimum": 2,
+  "maximum": 1
+}

@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"go.yaml.in/yaml/v3"
 )
 
 const schemaCorpusManifestPath = "testdata/cases/manifest.json"
@@ -128,6 +129,27 @@ func validateDecodedInstance(schemaBytes []byte, instance any) error {
 	}
 
 	return nil
+}
+
+// validateGeneratedJSON decodes generated JSON before independent validation.
+func validateGeneratedJSON(schemaBytes, generated []byte) error {
+	var instance any
+	if err := json.Unmarshal(generated, &instance); err != nil {
+		return fmt.Errorf("decode generated json: %w", err)
+	}
+
+	return validateDecodedInstance(schemaBytes, instance)
+}
+
+// validateGeneratedYAML decodes YAML and normalizes it before validation.
+func validateGeneratedYAML(schemaBytes, generated []byte) error {
+	var value any
+	if err := yaml.Unmarshal(generated, &value); err != nil {
+		return fmt.Errorf("decode generated yaml: %w", err)
+	}
+
+	normalized := normalizeYAMLMap(value)
+	return validateDecodedInstance(schemaBytes, normalized)
 }
 
 func minimalSchemaBytes(t *testing.T, doc map[string]any) []byte {

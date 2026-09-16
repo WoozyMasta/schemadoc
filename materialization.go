@@ -2197,6 +2197,9 @@ func isDefinitelyUnsatisfiable(schema effectiveSchema) bool {
 	if schemaTypesContradict(schema) {
 		return true
 	}
+	if scalarEnumerationConstraintsContradict(schema) {
+		return true
+	}
 	if numericConstraintsDefinitelyUnsatisfiable(schema) {
 		return true
 	}
@@ -2234,6 +2237,76 @@ func isDefinitelyUnsatisfiable(schema effectiveSchema) bool {
 		if minOK && maxOK && minimum > maximum {
 			return true
 		}
+	}
+
+	return false
+}
+
+// scalarEnumerationConstraintsContradict checks intersections
+// that can be decided without traversing nested schemas or resolving references.
+func scalarEnumerationConstraintsContradict(schema effectiveSchema) bool {
+	constants := schema.consts()
+	if len(constants) > 1 {
+		for _, value := range constants[1:] {
+			if !equalJSONValue(constants[0], value) {
+				return true
+			}
+		}
+	}
+
+	if len(constants) > 0 {
+		constant := constants[0]
+		for _, declaration := range schema.types() {
+			if !matchesSchemaType(constant, declaration) {
+				return true
+			}
+		}
+	}
+
+	enums := schema.enums()
+	if len(enums) > 1 {
+		members := asSlice(enums[0])
+		for _, candidate := range members {
+			admissible := true
+			for _, other := range enums[1:] {
+				if !containsJSONValue(asSlice(other), candidate) {
+					admissible = false
+					break
+				}
+			}
+
+			if admissible {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	if len(constants) > 0 {
+		for _, raw := range enums {
+			if !containsJSONValue(asSlice(raw), constants[0]) {
+				return true
+			}
+		}
+	}
+
+	if len(constants) == 0 && len(enums) == 1 {
+		for _, candidate := range asSlice(enums[0]) {
+			valid := true
+			for _, declaration := range schema.types() {
+				if !matchesSchemaType(candidate, declaration) {
+					valid = false
+					break
+				}
+			}
+
+			if valid {
+				return false
+			}
+		}
+
+		return true
 	}
 
 	return false

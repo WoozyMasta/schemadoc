@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:no-valid-any-of-branch",
+  "anyOf": [
+    {
+      "type": "string",
+      "pattern": "^(?:[A-Z]{3}-){2}[0-9]{4}$"
+    },
+    {
+      "type": "number",
+      "minimum": 2,
+      "maximum": 1
+    }
+  ]
+}

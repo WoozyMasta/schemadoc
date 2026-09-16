@@ -30,6 +30,9 @@ func TestGeneratedExampleJSONGolden(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GenerateExample(json): %v", err)
 	}
+	if err := validateGeneratedJSON(schemaBytes, got); err != nil {
+		t.Fatalf("validate generated json example: %v", err)
+	}
 
 	want, err := os.ReadFile(wantPath)
 	if err != nil {
@@ -55,6 +58,9 @@ func TestGeneratedExampleYAMLGolden(t *testing.T) {
 	got, err := GenerateExample(schemaBytes, ExampleModeAll, ExampleFormatYAML)
 	if err != nil {
 		t.Fatalf("GenerateExample(yaml): %v", err)
+	}
+	if err := validateGeneratedYAML(schemaBytes, got); err != nil {
+		t.Fatalf("validate generated yaml example: %v", err)
 	}
 
 	want, err := os.ReadFile(wantPath)

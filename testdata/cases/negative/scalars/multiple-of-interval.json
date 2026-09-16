@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:multiple-of-interval",
+  "type": "number",
+  "minimum": 0.1,
+  "maximum": 0.2,
+  "multipleOf": 0.3
+}

@@ -6,6 +6,7 @@ package schemadoc
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 )
 
@@ -76,5 +77,74 @@ func TestValidateDecodedInstance(t *testing.T) {
 
 	if err := validateDecodedInstance(schema, map[string]any{"name": 42}); err == nil {
 		t.Fatal("validate decoded instance accepted an invalid value")
+	}
+}
+
+func TestSchemaCorpusGeneratedExamplesValidate(t *testing.T) {
+	t.Parallel()
+
+	for _, fixture := range loadSchemaCorpus(t) {
+		if fixture.Group != "positive" && fixture.Group != "integration" {
+			continue
+		}
+
+		fixture := fixture
+		t.Run(fixture.Name, func(t *testing.T) {
+			t.Parallel()
+
+			schema := fixture.readSchemaCorpusSchema(t)
+			jsonExample, err := GenerateExampleJSON(schema, ExampleModeAll)
+			if err != nil {
+				t.Fatalf("generate json example: %v", err)
+			}
+			if err := validateGeneratedJSON(schema, jsonExample); err != nil {
+				t.Fatalf("validate generated json example: %v", err)
+			}
+
+			yamlExample, err := GenerateExampleYAML(schema, ExampleModeAll)
+			if err != nil {
+				t.Fatalf("generate yaml example: %v", err)
+			}
+			if err := validateGeneratedYAML(schema, yamlExample); err != nil {
+				t.Fatalf("validate generated yaml example: %v", err)
+			}
+		})
+	}
+}
+
+func TestSchemaCorpusNegativeMaterialization(t *testing.T) {
+	t.Parallel()
+
+	for _, fixture := range loadSchemaCorpus(t) {
+		if fixture.Group != "negative" {
+			continue
+		}
+
+		fixture := fixture
+		t.Run(fixture.Name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := GenerateExampleJSON(fixture.readSchemaCorpusSchema(t), ExampleModeAll)
+			if err == nil {
+				t.Fatal("GenerateExampleJSON unexpectedly succeeded")
+			}
+
+			var materialization *MaterializationError
+			if !errors.As(err, &materialization) {
+				t.Fatalf("error = %T %v, want MaterializationError", err, err)
+			}
+			if fixture.Error == nil {
+				t.Fatalf("negative case has no error expectation")
+			}
+			if string(materialization.Category) != fixture.Error.Category {
+				t.Fatalf("category = %q, want %q", materialization.Category, fixture.Error.Category)
+			}
+			if fixture.Error.Code != "" && string(materialization.Code) != fixture.Error.Code {
+				t.Fatalf("code = %q, want %q", materialization.Code, fixture.Error.Code)
+			}
+			if fixture.Error.Path != "" && materialization.Path != fixture.Error.Path {
+				t.Fatalf("path = %q, want %q", materialization.Path, fixture.Error.Path)
+			}
+		})
 	}
 }
