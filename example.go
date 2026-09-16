@@ -422,8 +422,8 @@ func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaVa
 			keyNode := node.Content[index]
 			valueNode := node.Content[index+1]
 
-			property, ok := properties[keyNode.Value]
-			if !ok {
+			property, ok, err := effective.property(builder.semantic, keyNode.Value)
+			if err != nil || !ok {
 				continue
 			}
 
@@ -439,8 +439,8 @@ func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaVa
 			return
 		}
 
-		itemSchema := effectiveArrayItemSchema(effective, builder.semantic)
-		for _, item := range node.Content {
+		for index, item := range node.Content {
+			itemSchema := effectiveArrayItemSchemaAt(effective, index, builder.semantic)
 			builder.annotateYAMLNode(item, itemSchema)
 		}
 	}
@@ -579,23 +579,19 @@ func sortKeysBySchemaOrder(keys []string, properties map[string]schemaValue) []s
 	return out
 }
 
-// effectiveArrayItemSchema selects the first applicable item schema for comments.
-func effectiveArrayItemSchema(schema effectiveSchema, view *schemaSemanticView) schemaValue {
+// effectiveArrayItemSchemaAt selects the schema applicable to one array index.
+func effectiveArrayItemSchemaAt(schema effectiveSchema, index int, view *schemaSemanticView) schemaValue {
 	items, err := schema.arrayItems(view)
 	if err != nil {
 		return schemaValue{}
 	}
-	if len(items) == 0 {
+
+	item, ok, err := arrayItemSchemaAt(items, index)
+	if err != nil || !ok {
 		return schemaValue{}
 	}
-	if items[0].PrefixItems != nil && len(*items[0].PrefixItems) > 0 {
-		return (*items[0].PrefixItems)[0].asSchemaValue()
-	}
-	if items[0].Items != nil {
-		return items[0].Items.asSchemaValue()
-	}
 
-	return schemaValue{}
+	return item.asSchemaValue()
 }
 
 // schemaKeyComment builds YAML key comments from selected schema annotations.

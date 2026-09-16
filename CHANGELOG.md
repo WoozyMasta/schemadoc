@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning][].
   and reports structured materialization failures.
 * YAML example comments now use independent controls for titles,
   descriptions, defaults, enums, examples, and annotation formatting.
+* YAML example comments now follow effective schemas
+  for dynamic map keys and tuple array positions.
 
 ### Removed
 

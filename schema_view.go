@@ -4,7 +4,10 @@
 
 package schemadoc
 
-import "maps"
+import (
+	"maps"
+	"regexp"
+)
 
 // schemaSemanticView expands schema structure while retaining simultaneous constraints.
 type schemaSemanticView struct {
@@ -259,6 +262,95 @@ func (schema effectiveSchema) properties(view *schemaSemanticView) (map[string]e
 	}
 
 	return properties, nil
+}
+
+// property resolves the schema terms that apply to one emitted object key.
+//
+// A declared property and every matching pattern property are conjunctive.
+// additionalProperties applies only for a term where neither of those rules matched;
+// this mirrors JSON Schema object evaluation for dynamic keys.
+func (schema effectiveSchema) property(view *schemaSemanticView, name string) (effectiveSchema, bool, error) {
+	selected := make([]effectiveSchema, 0)
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		properties := mapSchemaValues(term.Object["properties"])
+		property, declared := properties[name]
+		matchedPattern := false
+
+		if declared {
+			expanded, err := view.expand(property, make(map[string]struct{}))
+			if err != nil {
+				return effectiveSchema{}, false, err
+			}
+			selected = append(selected, expanded)
+		}
+
+		patterns, _ := term.Object["patternProperties"].(map[string]any)
+		for _, pattern := range sortedKeys(patterns) {
+			compiled, err := regexp.Compile(pattern)
+			if err != nil || !compiled.MatchString(name) {
+				continue
+			}
+
+			raw, exists := patterns[pattern]
+			if !exists {
+				continue
+			}
+			patternSchema, valid := toSchemaValue(raw)
+			if !valid {
+				continue
+			}
+
+			matchedPattern = true
+			expanded, err := view.expand(patternSchema, make(map[string]struct{}))
+			if err != nil {
+				return effectiveSchema{}, false, err
+			}
+			selected = append(selected, expanded)
+		}
+
+		if declared || matchedPattern {
+			continue
+		}
+
+		additional, exists := toSchemaValue(term.Object["additionalProperties"])
+		if !exists {
+			continue
+		}
+
+		expanded, err := view.expand(additional, make(map[string]struct{}))
+		if err != nil {
+			return effectiveSchema{}, false, err
+		}
+
+		selected = append(selected, expanded)
+	}
+
+	for _, group := range schema.compositionGroups {
+		for _, branch := range group.branches {
+			property, found, err := branch.property(view, name)
+			if err != nil {
+				return effectiveSchema{}, false, err
+			}
+			if found {
+				selected = append(selected, property)
+			}
+		}
+	}
+
+	if len(selected) == 0 {
+		return effectiveSchema{}, false, nil
+	}
+
+	combined := selected[0]
+	for _, item := range selected[1:] {
+		combined = combineEffectiveSchemas(combined, item)
+	}
+
+	return combined, true, nil
 }
 
 // required returns a stable union because all terms apply simultaneously.

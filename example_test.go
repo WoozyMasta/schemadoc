@@ -253,6 +253,153 @@ func TestGenerateExampleYAMLCommentPolicyExamplesAndValues(t *testing.T) {
 	assertContains(t, got, "value: \"\"")
 }
 
+func TestGenerateExampleYAMLTraversesDynamicMapsAndArrayTuples(t *testing.T) {
+	t.Parallel()
+
+	objectWithValueTitle := func(title string) map[string]any {
+		return map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"value": map[string]any{
+					"type":  "string",
+					"title": title,
+				},
+			},
+		}
+	}
+	objectWithNameTitle := func(title string) map[string]any {
+		return map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"name": map[string]any{
+					"type":  "string",
+					"title": title,
+				},
+			},
+		}
+	}
+
+	modernSchema := minimalSchemaBytes(t, map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"dynamic": map[string]any{
+				"type": "object",
+				"patternProperties": map[string]any{
+					"^x-": objectWithValueTitle("Pattern value"),
+				},
+				"additionalProperties": objectWithValueTitle("Additional value"),
+				"examples": []any{
+					map[string]any{
+						"x-item": map[string]any{"value": "pattern"},
+						"other":  map[string]any{"value": "additional"},
+					},
+				},
+			},
+			"items": map[string]any{
+				"type": "array",
+				"prefixItems": []any{
+					objectWithNameTitle("First item name"),
+					objectWithNameTitle("Second item name"),
+				},
+				"items": objectWithNameTitle("Trailing item name"),
+				"examples": []any{
+					[]any{
+						map[string]any{"name": "first"},
+						map[string]any{"name": "second"},
+						map[string]any{"name": "trailing"},
+					},
+				},
+			},
+		},
+	})
+
+	gotBytes, err := GenerateExampleYAMLWithOptions(modernSchema, ExampleModeAll, ExampleOptions{
+		YAMLComments: YAMLCommentPolicy{
+			Examples:      YAMLCommentExamplesNone,
+			ExampleFormat: YAMLCommentFormatBlock,
+		},
+	})
+	if err != nil {
+		t.Fatalf("GenerateExampleYAMLWithOptions: %v", err)
+	}
+	got := string(gotBytes)
+	for _, marker := range []string{
+		"# Pattern value",
+		"# Additional value",
+		"# First item name",
+		"# Second item name",
+		"# Trailing item name",
+	} {
+		assertContains(t, got, marker)
+	}
+
+	legacySchema := minimalSchemaBytes(t, map[string]any{
+		"$schema": "http://json-schema.org/draft-07/schema#",
+		"type":    "object",
+		"properties": map[string]any{
+			"items": map[string]any{
+				"type": "array",
+				"items": []any{
+					objectWithNameTitle("Legacy first name"),
+					objectWithNameTitle("Legacy second name"),
+				},
+				"additionalItems": objectWithNameTitle("Legacy additional name"),
+				"examples": []any{
+					[]any{
+						map[string]any{"name": "first"},
+						map[string]any{"name": "second"},
+						map[string]any{"name": "additional"},
+					},
+				},
+			},
+		},
+	})
+
+	gotBytes, err = GenerateExampleYAMLWithOptions(legacySchema, ExampleModeAll, ExampleOptions{
+		YAMLComments: YAMLCommentPolicy{Examples: YAMLCommentExamplesNone},
+	})
+	if err != nil {
+		t.Fatalf("GenerateExampleYAMLWithOptions legacy: %v", err)
+	}
+	got = string(gotBytes)
+	for _, marker := range []string{
+		"# Legacy first name",
+		"# Legacy second name",
+		"# Legacy additional name",
+	} {
+		assertContains(t, got, marker)
+	}
+}
+
+func TestGenerateExampleYAMLCommentValuesPreserveText(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"value": map[string]any{
+				"type":    "string",
+				"default": "# literal\nfalse: 0\n\"quoted\": yes",
+			},
+		},
+	})
+
+	gotBytes, err := GenerateExampleYAMLWithOptions(schema, ExampleModeAll, ExampleOptions{})
+	if err != nil {
+		t.Fatalf("GenerateExampleYAMLWithOptions: %v", err)
+	}
+	got := string(gotBytes)
+	assertContains(t, got, `# Default: # literal false: 0 "quoted": yes`)
+	for _, marker := range []string{
+		"value: |-",
+		"  # literal",
+		"  false: 0",
+		"  \"quoted\": yes",
+	} {
+		assertContains(t, got, marker)
+	}
+}
+
 func TestGenerateExampleJSONModeValidation(t *testing.T) {
 	t.Parallel()
 
