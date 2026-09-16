@@ -56,6 +56,14 @@
     "description": "Dynamic map values through additionalProperties."
   },
   {
+    "name": "objects/constrained-dynamic-map",
+    "group": "positive",
+    "schema": "positive/objects/constrained-dynamic-map.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Structured examples satisfy constrained dynamic maps."
+  },
+  {
     "name": "objects/pattern-properties",
     "group": "positive",
     "schema": "positive/objects/pattern-properties.json",

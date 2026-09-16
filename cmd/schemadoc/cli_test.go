@@ -196,6 +196,34 @@ func TestCLI_YAMLCommentPolicyFlags(t *testing.T) {
 	checkContainsAll(t, output, []string{"# Value description.", "value: selected"})
 }
 
+func TestCLI_ConstrainedDynamicMapEmbeddedExamples(t *testing.T) {
+	t.Parallel()
+
+	schemaPath := repoTestdataPath(t, "cases", "positive", "objects", "constrained-dynamic-map.json")
+	for _, format := range []string{"json", "yaml"} {
+		format := format
+		t.Run(format, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			code := run(
+				[]string{"schema2doc", "--format", format, schemaPath},
+				&stdout,
+				&stderr,
+			)
+			if code != 0 {
+				t.Fatalf("run exit code = %d, want 0; stderr: %s", code, stderr.String())
+			}
+
+			checkContainsAll(t, stdout.String(), []string{
+				"## Example " + format + " document",
+				"components",
+				"documentation",
+				"ignore",
+			})
+		})
+	}
+}
+
 func TestCLI_Schema2ExamplesAndTemplateAndConfig(t *testing.T) {
 	t.Parallel()
 

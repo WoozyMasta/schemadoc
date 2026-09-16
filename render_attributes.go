@@ -19,6 +19,7 @@ var knownSchemaKeywords = map[string]struct{}{
 
 	"$dynamicRef":      {},
 	"$recursiveRef":    {},
+	"$vocabulary":      {},
 	"$anchor":          {},
 	"$dynamicAnchor":   {},
 	"$recursiveAnchor": {},
@@ -147,19 +148,19 @@ func schemaAttributes(node schemaValue, required *bool, disableOtherKeywords, sh
 	}
 
 	if value, ok := obj["default"]; ok {
-		out = append(out, attributeView{Name: "Default", Value: inlineCodeValue(value)})
+		out = append(out, attributeView{Name: "Default", Value: formatAnnotationValue(value)})
 	}
 
 	if enum := asSlice(obj["enum"]); len(enum) > 0 {
-		out = append(out, attributeView{Name: "Enum", Value: inlineValueList(enum)})
+		out = append(out, attributeView{Name: "Enum", Value: formatAnnotationValueList(enum, "value")})
 	}
 
 	if value, ok := obj["const"]; ok {
-		out = append(out, attributeView{Name: "Const", Value: inlineCodeValue(value)})
+		out = append(out, attributeView{Name: "Const", Value: formatAnnotationValue(value)})
 	}
 
 	if examples := asSlice(obj["examples"]); len(examples) > 0 {
-		out = append(out, attributeView{Name: "Examples", Value: inlineValueList(examples)})
+		out = append(out, attributeView{Name: "Examples", Value: formatAnnotationValueList(examples, "example")})
 	}
 
 	if value := asString(obj["format"]); value != "" {
@@ -311,22 +312,22 @@ func appendSchemaLikeAttributes(out []attributeView, name string, value any) []a
 		}
 
 		if value, ok := typed["default"]; ok {
-			appendNamed("default", inlineCodeValue(value))
+			appendNamed("default", formatAnnotationValue(value))
 			appended = true
 		}
 
 		if value, ok := typed["const"]; ok {
-			appendNamed("const", inlineCodeValue(value))
+			appendNamed("const", formatAnnotationValue(value))
 			appended = true
 		}
 
 		if enum := asSlice(typed["enum"]); len(enum) > 0 {
-			appendNamed("enum", inlineValueList(enum))
+			appendNamed("enum", formatAnnotationValueList(enum, "value"))
 			appended = true
 		}
 
 		if examples := asSlice(typed["examples"]); len(examples) > 0 {
-			appendNamed("examples", inlineValueList(examples))
+			appendNamed("examples", formatAnnotationValueList(examples, "example"))
 			appended = true
 		}
 
@@ -409,19 +410,19 @@ func summarizeSchemaLike(value any) string {
 		}
 
 		if value, ok := typed["default"]; ok {
-			parts = append(parts, "default "+inlineCodeValue(value))
+			parts = append(parts, "default "+formatAnnotationValue(value))
 		}
 
 		if value, ok := typed["const"]; ok {
-			parts = append(parts, "const "+inlineCodeValue(value))
+			parts = append(parts, "const "+formatAnnotationValue(value))
 		}
 
 		if enum := asSlice(typed["enum"]); len(enum) > 0 {
-			parts = append(parts, "enum "+inlineValueList(enum))
+			parts = append(parts, "enum "+formatAnnotationValueList(enum, "value"))
 		}
 
 		if examples := asSlice(typed["examples"]); len(examples) > 0 {
-			parts = append(parts, "examples "+inlineValueList(examples))
+			parts = append(parts, "examples "+formatAnnotationValueList(examples, "example"))
 		}
 
 		if format := asString(typed["format"]); format != "" {
@@ -563,7 +564,7 @@ func otherKeywordList(node map[string]any, showInternalKeywords bool) []string {
 			}
 		}
 
-		out = append(out, key+"="+inlineValueText(node[key]))
+		out = append(out, key+"="+annotationValueText(node[key]))
 	}
 
 	return out
@@ -592,15 +593,60 @@ func yesNo(value bool) string {
 	return "no"
 }
 
-// inlineValueList renders mixed values as inline code tokens.
+// formatAnnotationValue renders scalar annotations inline
+// and summarizes structured annotations so document attributes remain readable.
+func formatAnnotationValue(value any) string {
+	if isScalarAnnotationValue(value) {
+		return inlineCodeValue(value)
+	}
+
+	return "`" + summarizeAnnotationValue(value) + "`"
+}
+
+// formatAnnotationValueList renders scalar values and counts structured ones.
 // String values are rendered without JSON quotes for readability.
-func inlineValueList(values []any) string {
+func formatAnnotationValueList(values []any, structuredLabel string) string {
 	parts := make([]string, 0, len(values))
+	structured := 0
 	for _, item := range values {
-		parts = append(parts, inlineCodeValue(item))
+		if isScalarAnnotationValue(item) {
+			parts = append(parts, inlineCodeValue(item))
+			continue
+		}
+
+		structured++
+	}
+
+	if structured > 0 {
+		label := structuredLabel
+		if structured != 1 {
+			label += "s"
+		}
+		parts = append(parts, strconv.Itoa(structured)+" structured "+label)
 	}
 
 	return strings.Join(parts, ", ")
+}
+
+// summarizeAnnotationValue returns a stable description for structured values.
+func summarizeAnnotationValue(value any) string {
+	switch value.(type) {
+	case map[string]any:
+		return "structured object"
+	case []any:
+		return "structured array"
+	default:
+		return "structured value"
+	}
+}
+
+// annotationValueText renders values for the generic "Other keywords" row.
+func annotationValueText(value any) string {
+	if isScalarAnnotationValue(value) {
+		return inlineValueText(value)
+	}
+
+	return summarizeAnnotationValue(value)
 }
 
 // inlineCodeValue renders value as inline code token.

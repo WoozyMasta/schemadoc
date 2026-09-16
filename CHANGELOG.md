@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning][].
   property-name, composition, array, and dynamic-reference keywords.
 * `schema2doc.format` documentation now matches runtime behavior:
   embedded examples remain disabled until a format is selected.
+* Structured object and array annotations are summarized in document attributes
+  instead of being rendered as long inline JSON values.
+* `$vocabulary` is recognized as a standard JSON Schema keyword.
 
 ### Removed
 

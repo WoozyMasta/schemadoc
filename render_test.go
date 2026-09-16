@@ -239,6 +239,48 @@ func TestRenderHidesInternalKeywordsByDefault(t *testing.T) {
 	assertContains(t, internalOutput, "x-order=1")
 }
 
+func TestRenderSummarizesStructuredAnnotations(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"$vocabulary": map[string]any{
+			"https://json-schema.org/draft/2020-12/vocab/core": true,
+		},
+		"type": "object",
+		"properties": map[string]any{
+			"value": map[string]any{
+				"type": "object",
+				"default": map[string]any{
+					"enabled": true,
+				},
+				"enum": []any{
+					map[string]any{"enabled": false},
+					"safe",
+				},
+				"examples": []any{
+					map[string]any{"enabled": true},
+					"demo",
+				},
+				"x-note": map[string]any{
+					"details": []any{"structured"},
+				},
+			},
+		},
+	})
+
+	output, err := Render(schema, Options{TemplateName: "list"})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+
+	assertContains(t, output, "* Default: `structured object`")
+	assertContains(t, output, "* Enum: `safe`, 1 structured value")
+	assertContains(t, output, "* Examples: `demo`, 1 structured example")
+	assertContains(t, output, "* Other keywords: x-note=structured object")
+	assertNotContains(t, output, `{"enabled":`)
+	assertNotContains(t, output, "$vocabulary=")
+}
+
 func assertBefore(t *testing.T, text, first, second string) {
 	t.Helper()
 	firstIndex := strings.Index(text, first)

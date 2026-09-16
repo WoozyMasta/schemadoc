@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:constrained-dynamic-map",
+  "type": "object",
+  "properties": {
+    "components": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^(?:documentation|changelog|x-[a-z][a-z0-9]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "examples": [
+        {
+          "documentation": {}
+        }
+      ]
+    },
+    "ignore": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "examples": [
+        [
+          "/.git/**"
+        ]
+      ]
+    }
+  },
+  "additionalProperties": false
+}
