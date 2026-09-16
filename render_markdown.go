@@ -358,19 +358,23 @@ func wrapParagraph(text string, width int) []string {
 		return []string{strings.Join(words, " ")}
 	}
 	out := make([]string, 0, 2)
-	line := words[0]
-	lineLen := utf8.RuneCountInString(line)
+	var line strings.Builder
+	line.WriteString(words[0])
+	lineLen := utf8.RuneCountInString(words[0])
 	for _, word := range words[1:] {
 		wordLen := utf8.RuneCountInString(word)
 		if lineLen+1+wordLen <= width {
-			line += " " + word
+			line.WriteByte(' ')
+			line.WriteString(word)
 			lineLen += 1 + wordLen
 			continue
 		}
-		out = append(out, line)
-		line, lineLen = word, wordLen
+		out = append(out, line.String())
+		line.Reset()
+		line.WriteString(word)
+		lineLen = wordLen
 	}
-	return append(out, line)
+	return append(out, line.String())
 }
 
 // normalizeLineEndings converts CRLF/CR to LF.
@@ -382,65 +386,116 @@ func normalizeLineEndings(text string) string {
 
 // normalizeMarkdownSpacing collapses extra blank lines outside fenced blocks.
 func normalizeMarkdownSpacing(text string) string {
-	lines := strings.Split(text, "\n")
-	out := make([]string, 0, len(lines))
+	var out strings.Builder
+	out.Grow(len(text))
+	started := false
+	writeLine := func(line string) {
+		if started {
+			out.WriteByte('\n')
+		}
+		out.WriteString(line)
+		started = true
+	}
 
 	inFence := false
 	fenceMarker := byte(0)
 	fenceWidth := 0
 	needsBlankAfterFence := false
 	blankCount := 0
-	for _, rawLine := range lines {
+	for start := 0; ; {
+		lineEnd := strings.IndexByte(text[start:], '\n')
+		rawLine := text[start:]
+		if lineEnd >= 0 {
+			rawLine = text[start : start+lineEnd]
+		}
+
 		line := rawLine
 		trimmed := strings.TrimSpace(line)
 
 		if marker, width, ok := markdownFence(trimmed); ok {
 			if !inFence {
 				inFence, fenceMarker, fenceWidth = true, marker, width
-				out = append(out, line)
+				writeLine(line)
 				needsBlankAfterFence = false
 				blankCount = 0
-				continue
-			}
-			if marker == fenceMarker && width >= fenceWidth {
+			} else if marker == fenceMarker && width >= fenceWidth {
 				inFence = false
-				out = append(out, line)
+				writeLine(line)
 				needsBlankAfterFence = true
 				blankCount = 0
-				continue
+			} else {
+				writeLine(line)
+			}
+		} else {
+			if !inFence && trimmed == "" {
+				if blankCount == 0 {
+					writeLine("")
+				}
+				blankCount++
+				needsBlankAfterFence = false
+			} else {
+				if !inFence && needsBlankAfterFence {
+					writeLine("")
+					needsBlankAfterFence = false
+				}
+				blankCount = 0
+				writeLine(line)
 			}
 		}
 
-		if !inFence && trimmed == "" {
-			if blankCount == 0 {
-				out = append(out, "")
-			}
-
-			blankCount++
-			needsBlankAfterFence = false
-			continue
+		if lineEnd < 0 {
+			break
 		}
-
-		if !inFence && needsBlankAfterFence {
-			out = append(out, "")
-			needsBlankAfterFence = false
-		}
-
-		blankCount = 0
-		out = append(out, line)
+		start += lineEnd + 1
 	}
 
-	return strings.TrimRight(strings.Join(out, "\n"), "\n")
+	return strings.TrimRight(out.String(), "\n")
 }
 
 // trimTrailingWhitespace removes trailing spaces and tabs from each line.
 func trimTrailingWhitespace(text string) string {
-	lines := strings.Split(text, "\n")
-	for index := range lines {
-		lines[index] = strings.TrimRight(lines[index], " \t")
+	var out strings.Builder
+	trimmed := false
+	lineStart := 0
+
+	for lineEnd := 0; lineEnd <= len(text); lineEnd++ {
+		if lineEnd < len(text) && text[lineEnd] != '\n' {
+			continue
+		}
+
+		contentEnd := lineEnd
+		for contentEnd > lineStart {
+			last := text[contentEnd-1]
+			if last != ' ' && last != '\t' {
+				break
+			}
+			contentEnd--
+		}
+
+		if !trimmed {
+			if contentEnd == lineEnd {
+				lineStart = lineEnd + 1
+				continue
+			}
+
+			out.Grow(len(text))
+			out.WriteString(text[:contentEnd])
+			trimmed = true
+		} else {
+			out.WriteString(text[lineStart:contentEnd])
+		}
+
+		if lineEnd < len(text) {
+			out.WriteByte('\n')
+		}
+		lineStart = lineEnd + 1
 	}
 
-	return strings.Join(lines, "\n")
+	if !trimmed {
+		return text
+	}
+
+	return out.String()
 }
 
 // escapeInline escapes backticks in inline code markdown segments.
@@ -450,6 +505,11 @@ func escapeInline(value string) string {
 
 // ensureTrailingNewline guarantees exactly one trailing newline in output.
 func ensureTrailingNewline(value string) string {
+	if strings.HasSuffix(value, "\n") &&
+		(value == "\n" || !strings.HasSuffix(value[:len(value)-1], "\n")) {
+		return value
+	}
+
 	value = strings.TrimRight(value, "\n")
 	return value + "\n"
 }

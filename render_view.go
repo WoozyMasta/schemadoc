@@ -44,12 +44,13 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 	rootName := rootDefinitionName(doc.Ref)
 	definitions := renderDefinitions(doc, rootName)
 	rootDefinition := renderRootDefinitionName(rootName, definitions)
-	defOrder := definitionOrder(definitions, rootDefinition)
+	edges := definitionEdgesByDefinition(definitions)
+	defOrder := definitionOrder(definitions, rootDefinition, edges)
 	if len(defOrder) == 0 {
 		return renderView{}, errors.New("schema has no definitions to render")
 	}
 
-	definitionPaths := buildDefinitionPaths(definitions, rootDefinition)
+	definitionPaths := buildDefinitionPaths(definitions, rootDefinition, edges)
 
 	view := renderView{
 		Title:              sanitizeText(title),
@@ -68,7 +69,7 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 		FooterToolURL:      sanitizeText(strings.TrimSpace(opt.FooterToolURL)),
 		FooterVersion:      sanitizeText(strings.TrimSpace(opt.FooterVersion)),
 		FooterCommit:       sanitizeText(strings.TrimSpace(opt.FooterCommit)),
-		Contents:           buildContents(definitions, rootDefinition, defOrder),
+		Contents:           buildContents(definitions, rootDefinition, defOrder, edges),
 		Definitions:        make([]definitionView, 0, len(defOrder)),
 	}
 	pathAnchors := make(map[string]string)
@@ -109,7 +110,6 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 			definition.Properties = append(definition.Properties, propertyView{
 				Heading:     escapeInline(headingText),
 				Name:        escapeInline(propName),
-				Paths:       pathPresentations(paths),
 				pathValues:  paths,
 				Description: formatDescriptionMarkdown(nodeDescription(prop), wrapWidth, listMarker),
 				Attributes:  schemaAttributes(prop, &propRequired, opt.HideExtraKeywords, opt.ShowInternalKeywords),
@@ -264,15 +264,19 @@ func cutPrefixFold(value, prefix string) (string, bool) {
 }
 
 // buildContents builds a deterministic nested TOC from reference graph.
-func buildContents(definitions map[string]schemaValue, rootDefinition string, definitionOrder []string) []tocEntry {
+func buildContents(
+	definitions map[string]schemaValue,
+	rootDefinition string,
+	definitionOrder []string,
+	edgesByDefinition map[string][]definitionEdge,
+) []tocEntry {
 	if len(definitionOrder) == 0 {
 		return nil
 	}
 
 	adjacency := make(map[string][]string, len(definitions))
 	for _, name := range definitionOrder {
-		node := definitions[name]
-		edges := definitionEdges(node)
+		edges := edgesByDefinition[name]
 
 		seenTargets := make(map[string]struct{}, len(edges))
 		targets := make([]string, 0, len(edges))
@@ -401,7 +405,7 @@ func indexPathAnchors(pathAnchors map[string]string, ambiguous map[string]struct
 
 // applyPathLinks converts property paths to per-segment markdown links where possible.
 func applyPathLinks(view *renderView, pathAnchors map[string]string) {
-	if view == nil || len(view.Definitions) == 0 || len(pathAnchors) == 0 {
+	if view == nil || len(view.Definitions) == 0 {
 		return
 	}
 
@@ -413,7 +417,12 @@ func applyPathLinks(view *renderView, pathAnchors map[string]string) {
 				continue
 			}
 
-			linkedPaths := make([]string, 0, len(property.Paths))
+			if len(pathAnchors) == 0 {
+				property.Paths = pathPresentations(property.pathValues)
+				continue
+			}
+
+			linkedPaths := make([]string, 0, len(property.pathValues))
 			for _, path := range property.pathValues {
 				linkedPaths = append(linkedPaths, buildLinkedPath(path, pathAnchors))
 			}
@@ -430,14 +439,14 @@ func buildLinkedPath(path schemaPath, pathAnchors map[string]string) string {
 	}
 
 	var builder strings.Builder
-	prefix := schemaPath{}
+	var prefixKey strings.Builder
 
 	for index, segmentValue := range path.segments {
 		separator := path.segmentSeparator(index)
 		segment := "`" + escapeInline(segmentValue.display()) + "`"
-		prefix = prefix.append(segmentValue)
+		writeSchemaPathKey(&prefixKey, segmentValue)
 		if index < len(path.segments)-1 {
-			anchor, ok := pathAnchors[prefix.key()]
+			anchor, ok := pathAnchors[prefixKey.String()]
 			if ok && strings.TrimSpace(anchor) != "" {
 				builder.WriteString(separator)
 				builder.WriteString("[")
@@ -457,7 +466,11 @@ func buildLinkedPath(path schemaPath, pathAnchors map[string]string) string {
 }
 
 // buildDefinitionPaths finds all reachable JSON paths for every definition from root definition.
-func buildDefinitionPaths(definitions map[string]schemaValue, rootDefinition string) map[string][]schemaPath {
+func buildDefinitionPaths(
+	definitions map[string]schemaValue,
+	rootDefinition string,
+	edgesByDefinition map[string][]definitionEdge,
+) map[string][]schemaPath {
 	if strings.TrimSpace(rootDefinition) == "" {
 		return nil
 	}
@@ -489,9 +502,7 @@ func buildDefinitionPaths(definitions map[string]schemaValue, rootDefinition str
 			continue
 		}
 
-		node := definitions[current.Definition]
-		edges := definitionEdges(node)
-		for _, edge := range edges {
+		for _, edge := range edgesByDefinition[current.Definition] {
 			if edge.Target == rootDefinition {
 				continue
 			}
@@ -538,13 +549,14 @@ func buildPropertyPaths(basePaths []schemaPath, propertyName string, hideRootPat
 	}
 
 	dedup := make(map[string]schemaPath, len(basePaths))
+	rootPath := schemaPath{}.appendProperty(propertyName)
 	for _, base := range basePaths {
 		path := base.appendProperty(propertyName)
 		if len(path.segments) == 0 {
 			continue
 		}
 
-		if hideRootPath && path.equal(schemaPath{}.appendProperty(propertyName)) {
+		if hideRootPath && path.equal(rootPath) {
 			continue
 		}
 
@@ -555,14 +567,28 @@ func buildPropertyPaths(basePaths []schemaPath, propertyName string, hideRootPat
 		return nil
 	}
 
-	out := make([]schemaPath, 0, len(dedup))
+	ordered := make([]struct {
+		path    schemaPath
+		display string
+	}, 0, len(dedup))
 	for _, path := range dedup {
-		out = append(out, path)
+		ordered = append(ordered, struct {
+			path    schemaPath
+			display string
+		}{
+			path:    path,
+			display: path.display(),
+		})
 	}
 
-	sort.Slice(out, func(left, right int) bool {
-		return out[left].display() < out[right].display()
+	sort.Slice(ordered, func(left, right int) bool {
+		return ordered[left].display < ordered[right].display
 	})
+
+	out := make([]schemaPath, 0, len(ordered))
+	for _, item := range ordered {
+		out = append(out, item.path)
+	}
 
 	return out
 }
@@ -575,7 +601,7 @@ func definitionEdges(node schemaValue) []definitionEdge {
 
 	properties := nodeProperties(node)
 	edgeMap := make(map[string]definitionEdge)
-	collectDefinitionEdges(node, schemaPath{}, edgeMap)
+	collectDefinitionEdges(node, nil, edgeMap)
 
 	if len(edgeMap) == 0 {
 		return nil
@@ -614,6 +640,17 @@ func definitionEdges(node schemaValue) []definitionEdge {
 	return out
 }
 
+// definitionEdgesByDefinition collects graph edges once for each definition.
+// Definition order and path traversal consume the same immutable edge lists.
+func definitionEdgesByDefinition(definitions map[string]schemaValue) map[string][]definitionEdge {
+	edges := make(map[string][]definitionEdge, len(definitions))
+	for name, node := range definitions {
+		edges[name] = definitionEdges(node)
+	}
+
+	return edges
+}
+
 // firstPathProperty returns the first property name for stable edge ordering.
 func firstPathProperty(path schemaPath) string {
 	for _, segment := range path.segments {
@@ -626,7 +663,12 @@ func firstPathProperty(path schemaPath) string {
 }
 
 // collectDefinitionEdges recursively collects all referenced definitions under one schema node.
-func collectDefinitionEdges(schema schemaValue, path schemaPath, edgeMap map[string]definitionEdge) {
+// The path is a mutable traversal stack; it is materialized only for a found reference.
+func collectDefinitionEdges(
+	schema schemaValue,
+	path []schemaPathSegment,
+	edgeMap map[string]definitionEdge,
+) {
 	if schema.Object == nil {
 		return
 	}
@@ -649,29 +691,51 @@ func collectDefinitionEdges(schema schemaValue, path schemaPath, edgeMap map[str
 	}
 
 	for _, keyword := range []string{"items", "prefixItems", "contains", "additionalItems", "unevaluatedItems"} {
-		collectDefinitionEdgesAny(object[keyword], path.appendArrayItem(), edgeMap)
+		value, exists := object[keyword]
+		if !exists {
+			continue
+		}
+
+		collectDefinitionEdgesAny(value, append(path, schemaPathSegment{kind: schemaPathArrayItem}), edgeMap)
 	}
 
 	for _, keyword := range []string{"additionalProperties", "unevaluatedProperties"} {
-		collectDefinitionEdgesAny(object[keyword], path.appendArrayItem(), edgeMap)
+		value, exists := object[keyword]
+		if !exists {
+			continue
+		}
+
+		collectDefinitionEdgesAny(value, append(path, schemaPathSegment{kind: schemaPathArrayItem}), edgeMap)
 	}
 
 	if nested := mapSchemaValues(object["properties"]); len(nested) > 0 {
 		for _, key := range sortedSchemaValueKeys(nested) {
-			collectDefinitionEdges(nested[key], path.appendProperty(key), edgeMap)
+			collectDefinitionEdges(
+				nested[key],
+				append(path, schemaPathSegment{kind: schemaPathProperty, value: key}),
+				edgeMap,
+			)
 		}
 	}
 
 	if nested := mapSchemaValues(object["patternProperties"]); len(nested) > 0 {
 		for _, key := range sortedSchemaValueKeys(nested) {
-			collectDefinitionEdges(nested[key], path.appendProperty(key), edgeMap)
+			collectDefinitionEdges(
+				nested[key],
+				append(path, schemaPathSegment{kind: schemaPathProperty, value: key}),
+				edgeMap,
+			)
 		}
 	}
 
 	for _, keyword := range []string{"dependentSchemas", "dependencies"} {
 		if nested := mapSchemaValues(object[keyword]); len(nested) > 0 {
 			for _, key := range sortedSchemaValueKeys(nested) {
-				collectDefinitionEdges(nested[key], path.appendProperty(key), edgeMap)
+				collectDefinitionEdges(
+					nested[key],
+					append(path, schemaPathSegment{kind: schemaPathProperty, value: key}),
+					edgeMap,
+				)
 			}
 		}
 	}
@@ -680,7 +744,7 @@ func collectDefinitionEdges(schema schemaValue, path schemaPath, edgeMap map[str
 }
 
 // collectDefinitionEdgesAny unwraps arrays and forwards schema-like values to edge collector.
-func collectDefinitionEdgesAny(raw any, path schemaPath, edgeMap map[string]definitionEdge) {
+func collectDefinitionEdgesAny(raw any, path []schemaPathSegment, edgeMap map[string]definitionEdge) {
 	switch typed := raw.(type) {
 	case []any:
 		for _, value := range typed {
@@ -697,14 +761,15 @@ func collectDefinitionEdgesAny(raw any, path schemaPath, edgeMap map[string]defi
 }
 
 // addDefinitionEdge stores one unique edge key in edge map.
-func addDefinitionEdge(edgeMap map[string]definitionEdge, path schemaPath, target string) {
+func addDefinitionEdge(edgeMap map[string]definitionEdge, path []schemaPathSegment, target string) {
 	target = strings.TrimSpace(target)
 	if target == "" {
 		return
 	}
 
-	edge := definitionEdge{Path: path, Target: target}
-	edgeMap[target+"\x00"+path.key()] = edge
+	materialized := schemaPath{segments: slices.Clone(path)}
+	edge := definitionEdge{Path: materialized, Target: target}
+	edgeMap[target+"\x00"+materialized.key()] = edge
 }
 
 // appendSchemaPath joins two structured paths without changing either input.
@@ -824,7 +889,11 @@ func draftSupportText(info DraftInfo) string {
 }
 
 // definitionOrder returns deterministic definition rendering order with root first.
-func definitionOrder(defs map[string]schemaValue, rootName string) []string {
+func definitionOrder(
+	defs map[string]schemaValue,
+	rootName string,
+	edgesByDefinition map[string][]definitionEdge,
+) []string {
 	keys := make([]string, 0, len(defs))
 	for name := range defs {
 		keys = append(keys, name)
@@ -861,7 +930,7 @@ func definitionOrder(defs map[string]schemaValue, rootName string) []string {
 
 		visited[name] = struct{}{}
 		out = append(out, name)
-		for _, edge := range definitionEdges(defs[name]) {
+		for _, edge := range edgesByDefinition[name] {
 			walk(edge.Target)
 		}
 	}

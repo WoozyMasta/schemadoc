@@ -174,3 +174,26 @@ func TestNormalizeMarkdownSpacingAddsBlankAfterFence(t *testing.T) {
 		t.Fatalf("normalizeMarkdownSpacing() = %q, want %q", got, want)
 	}
 }
+
+func TestTrimTrailingWhitespace(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{name: "empty", in: "", want: ""},
+		{name: "unchanged", in: "one\ntwo", want: "one\ntwo"},
+		{name: "each line", in: "one \t\ntwo\t\nthree ", want: "one\ntwo\nthree"},
+		{name: "blank line", in: "one\n \t\ntwo", want: "one\n\ntwo"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := trimTrailingWhitespace(test.in); got != test.want {
+				t.Fatalf("trimTrailingWhitespace() = %q, want %q", got, test.want)
+			}
+		})
+	}
+}

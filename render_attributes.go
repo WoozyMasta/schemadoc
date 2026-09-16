@@ -90,7 +90,7 @@ var internalSchemaKeywords = map[string]struct{}{
 
 // schemaAttributes renders flat attribute list for one schema node.
 func schemaAttributes(node schemaValue, required *bool, disableOtherKeywords, showInternalKeywords bool) []attributeView {
-	out := make([]attributeView, 0, 32)
+	out := make([]attributeView, 0, 8)
 
 	if node.Bool != nil {
 		if required != nil {
@@ -475,7 +475,7 @@ func summarizeSchemaList(items []any) string {
 
 // compositionSummary renders one-line summary for allOf/anyOf/oneOf combinations.
 func compositionSummary(node map[string]any) string {
-	items := make([]string, 0, 3)
+	var items []string
 	if oneOf := asSlice(node["oneOf"]); len(oneOf) > 0 {
 		items = append(items, "oneOf="+strconv.Itoa(len(oneOf)))
 	}
@@ -493,7 +493,7 @@ func compositionSummary(node map[string]any) string {
 
 // conditionalSummary renders one-line summary for if/then/else usage.
 func conditionalSummary(node map[string]any) string {
-	items := make([]string, 0, 3)
+	var items []string
 	if _, ok := node["if"]; ok {
 		items = append(items, "if")
 	}
@@ -511,7 +511,7 @@ func conditionalSummary(node map[string]any) string {
 
 // constraintList renders numeric and string constraints as deterministic key/value pairs.
 func constraintList(node map[string]any) []string {
-	keys := []string{
+	keys := [...]string{
 		"minimum",
 		"maximum",
 		"exclusiveMinimum",
@@ -529,13 +529,16 @@ func constraintList(node map[string]any) []string {
 		"maxProperties",
 	}
 
-	out := make([]string, 0, len(keys))
+	var out []string
 	for _, key := range keys {
 		value, ok := node[key]
 		if !ok {
 			continue
 		}
 
+		if out == nil {
+			out = make([]string, 0, len(keys))
+		}
 		out = append(out, inlineCodeValue(key+"="+inlineValueText(value)))
 	}
 

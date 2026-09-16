@@ -58,15 +58,20 @@ func (path schemaPath) equal(other schemaPath) bool {
 func (path schemaPath) key() string {
 	var builder strings.Builder
 	for _, segment := range path.segments {
-		builder.WriteByte(byte(segment.kind))
-		builder.WriteByte(':')
-		builder.WriteString(strconv.Itoa(len(segment.value)))
-		builder.WriteByte(':')
-		builder.WriteString(segment.value)
-		builder.WriteByte(';')
+		writeSchemaPathKey(&builder, segment)
 	}
 
 	return builder.String()
+}
+
+// writeSchemaPathKey appends one segment to an unambiguous path key.
+func writeSchemaPathKey(builder *strings.Builder, segment schemaPathSegment) {
+	builder.WriteByte(byte(segment.kind))
+	builder.WriteByte(':')
+	builder.WriteString(strconv.Itoa(len(segment.value)))
+	builder.WriteByte(':')
+	builder.WriteString(segment.value)
+	builder.WriteByte(';')
 }
 
 // display converts a structured path to a readable, non-authoritative form.
