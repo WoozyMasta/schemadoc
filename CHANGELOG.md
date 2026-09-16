@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning][].
 
 ## Unreleased
 
+### Added
+
+* Custom templates can declare output extensions, post-processors,
+  and output-specific generated-file notes through template metadata.
+
 ### Changed
 
 * Schema path identity is now structured
