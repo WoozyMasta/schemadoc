@@ -584,6 +584,19 @@ func TestCLI_BuildDerivesOutputPaths(t *testing.T) {
 		t.Fatalf("write schema fixture copy: %v", err)
 	}
 
+	customTemplatePath := filepath.Join(tempDir, "reference.gotmpl")
+	customTemplate := `{{/*
+schemadoc:
+  output:
+    extension: ".man"
+  postprocess: []
+*/ -}}
+MANUAL(1)
+`
+	if err := os.WriteFile(customTemplatePath, []byte(customTemplate), 0o600); err != nil {
+		t.Fatalf("write custom template: %v", err)
+	}
+
 	configPath := filepath.Join(tempDir, "build-derived.yaml")
 	configBody := strings.Join([]string{
 		"schema: " + filepath.ToSlash(schemaPath),
@@ -598,6 +611,10 @@ func TestCLI_BuildDerivesOutputPaths(t *testing.T) {
 		"schema: " + filepath.ToSlash(schemaPath),
 		"schema2doc:",
 		"  template: html",
+		"---",
+		"schema: " + filepath.ToSlash(schemaPath),
+		"schema2doc:",
+		"  template_file: " + filepath.ToSlash(customTemplatePath),
 		"",
 	}, "\n")
 	if err := os.WriteFile(configPath, []byte(configBody), 0o600); err != nil {
@@ -618,6 +635,7 @@ func TestCLI_BuildDerivesOutputPaths(t *testing.T) {
 		base + ".list.md",
 		base + ".table.md",
 		base + ".html",
+		base + ".man",
 	}
 	for _, path := range expectedOutputs {
 		if _, err := os.Stat(path); err != nil {

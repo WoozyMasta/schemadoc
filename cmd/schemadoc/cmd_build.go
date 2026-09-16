@@ -7,6 +7,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -145,11 +146,15 @@ func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Co
 
 	if loadedConfig.Schema2Doc != nil {
 		stage := loadedConfig.Schema2Doc
-		outputPath := resolveBuildDocOutputPath(
+		outputPath, err := resolveBuildDocOutputPath(
 			schemaPath,
 			strings.TrimSpace(stage.Output),
 			strings.TrimSpace(stage.Template),
+			strings.TrimSpace(stage.TemplateFile),
 		)
+		if err != nil {
+			return fmt.Errorf("config doc %d stage schema2doc output path: %w", docNumber, err)
+		}
 		if err := runner.runSchemaToDocForBuild(schemaPath, markdownRenderRequest{
 			TemplateName:         strings.TrimSpace(stage.Template),
 			TemplatePath:         strings.TrimSpace(stage.TemplateFile),
@@ -213,22 +218,66 @@ func resolveBuildExampleOutputPath(schemaPath, outputPath, extension string) str
 	return basePath + "." + strings.ToLower(strings.TrimSpace(extension))
 }
 
-// resolveBuildDocOutputPath returns explicit output or template-based default.
-func resolveBuildDocOutputPath(schemaPath, outputPath, templateName string) string {
+// resolveBuildDocOutputPath returns explicit output or metadata-based default.
+func resolveBuildDocOutputPath(schemaPath, outputPath, templateName, templatePath string) (string, error) {
 	outputPath = strings.TrimSpace(outputPath)
 	if outputPath != "" {
-		return outputPath
+		return outputPath, nil
+	}
+
+	extension, err := resolveTemplateOutputExtension(templateName, templatePath)
+	if err != nil {
+		return "", err
+	}
+	if extension == "" {
+		if strings.TrimSpace(templatePath) != "" {
+			return "", errors.New("custom template must declare output.extension when output path is empty")
+		}
+
+		return "", errors.New("template must declare output.extension when output path is empty")
 	}
 
 	basePath := buildSchemaBasePath(schemaPath)
-	switch strings.ToLower(strings.TrimSpace(templateName)) {
-	case "table":
-		return basePath + ".table.md"
-	case "html":
-		return basePath + ".html"
-	default:
-		return basePath + ".list.md"
+	suffix := ""
+	if strings.TrimSpace(templatePath) == "" {
+		name := strings.ToLower(strings.TrimSpace(templateName))
+		if name == "" {
+			name = "list"
+		}
+
+		switch name {
+		case "table":
+			suffix = ".table"
+		case "list":
+			suffix = ".list"
+		}
 	}
+
+	return basePath + suffix + extension, nil
+}
+
+// resolveTemplateOutputExtension reads metadata from a builtin or custom template.
+func resolveTemplateOutputExtension(templateName, templatePath string) (string, error) {
+	var source []byte
+	var err error
+	if strings.TrimSpace(templatePath) != "" {
+		source, err = os.ReadFile(templatePath)
+		if err != nil {
+			return "", fmt.Errorf("read template file %q: %w", templatePath, err)
+		}
+	} else {
+		name := strings.TrimSpace(templateName)
+		if name == "" {
+			name = "list"
+		}
+		text, builtinErr := schemadoc.BuiltinTemplate(name)
+		if builtinErr != nil {
+			return "", builtinErr
+		}
+		source = []byte(text)
+	}
+
+	return schemadoc.TemplateOutputExtension(string(source))
 }
 
 // buildSchemaBasePath strips extension from schema path for derived outputs.

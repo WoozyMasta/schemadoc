@@ -226,10 +226,9 @@ type Schema2DocStage struct {
 
 	// Output is markdown output path.
 	//
-	// When empty, build derives output from `schema` path:
-	//   - template `list` -> `<schema-base>.list.md`
-	//   - template `table` -> `<schema-base>.table.md`
-	//   - template `html` -> `<schema-base>.html`
+	// When empty, build derives output from `schema` path and template metadata.
+	// Builtin list and table templates keep `.list` and `.table` suffixes;
+	// custom templates use their declared `output.extension` directly.
 	Output string `json:"output,omitempty" yaml:"output,omitempty" jsonschema_extras:"x-order=1"`
 
 	// Template selects built-in document template.

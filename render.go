@@ -179,3 +179,18 @@ func BuiltinTemplate(name string) (string, error) {
 
 	return string(data), nil
 }
+
+// TemplateOutputExtension returns the declared output extension from template metadata.
+//
+// It returns an empty string when the template has no output extension.
+func TemplateOutputExtension(source string) (string, error) {
+	metadata, err := parseTemplateMetadata(source)
+	if err != nil {
+		return "", err
+	}
+	if metadata.Output == nil || metadata.Output.Extension == nil {
+		return "", nil
+	}
+
+	return *metadata.Output.Extension, nil
+}
