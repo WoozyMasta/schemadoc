@@ -7,8 +7,10 @@ package schemadoc
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode/utf8"
 )
@@ -269,9 +271,29 @@ func (materializer *exampleMaterializer) synthesize(schema effectiveSchema, path
 	}
 	required := schema.required()
 	typeName := effectiveSchemaType(schema)
+	additionalProperties, err := schema.additionalProperties(materializer.semantic)
+	if err != nil {
+		return nil, materializationReferenceError(err, path)
+	}
+	propertyNames, err := schema.propertyNames(materializer.semantic)
+	if err != nil {
+		return nil, materializationReferenceError(err, path)
+	}
+	patterns, err := schema.patternProperties(materializer.semantic)
+	if err != nil {
+		return nil, materializationReferenceError(err, path)
+	}
 
-	if typeName == "object" || len(properties) > 0 || len(required) > 0 {
-		return materializer.synthesizeObject(properties, required, path)
+	if typeName == "object" || len(properties) > 0 || len(required) > 0 ||
+		len(additionalProperties) > 0 || len(propertyNames) > 0 || len(patterns) > 0 {
+		return materializer.synthesizeObject(
+			schema,
+			properties,
+			required,
+			additionalProperties,
+			propertyNames,
+			path,
+		)
 	}
 
 	if typeName == "array" || materializer.hasArrayItems(schema) {
@@ -339,14 +361,44 @@ func (materializer *exampleMaterializer) synthesizeComposition(schema effectiveS
 	)
 }
 
-// synthesizeObject materializes selected declared properties.
+// synthesizeObject materializes declared properties and one safe dynamic entry.
 func (materializer *exampleMaterializer) synthesizeObject(
+	schema effectiveSchema,
 	properties map[string]effectiveSchema,
 	required []string,
+	additionalProperties []effectiveSchema,
+	propertyNames []effectiveSchema,
 	path schemaPath,
 ) (map[string]any, error) {
+	requiredSet := make(map[string]struct{}, len(required))
+	for _, name := range required {
+		requiredSet[name] = struct{}{}
+		property, ok := properties[name]
+		if !ok {
+			return nil, newMaterializationError(
+				MaterializationCodeUnsupportedRequired,
+				MaterializationCategoryUnsupportedRequired,
+				materializationKeywordPath(path, "required"),
+				ErrUnsupportedRequiredSemantics,
+			)
+		}
+
+		if isFalseEffectiveSchema(property) {
+			return nil, newMaterializationError(
+				MaterializationCodeUnsatisfiable,
+				MaterializationCategoryUnsatisfiableSchema,
+				pathPointer(path.appendProperty(name)),
+				ErrMaterializationUnsatisfiable,
+			)
+		}
+	}
+
 	values := make(map[string]schemaValue, len(properties))
 	for name, property := range properties {
+		if isFalseEffectiveSchema(property) {
+			continue
+		}
+
 		values[name] = property.asSchemaValue()
 	}
 
@@ -355,17 +407,41 @@ func (materializer *exampleMaterializer) synthesizeObject(
 		keys = requiredPropertyOrder(required, values)
 	}
 
-	if len(required) > 0 {
-		for _, name := range required {
-			if _, ok := properties[name]; !ok {
-				return nil, newMaterializationError(
-					MaterializationCodeUnsupportedRequired,
-					MaterializationCategoryUnsupportedRequired,
-					materializationKeywordPath(path, "required"),
-					ErrUnsupportedRequiredSemantics,
-				)
+	minimum, hasMinimum, maximum, hasMaximum := objectBounds(schema)
+	if hasMinimum && hasMaximum && minimum > maximum {
+		return nil, newMaterializationError(
+			MaterializationCodeUnsatisfiable,
+			MaterializationCategoryUnsatisfiableSchema,
+			materializationKeywordPath(path, "minProperties"),
+			ErrMaterializationUnsatisfiable,
+		)
+	}
+
+	if hasMaximum && len(required) > maximum {
+		return nil, newMaterializationError(
+			MaterializationCodeUnsatisfiable,
+			MaterializationCategoryUnsatisfiableSchema,
+			materializationKeywordPath(path, "maxProperties"),
+			ErrMaterializationUnsatisfiable,
+		)
+	}
+
+	if hasMaximum && len(keys) > maximum {
+		selected := make([]string, 0, maximum)
+		for _, name := range keys {
+			if _, ok := requiredSet[name]; ok {
+				selected = append(selected, name)
 			}
 		}
+
+		for _, name := range keys {
+			if _, ok := requiredSet[name]; ok || len(selected) >= maximum {
+				continue
+			}
+
+			selected = append(selected, name)
+		}
+		keys = selected
 	}
 
 	result := make(map[string]any, len(keys))
@@ -374,10 +450,208 @@ func (materializer *exampleMaterializer) synthesizeObject(
 		if err != nil {
 			return nil, err
 		}
+
 		result[name] = value
+	}
+	result = pruneInvalidOptionalProperties(
+		materializer.semantic,
+		schema,
+		result,
+		keys,
+		requiredSet,
+		path,
+	)
+
+	additional, hasAdditional := combinedEffectiveSchema(additionalProperties)
+	if materializer.mode == ExampleModeAll && hasAdditional &&
+		!isFalseEffectiveSchema(additional) && (len(result) == 0 || len(result) < minimum) {
+		for _, name := range dynamicPropertyNames(propertyNames, materializer.semantic, path) {
+			if _, declared := properties[name]; declared {
+				continue
+			}
+			if _, exists := result[name]; exists {
+				continue
+			}
+
+			if hasMaximum && len(result) >= maximum {
+				break
+			}
+
+			if err := validatePropertyName(materializer.semantic, propertyNames, name, path); err != nil {
+				if isMaterializationReferenceError(err) {
+					return nil, err
+				}
+				continue
+			}
+
+			value, err := materializer.materializeEffective(additional, path.appendProperty(name))
+			if err != nil {
+				if isMaterializationReferenceError(err) {
+					return nil, err
+				}
+				continue
+			}
+
+			result[name] = value
+			if err := validateEffectiveInstance(materializer.semantic, schema, result, path); err != nil {
+				delete(result, name)
+				continue
+			}
+			break
+		}
+	}
+
+	if hasMinimum && len(result) < minimum {
+		return nil, newMaterializationError(
+			MaterializationCodeUnsupported,
+			MaterializationCategoryUnsupportedMaterialization,
+			materializationKeywordPath(path, "minProperties"),
+			ErrUnsupportedMaterialization,
+		)
 	}
 
 	return result, nil
+}
+
+// pruneInvalidOptionalProperties removes declared fields forbidden by overlapping object terms.
+func pruneInvalidOptionalProperties(
+	view *schemaSemanticView,
+	schema effectiveSchema,
+	result map[string]any,
+	keys []string,
+	required map[string]struct{},
+	path schemaPath,
+) map[string]any {
+	for {
+		err := validateEffectiveInstance(view, schema, result, path)
+		if err == nil || isMaterializationReferenceError(err) {
+			return result
+		}
+
+		if candidateValidationKeyword(err) == "minProperties" {
+			return result
+		}
+
+		removed := false
+		for _, name := range slices.Backward(keys) {
+			if _, isRequired := required[name]; isRequired {
+				continue
+			}
+			if _, exists := result[name]; !exists {
+				continue
+			}
+
+			candidate := make(map[string]any, len(result)-1)
+			maps.Copy(candidate, result)
+			delete(candidate, name)
+
+			candidateErr := validateEffectiveInstance(view, schema, candidate, path)
+			if isMaterializationReferenceError(candidateErr) {
+				return result
+			}
+
+			if candidateErr == nil || candidateValidationKeyword(candidateErr) != "required" {
+				result = candidate
+				removed = true
+				break
+			}
+		}
+
+		if !removed {
+			return result
+		}
+	}
+}
+
+// combinedEffectiveSchema joins all declared schemas for one object keyword.
+func combinedEffectiveSchema(schemas []effectiveSchema) (effectiveSchema, bool) {
+	if len(schemas) == 0 {
+		return effectiveSchema{}, false
+	}
+
+	combined := schemas[0]
+	for _, schema := range schemas[1:] {
+		combined = combineEffectiveSchemas(combined, schema)
+	}
+
+	return combined, true
+}
+
+// dynamicPropertyNames returns annotation-driven names without synthesizing regex matches.
+func dynamicPropertyNames(
+	propertyNames []effectiveSchema,
+	view *schemaSemanticView,
+	path schemaPath,
+) []string {
+	nameSchema, hasNameSchema := combinedEffectiveSchema(propertyNames)
+	if !hasNameSchema {
+		return []string{"example"}
+	}
+
+	result := make([]string, 0)
+	seen := make(map[string]struct{})
+	for _, raw := range nameSchema.keywordValues("examples") {
+		for _, value := range asSlice(raw) {
+			name, ok := value.(string)
+			if !ok || name == "" {
+				continue
+			}
+			if _, exists := seen[name]; exists {
+				continue
+			}
+
+			if err := validateEffectiveInstance(view, nameSchema, name, path.appendProperty(name)); err != nil {
+				if isMaterializationReferenceError(err) {
+					continue
+				}
+				continue
+			}
+
+			seen[name] = struct{}{}
+			result = append(result, name)
+		}
+	}
+
+	if _, exists := seen["example"]; !exists {
+		result = append(result, "example")
+	}
+
+	return result
+}
+
+// validatePropertyName applies all effective property-name schemas to one candidate.
+func validatePropertyName(
+	view *schemaSemanticView,
+	propertyNames []effectiveSchema,
+	name string,
+	path schemaPath,
+) error {
+	nameSchema, ok := combinedEffectiveSchema(propertyNames)
+	if !ok {
+		return nil
+	}
+
+	return validateEffectiveInstance(view, nameSchema, name, path.appendProperty(name))
+}
+
+// objectBounds returns the most restrictive simultaneous object-size bounds.
+func objectBounds(schema effectiveSchema) (minimum int, hasMinimum bool, maximum int, hasMaximum bool) {
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+
+		if value, ok := integerKeyword(term.Object, "minProperties"); ok &&
+			(!hasMinimum || value > minimum) {
+			minimum, hasMinimum = value, true
+		}
+		if value, ok := integerKeyword(term.Object, "maxProperties"); ok &&
+			(!hasMaximum || value < maximum) {
+			maximum, hasMaximum = value, true
+		}
+	}
+
+	return minimum, hasMinimum, maximum, hasMaximum
 }
 
 // scalarPlaceholder returns fallback value for a known scalar type.
@@ -709,6 +983,20 @@ func validateObjectTerm(view *schemaSemanticView, object map[string]any, value a
 	properties, isObject := value.(map[string]any)
 	if !isObject {
 		return nil
+	}
+
+	if minimum, ok := integerKeyword(object, "minProperties"); ok && len(properties) < minimum {
+		return newCandidateValidationError(
+			materializationKeywordPath(path, "minProperties"),
+			"minProperties",
+			"object has too few properties")
+	}
+
+	if maximum, ok := integerKeyword(object, "maxProperties"); ok && len(properties) > maximum {
+		return newCandidateValidationError(
+			materializationKeywordPath(path, "maxProperties"),
+			"maxProperties",
+			"object has too many properties")
 	}
 
 	declared := mapSchemaValues(object["properties"])
@@ -1062,6 +1350,27 @@ func hasSchemaKeyword(schema effectiveSchema, keyword string) bool {
 	return false
 }
 
+// isFalseEffectiveSchema reports whether one conjunctive schema term forbids every value.
+func isFalseEffectiveSchema(schema effectiveSchema) bool {
+	for _, term := range schema.terms {
+		if term.Bool != nil && !*term.Bool {
+			return true
+		}
+	}
+
+	return false
+}
+
+// candidateValidationKeyword extracts the failed validation keyword when available.
+func candidateValidationKeyword(err error) string {
+	var validation *candidateValidationError
+	if errors.As(err, &validation) {
+		return validation.keyword
+	}
+
+	return ""
+}
+
 // candidateValidationError describes why one candidate was rejected.
 type candidateValidationError struct {
 	path    string
@@ -1179,6 +1488,12 @@ func isDefinitelyUnsatisfiable(schema effectiveSchema) bool {
 
 		minimum, minOK = integerKeyword(term.Object, "minLength")
 		maximum, maxOK = integerKeyword(term.Object, "maxLength")
+		if minOK && maxOK && minimum > maximum {
+			return true
+		}
+
+		minimum, minOK = integerKeyword(term.Object, "minProperties")
+		maximum, maxOK = integerKeyword(term.Object, "maxProperties")
 		if minOK && maxOK && minimum > maximum {
 			return true
 		}

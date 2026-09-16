@@ -1689,12 +1689,24 @@ End is end minute in a one-hour window.
   "advanced": {
     "circuit_breaker": false,
     "cooldown": 0,
-    "metadata": {},
+    "metadata": {
+      "example": {
+        "example": "<string>"
+      }
+    },
     "tags": [
       "<string>"
     ]
   },
-  "alert_targets": {},
+  "alert_targets": {
+    "example": [
+      {
+        "address": "https://hooks.slack.com/...",
+        "channel": "slack",
+        "severity": "info"
+      }
+    ]
+  },
   "base_binding": {
     "meta": {
       "read_only": false,
@@ -1711,9 +1723,55 @@ End is end minute in a one-hour window.
     "retry_delay": 0,
     "start": 0
   },
-  "bucket_groups": {},
+  "bucket_groups": {
+    "example": [
+      {
+        "name": "artifacts-main",
+        "read_only": false,
+        "region": "us-east-1"
+      }
+    ]
+  },
   "buckets_by_priority": {},
-  "deep_by_env": {},
+  "deep_by_env": {
+    "example": {
+      "next": {
+        "next": {
+          "next": {
+            "next": {
+              "next": {
+                "final_value": "done",
+                "probe": {
+                  "enabled": true,
+                  "token": "probe"
+                }
+              },
+              "probe": {
+                "enabled": true,
+                "token": "probe"
+              }
+            },
+            "probe": {
+              "enabled": true,
+              "token": "probe"
+            }
+          },
+          "probe": {
+            "enabled": true,
+            "token": "probe"
+          }
+        },
+        "probe": {
+          "enabled": true,
+          "token": "probe"
+        }
+      },
+      "probe": {
+        "enabled": true,
+        "token": "probe"
+      }
+    }
+  },
   "deep_primary": {
     "next": {
       "next": {
@@ -1792,21 +1850,42 @@ End is end minute in a one-hour window.
     "enabled": true,
     "token": "probe"
   },
-  "endpoint_tls_overrides": {},
+  "endpoint_tls_overrides": {
+    "example": {
+      "enabled": false,
+      "min_version": "1.2"
+    }
+  },
   "extensions": {},
   "mirror_endpoints": [
     "<string>"
   ],
   "mode": "safe",
   "name": "demo-service",
-  "named_buckets": {},
+  "named_buckets": {
+    "example": {
+      "name": "artifacts-main",
+      "read_only": false,
+      "region": "us-east-1"
+    }
+  },
   "optional_retry": {
     "attempts": 3,
     "backoff_ms": 250,
     "max_jitter_ms": 100
   },
-  "queue_workers_by_zone": {},
-  "queues": {},
+  "queue_workers_by_zone": {
+    "example": {
+      "example": 0
+    }
+  },
+  "queues": {
+    "example": {
+      "batch_size": 100,
+      "visibility_timeout": 0,
+      "workers": 4
+    }
+  },
   "retry": {
     "attempts": 3,
     "backoff_ms": 250,
@@ -1851,27 +1930,51 @@ End is end minute in a one-hour window.
       },
       "name": "primary"
     },
-    "endpoint_groups": {},
-    "endpoint_ports": {},
+    "endpoint_groups": {
+      "example": [
+        "<string>"
+      ]
+    },
+    "endpoint_ports": {
+      "example": {
+        "example": 0
+      }
+    },
     "endpoints": {
       "api": "https://api.acme.local",
       "internal": "http://internal:8080",
-      "meta": {},
+      "meta": {
+        "example": {
+          "read_only": false,
+          "region": "eu-central-1",
+          "weight": 0
+        }
+      },
       "metrics": "https://metrics.acme.local"
     },
-    "feature_matrix": {},
+    "feature_matrix": {
+      "example": {
+        "example": false
+      }
+    },
     "feature_toggle": {
       "enabled": true
     },
     "labels": {},
-    "level_by_subsystem": {},
+    "level_by_subsystem": {
+      "example": "<string>"
+    },
     "maintenance_window": {
       "end": 0,
       "retry_delay": 0,
       "start": 0
     },
-    "ports": {},
-    "timeout_by_endpoint": {},
+    "ports": {
+      "example": 0
+    },
+    "timeout_by_endpoint": {
+      "example": 0
+    },
     "tls": {
       "cipher_suites": [
         "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"

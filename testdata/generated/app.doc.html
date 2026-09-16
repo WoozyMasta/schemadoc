@@ -1790,11 +1790,18 @@ shared:
     # Example: https://metrics.acme.local
     metrics: https://metrics.acme.local
     # Meta stores endpoint metadata by endpoint name.
-    meta: {}
+    meta:
+      example:
+        read_only: false
+        region: eu-central-1
+        weight: 0
   # LevelBySubsystem maps subsystem name to log level.
-  level_by_subsystem: {}
+  level_by_subsystem:
+    example: &lt;string&gt;
   # EndpointGroups stores endpoint names grouped by key.
-  endpoint_groups: {}
+  endpoint_groups:
+    example:
+      - &lt;string&gt;
   # TLS Options
   # TLS is TLS configuration shared across components.
   tls:
@@ -1821,7 +1828,9 @@ shared:
   # Example:
   #   - `auth.mfa_required = true`
   #   - `billing.v2_invoice = false`
-  feature_matrix: {}
+  feature_matrix:
+    example:
+      example: false
   # EndpointBinding links endpoint identity and metadata.
   endpoint_binding:
     # Meta reuses existing endpoint metadata schema.
@@ -1850,15 +1859,19 @@ shared:
     # End is end minute in a one-hour window.
     end: 0
   # Ports maps external service names to exposed port.
-  ports: {}
+  ports:
+    example: 0
   # EndpointPorts stores ports by endpoint and protocol name.
   # This field is useful when one logical endpoint exposes multiple listener
   # protocols (for example `http`, `grpc`, `admin`). Consumers can resolve
   # exact port by `(endpoint, protocol)` pair without hardcoding transport
   # assumptions.
-  endpoint_ports: {}
+  endpoint_ports:
+    example:
+      example: 0
   # TimeoutByEndpoint stores timeout per endpoint name.
-  timeout_by_endpoint: {}
+  timeout_by_endpoint:
+    example: 0
 # Service Name
 # Human-readable service name.
 # Default: demo-service
@@ -1907,7 +1920,10 @@ schedule:
     # Start is start time (HH:MM).
     start: 00:00
 # EndpointTLSOverrides overrides TLS by endpoint name.
-endpoint_tls_overrides: {}
+endpoint_tls_overrides:
+  example:
+    enabled: false
+    min_version: &#34;1.2&#34;
 # OptionalRetry allows temporary retry override.
 optional_retry:
   # Backoff is delay between attempts in milliseconds.
@@ -2074,11 +2090,38 @@ deep_secondary:
         # Default: probe
         token: probe
 # DeepByEnv stores deep branches by environment key.
-deep_by_env: {}
+deep_by_env:
+  example:
+    next:
+      next:
+        next:
+          next:
+            next:
+              final_value: done
+              probe:
+                enabled: true
+                token: probe
+            probe:
+              enabled: true
+              token: probe
+          probe:
+            enabled: true
+            token: probe
+        probe:
+          enabled: true
+          token: probe
+      probe:
+        enabled: true
+        token: probe
+    probe:
+      enabled: true
+      token: probe
 # Advanced groups optional advanced behavior flags.
 advanced:
   # Metadata keeps arbitrary nested metadata.
-  metadata: {}
+  metadata:
+    example:
+      example: &lt;string&gt;
   # Cooldown sets cooldown duration after errors.
   cooldown: 0
   # CircuitBreaker enables circuit breaker behavior.
@@ -2087,17 +2130,35 @@ advanced:
   tags:
     - &lt;string&gt;
 # Queues configures processing queues by queue name.
-queues: {}
+queues:
+  example:
+    batch_size: 100
+    visibility_timeout: 0
+    workers: 4
 # NamedBuckets configures storage by logical bucket key.
-named_buckets: {}
+named_buckets:
+  example:
+    name: artifacts-main
+    read_only: false
+    region: us-east-1
 # BucketsByPriority maps numeric priority to bucket config.
 buckets_by_priority: {}
 # BucketGroups stores grouped bucket lists.
-bucket_groups: {}
+bucket_groups:
+  example:
+    - name: artifacts-main
+      read_only: false
+      region: us-east-1
 # QueueWorkersByZone stores workers count by zone.
-queue_workers_by_zone: {}
+queue_workers_by_zone:
+  example:
+    example: 0
 # AlertTargets stores alerting destinations by level.
-alert_targets: {}
+alert_targets:
+  example:
+    - address: https://hooks.slack.com/...
+      channel: slack
+      severity: info
 # Mode is execution mode.
 # Default: safe
 # Allowed values: safe, fast

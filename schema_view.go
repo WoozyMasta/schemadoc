@@ -387,22 +387,16 @@ func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveA
 }
 
 // additionalProperties returns all applicable additional-property schemas.
-//
-//nolint:unused // Reserved for object materialization.
 func (schema effectiveSchema) additionalProperties(view *schemaSemanticView) ([]effectiveSchema, error) {
 	return schema.expandKeywordSchemas(view, "additionalProperties")
 }
 
 // propertyNames returns all applicable property-name schemas.
-//
-//nolint:unused // Reserved for object materialization.
 func (schema effectiveSchema) propertyNames(view *schemaSemanticView) ([]effectiveSchema, error) {
 	return schema.expandKeywordSchemas(view, "propertyNames")
 }
 
 // patternProperties returns deterministic pattern-property schema maps.
-//
-//nolint:unused // Reserved for object materialization.
 func (schema effectiveSchema) patternProperties(view *schemaSemanticView) ([]map[string]effectiveSchema, error) {
 	result := make([]map[string]effectiveSchema, 0)
 	for _, term := range schema.terms {
@@ -449,8 +443,6 @@ func compositionKind(keyword string) schemaCompositionKind {
 }
 
 // expandKeywordSchemas expands schema-valued occurrences of one keyword.
-//
-//nolint:unused // Reserved for object keyword consumers.
 func (schema effectiveSchema) expandKeywordSchemas(view *schemaSemanticView, keyword string) ([]effectiveSchema, error) {
 	result := make([]effectiveSchema, 0)
 	for _, term := range schema.terms {

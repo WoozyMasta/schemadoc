@@ -214,3 +214,174 @@ func TestMaterializationEvaluatesCompositionBranches(t *testing.T) {
 		t.Fatalf("example = %s, want selected branch", got)
 	}
 }
+
+func TestMaterializationObjectsAndDynamicMaps(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		schema map[string]any
+		want   string
+	}{
+		{
+			name: "nested map",
+			schema: map[string]any{
+				"type": "object",
+				"additionalProperties": map[string]any{
+					"type":     "object",
+					"required": []any{"enabled"},
+					"properties": map[string]any{
+						"enabled": map[string]any{"type": "boolean"},
+					},
+				},
+			},
+			want: "{\n  \"example\": {\n    \"enabled\": false\n  }\n}",
+		},
+		{
+			name: "property name example",
+			schema: map[string]any{
+				"type": "object",
+				"propertyNames": map[string]any{
+					"type":     "string",
+					"examples": []any{"tenant"},
+				},
+				"additionalProperties": map[string]any{"type": "string"},
+			},
+			want: "{\n  \"tenant\": \"<string>\"\n}",
+		},
+		{
+			name: "forbidden pattern key is not invented",
+			schema: map[string]any{
+				"type": "object",
+				"propertyNames": map[string]any{
+					"type":    "string",
+					"pattern": "^x-",
+				},
+				"patternProperties": map[string]any{
+					"^x-": map[string]any{"type": "string"},
+				},
+				"additionalProperties": map[string]any{"type": "string"},
+			},
+			want: "{}",
+		},
+		{
+			name: "additional properties false",
+			schema: map[string]any{
+				"type":                 "object",
+				"additionalProperties": false,
+			},
+			want: "{}",
+		},
+		{
+			name: "overlapping object terms",
+			schema: map[string]any{
+				"allOf": []any{
+					map[string]any{
+						"type": "object",
+						"properties": map[string]any{
+							"declared": map[string]any{"type": "string"},
+						},
+					},
+					map[string]any{
+						"type":                 "object",
+						"additionalProperties": false,
+					},
+				},
+			},
+			want: "{}",
+		},
+		{
+			name: "optional false property is omitted",
+			schema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"forbidden": false,
+					"visible":   map[string]any{"type": "string"},
+				},
+			},
+			want: "{\n  \"visible\": \"<string>\"\n}",
+		},
+		{
+			name: "dynamic entry respects bounds",
+			schema: map[string]any{
+				"type":          "object",
+				"minProperties": 1,
+				"maxProperties": 1,
+				"propertyNames": map[string]any{
+					"type":     "string",
+					"examples": []any{"tenant"},
+				},
+				"additionalProperties": map[string]any{"type": "integer"},
+			},
+			want: "{\n  \"tenant\": 0\n}",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := GenerateExampleJSON(minimalSchemaBytes(t, test.schema), ExampleModeAll)
+			if err != nil {
+				t.Fatalf("GenerateExampleJSON: %v", err)
+			}
+			if strings.TrimSpace(string(got)) != test.want {
+				t.Fatalf("example = %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
+func TestMaterializationRejectsForbiddenRequiredProperty(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type":     "object",
+		"required": []any{"forbidden"},
+		"properties": map[string]any{
+			"forbidden": false,
+		},
+	})
+
+	_, err := GenerateExampleJSON(schema, ExampleModeAll)
+	if !errors.Is(err, ErrMaterializationUnsatisfiable) {
+		t.Fatalf("GenerateExampleJSON error = %v, want unsatisfiable", err)
+	}
+}
+
+func TestMaterializationRejectsUnmaterializableNestedMap(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type":          "object",
+		"minProperties": 1,
+		"additionalProperties": map[string]any{
+			"type":     "object",
+			"required": []any{"forbidden"},
+			"properties": map[string]any{
+				"forbidden": false,
+			},
+		},
+	})
+
+	_, err := GenerateExampleJSON(schema, ExampleModeAll)
+	if !errors.Is(err, ErrUnsupportedMaterialization) {
+		t.Fatalf("GenerateExampleJSON error = %v, want unsupported materialization", err)
+	}
+}
+
+func TestMaterializationRejectsContradictoryObjectBounds(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type":          "object",
+		"minProperties": 2,
+		"maxProperties": 1,
+	})
+
+	_, err := GenerateExampleJSON(schema, ExampleModeAll)
+	if !errors.Is(err, ErrMaterializationUnsatisfiable) {
+		t.Fatalf("GenerateExampleJSON error = %v, want unsatisfiable", err)
+	}
+}
