@@ -165,12 +165,12 @@ func assertMarkdownParses(t *testing.T, input string) {
 	}
 }
 
-func TestNormalizeMarkdownOutputAddsBlankAfterFence(t *testing.T) {
+func TestNormalizeMarkdownSpacingAddsBlankAfterFence(t *testing.T) {
 	t.Parallel()
 
-	got := normalizeMarkdownOutput("~~~yaml\nkey: value\n~~~\n<!-- marker -->")
+	got := normalizeMarkdownSpacing("~~~yaml\nkey: value\n~~~\n<!-- marker -->")
 	want := "~~~yaml\nkey: value\n~~~\n\n<!-- marker -->"
 	if got != want {
-		t.Fatalf("normalizeMarkdownOutput() = %q, want %q", got, want)
+		t.Fatalf("normalizeMarkdownSpacing() = %q, want %q", got, want)
 	}
 }

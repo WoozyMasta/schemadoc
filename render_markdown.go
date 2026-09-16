@@ -380,9 +380,8 @@ func normalizeLineEndings(text string) string {
 	return text
 }
 
-// normalizeMarkdownOutput collapses extra blank lines outside fenced blocks.
-func normalizeMarkdownOutput(text string) string {
-	text = normalizeLineEndings(text)
+// normalizeMarkdownSpacing collapses extra blank lines outside fenced blocks.
+func normalizeMarkdownSpacing(text string) string {
 	lines := strings.Split(text, "\n")
 	out := make([]string, 0, len(lines))
 
@@ -392,7 +391,7 @@ func normalizeMarkdownOutput(text string) string {
 	needsBlankAfterFence := false
 	blankCount := 0
 	for _, rawLine := range lines {
-		line := strings.TrimRight(rawLine, "\t")
+		line := rawLine
 		trimmed := strings.TrimSpace(line)
 
 		if marker, width, ok := markdownFence(trimmed); ok {
@@ -432,6 +431,16 @@ func normalizeMarkdownOutput(text string) string {
 	}
 
 	return strings.TrimRight(strings.Join(out, "\n"), "\n")
+}
+
+// trimTrailingWhitespace removes trailing spaces and tabs from each line.
+func trimTrailingWhitespace(text string) string {
+	lines := strings.Split(text, "\n")
+	for index := range lines {
+		lines[index] = strings.TrimRight(lines[index], " \t")
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 // escapeInline escapes backticks in inline code markdown segments.

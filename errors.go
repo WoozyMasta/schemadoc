@@ -21,6 +21,14 @@ var (
 	ErrSchemaRootType = errors.New("schema root must be object or boolean")
 	// ErrParseBuiltinTemplate is returned when built-in template parsing fails.
 	ErrParseBuiltinTemplate = errors.New("parse built-in template")
+	// ErrParseTemplateMetadata is returned when template metadata is invalid.
+	ErrParseTemplateMetadata = errors.New("parse template metadata")
+	// ErrUnknownTemplatePostProcessor is returned for an unregistered processor.
+	ErrUnknownTemplatePostProcessor = errors.New("unknown template post-processor")
+	// ErrDuplicateTemplatePostProcessor is returned for a repeated processor.
+	ErrDuplicateTemplatePostProcessor = errors.New("duplicate template post-processor")
+	// ErrInvalidTemplateExtension is returned for an invalid output extension.
+	ErrInvalidTemplateExtension = errors.New("invalid template output extension")
 	// ErrUnknownExampleMode is returned when example generation mode is not supported.
 	ErrUnknownExampleMode = errors.New("unknown example mode")
 	// ErrUnknownExampleFormat is returned when example generation format is not supported.

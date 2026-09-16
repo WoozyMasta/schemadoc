@@ -13,13 +13,28 @@ import (
 	"unicode"
 )
 
-var builtinParsedTemplateCache sync.Map // map[string]*template.Template
+type parsedTemplate struct {
+	template *template.Template
+	metadata templateMetadata
+}
+
+var builtinParsedTemplateCache sync.Map // map[string]parsedTemplate
 
 // resolveTemplate resolves either custom or built-in template text into a parsed template.
-func resolveTemplate(opt Options) (*template.Template, error) {
+func resolveTemplate(opt Options) (*template.Template, templateMetadata, error) {
 	templateText := strings.TrimSpace(opt.TemplateText)
 	if templateText != "" {
-		return template.New("custom").Funcs(templateFuncs()).Parse(templateText)
+		metadata, err := parseTemplateMetadata(templateText)
+		if err != nil {
+			return nil, templateMetadata{}, err
+		}
+
+		parsed, err := template.New("custom").Funcs(templateFuncs()).Parse(templateText)
+		if err != nil {
+			return nil, templateMetadata{}, err
+		}
+
+		return parsed, metadata, nil
 	}
 
 	templateName := normalizeTemplateName(opt.TemplateName)
@@ -28,24 +43,32 @@ func resolveTemplate(opt Options) (*template.Template, error) {
 	}
 
 	if cached, ok := builtinParsedTemplateCache.Load(templateName); ok {
-		tpl, ok := cached.(*template.Template)
-		if ok && tpl != nil {
-			return tpl, nil
+		parsed, ok := cached.(parsedTemplate)
+		if ok && parsed.template != nil {
+			return parsed.template, parsed.metadata, nil
 		}
 	}
 
 	templateText, err := BuiltinTemplate(templateName)
 	if err != nil {
-		return nil, err
+		return nil, templateMetadata{}, err
+	}
+
+	metadata, err := parseTemplateMetadata(templateText)
+	if err != nil {
+		return nil, templateMetadata{}, err
 	}
 
 	parsed, err := template.New(templateName).Funcs(templateFuncs()).Parse(templateText)
 	if err != nil {
-		return nil, fmt.Errorf("%w %q: %w", ErrParseBuiltinTemplate, templateName, err)
+		return nil, templateMetadata{}, fmt.Errorf("%w %q: %w", ErrParseBuiltinTemplate, templateName, err)
 	}
 
-	builtinParsedTemplateCache.Store(templateName, parsed)
-	return parsed, nil
+	builtinParsedTemplateCache.Store(templateName, parsedTemplate{
+		template: parsed,
+		metadata: metadata,
+	})
+	return parsed, metadata, nil
 }
 
 // normalizeTemplateName normalizes built-in template identifiers.
