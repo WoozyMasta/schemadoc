@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "urn:schemadoc:legacy-tuple-items",
+  "type": "array",
+  "items": [
+    {
+      "type": "string"
+    },
+    {
+      "type": "integer"
+    }
+  ],
+  "additionalItems": false,
+  "minItems": 2,
+  "maxItems": 2
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:schemadoc:ref-sibling-draft7",
+  "$ref": "#/definitions/value",
+  "description": "This sibling is ignored by draft 7 semantics.",
+  "definitions": {
+    "value": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:integration:adversarial",
+  "title": "Adversarial names",
+  "type": "object",
+  "properties": {
+    ".": {
+      "type": "string",
+      "description": "dot"
+    },
+    "..": {
+      "type": "string",
+      "description": "dot dot"
+    },
+    "foo.bar": {
+      "type": "string",
+      "description": "dotted key"
+    },
+    "[]": {
+      "type": "string",
+      "description": "bracket key"
+    },
+    "/": {
+      "type": "string",
+      "description": "slash key"
+    },
+    "~": {
+      "type": "string",
+      "description": "tilde key"
+    },
+    "# heading": {
+      "type": "string",
+      "description": "line one\nline two\n# not a heading"
+    },
+    "empty": {
+      "type": "string",
+      "examples": [""],
+      "description": "YAML-looking: false: 0"
+    }
+  }
+}

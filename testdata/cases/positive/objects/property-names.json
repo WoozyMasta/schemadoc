@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:property-names",
+  "type": "object",
+  "propertyNames": {
+    "type": "string",
+    "pattern": "^[a-z][a-z0-9_]*$"
+  },
+  "additionalProperties": {
+    "type": "string"
+  }
+}

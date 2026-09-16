@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:toc-modes",
+  "type": "object",
+  "properties": {
+    "first": {
+      "$ref": "#/$defs/First"
+    },
+    "second": {
+      "$ref": "#/$defs/Second"
+    }
+  },
+  "$defs": {
+    "First": {
+      "type": "object"
+    },
+    "Second": {
+      "type": "object"
+    }
+  }
+}

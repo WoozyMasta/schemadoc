@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:external-reference",
+  "$ref": "https://example.invalid/schemas/missing.json"
+}

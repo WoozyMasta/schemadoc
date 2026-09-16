@@ -1,0 +1,230 @@
+[
+  {
+    "name": "refs/ref-sibling-draft4",
+    "group": "positive",
+    "schema": "positive/refs/ref-sibling-draft4.json",
+    "dialect": "draft4-compatible",
+    "status": "characterization",
+    "description": "Draft 4-compatible $ref sibling behavior."
+  },
+  {
+    "name": "refs/ref-sibling-draft7",
+    "group": "positive",
+    "schema": "positive/refs/ref-sibling-draft7.json",
+    "dialect": "draft7",
+    "status": "characterization",
+    "description": "Draft 7 $ref sibling behavior."
+  },
+  {
+    "name": "refs/ref-sibling-2020-12",
+    "group": "positive",
+    "schema": "positive/refs/ref-sibling-2020-12.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Modern $ref sibling behavior."
+  },
+  {
+    "name": "composition/nested-all-of",
+    "group": "positive",
+    "schema": "positive/composition/nested-all-of.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Nested allOf constraints and properties."
+  },
+  {
+    "name": "objects/root-object-with-defs",
+    "group": "positive",
+    "schema": "positive/objects/root-object-with-defs.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Root content must remain visible next to $defs."
+  },
+  {
+    "name": "objects/object-example",
+    "group": "positive",
+    "schema": "positive/objects/object-example.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Whole-object example annotation."
+  },
+  {
+    "name": "objects/additional-properties",
+    "group": "positive",
+    "schema": "positive/objects/additional-properties.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Dynamic map values through additionalProperties."
+  },
+  {
+    "name": "objects/pattern-properties",
+    "group": "positive",
+    "schema": "positive/objects/pattern-properties.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Pattern property schema selection."
+  },
+  {
+    "name": "objects/property-names",
+    "group": "positive",
+    "schema": "positive/objects/property-names.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Property-name constraints."
+  },
+  {
+    "name": "arrays/array-example",
+    "group": "positive",
+    "schema": "positive/arrays/array-example.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Whole-array example annotation."
+  },
+  {
+    "name": "arrays/modern-prefix-items",
+    "group": "positive",
+    "schema": "positive/arrays/modern-prefix-items.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Modern prefixItems and trailing items."
+  },
+  {
+    "name": "arrays/legacy-tuple-items",
+    "group": "positive",
+    "schema": "positive/arrays/legacy-tuple-items.json",
+    "dialect": "draft4-compatible",
+    "status": "characterization",
+    "description": "Legacy tuple items and additionalItems."
+  },
+  {
+    "name": "annotations/structured-values",
+    "group": "positive",
+    "schema": "positive/annotations/structured-values.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Structured default, example, and enum values."
+  },
+  {
+    "name": "rendering/property-heading",
+    "group": "positive",
+    "schema": "positive/rendering/property-heading.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "render": {
+      "template": "list"
+    },
+    "description": "Property key versus referenced definition heading."
+  },
+  {
+    "name": "rendering/toc-modes",
+    "group": "positive",
+    "schema": "positive/rendering/toc-modes.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "render": {
+      "template": "list",
+      "toc_mode": "references"
+    },
+    "description": "Reference and semantic-section TOC modes."
+  },
+  {
+    "name": "templates/custom-no-markdown",
+    "group": "positive",
+    "schema": "positive/templates/custom-no-markdown.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "render": {
+      "template": "custom"
+    },
+    "description": "Custom template without implicit Markdown processing."
+  },
+  {
+    "name": "refs/invalid-local-reference",
+    "group": "negative",
+    "schema": "negative/refs/invalid-local-reference.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unresolved_reference",
+      "path": "#/$ref"
+    }
+  },
+  {
+    "name": "refs/external-reference",
+    "group": "negative",
+    "schema": "negative/refs/external-reference.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsupported_external_reference",
+      "path": "#/$ref"
+    }
+  },
+  {
+    "name": "composition/unsatisfiable",
+    "group": "negative",
+    "schema": "negative/composition/unsatisfiable.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsatisfiable_schema"
+    }
+  },
+  {
+    "name": "refs/recursive-reference",
+    "group": "negative",
+    "schema": "negative/refs/recursive-reference.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "reference_cycle"
+    }
+  },
+  {
+    "name": "booleans/false-schema",
+    "group": "negative",
+    "schema": "negative/booleans/false-schema.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsatisfiable_schema"
+    }
+  },
+  {
+    "name": "arrays/min-items",
+    "group": "negative",
+    "schema": "negative/arrays/min-items.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsatisfiable_schema",
+      "path": "#/minItems"
+    }
+  },
+  {
+    "name": "scalars/string-pattern",
+    "group": "negative",
+    "schema": "negative/scalars/string-pattern.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "error": {
+      "category": "unsupported_materialization",
+      "path": "#/pattern"
+    }
+  },
+  {
+    "name": "integration/kitchen-sink",
+    "group": "integration",
+    "schema": "../integration/kitchen-sink/schema.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Broad positive integration fixture."
+  },
+  {
+    "name": "integration/adversarial",
+    "group": "integration",
+    "schema": "../integration/adversarial/schema.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "Hostile names and annotation text."
+  }
+]

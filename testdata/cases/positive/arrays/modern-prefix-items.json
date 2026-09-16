@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:modern-prefix-items",
+  "type": "array",
+  "prefixItems": [
+    {
+      "type": "string"
+    },
+    {
+      "type": "integer"
+    }
+  ],
+  "items": {
+    "type": "boolean"
+  },
+  "minItems": 2
+}

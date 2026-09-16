@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:integration:kitchen-sink",
+  "title": "Kitchen sink",
+  "type": "object",
+  "required": ["name", "settings", "items"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "examples": ["demo"]
+    },
+    "settings": {
+      "$ref": "#/$defs/Settings",
+      "x-order": 1
+    },
+    "items": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "items": {
+        "type": "boolean"
+      },
+      "minItems": 2
+    },
+    "labels": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "patternProperties": {
+    "^x-": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Settings": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "multipleOf": 0.1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:unsatisfiable",
+  "allOf": [
+    {
+      "type": "string"
+    },
+    {
+      "type": "number"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:ref-sibling-2020-12",
+  "$ref": "#/$defs/value",
+  "description": "This sibling participates in modern semantics.",
+  "$defs": {
+    "value": {
+      "type": "string"
+    }
+  }
+}

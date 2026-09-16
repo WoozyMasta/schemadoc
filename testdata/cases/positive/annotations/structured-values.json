@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:structured-values",
+  "type": "object",
+  "properties": {
+    "settings": {
+      "type": "object",
+      "default": {
+        "enabled": true,
+        "labels": ["demo"]
+      },
+      "examples": [
+        {
+          "enabled": false,
+          "labels": ["example"]
+        }
+      ],
+      "enum": [
+        {
+          "enabled": true,
+          "labels": ["safe"]
+        }
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
