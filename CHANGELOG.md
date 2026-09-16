@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning][].
 * Draft 5 aliases use Draft 4-compatible semantic handling.
 * Effective schema access now centralizes dialect-aware `$ref`,
   composition, keyword access, and annotation precedence.
+* Example generation now selects validated candidates
+  and reports structured materialization failures.
 
 ## [0.7.1][] - 2026-09-05
 

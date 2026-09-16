@@ -45,4 +45,12 @@ var (
 	ErrInvalidSchemaPointer = errors.New("invalid schema JSON pointer")
 	// ErrSchemaReferenceCycle is returned when local references form a cycle.
 	ErrSchemaReferenceCycle = errors.New("schema reference cycle")
+	// ErrMaterializationUnsatisfiable is returned when no valid example exists.
+	ErrMaterializationUnsatisfiable = errors.New("materialization is unsatisfiable")
+	// ErrUnsupportedMaterialization is returned when generation lacks a safe strategy.
+	ErrUnsupportedMaterialization = errors.New("materialization is unsupported")
+	// ErrUnsupportedRequiredSemantics is returned for required constraints without a usable schema.
+	ErrUnsupportedRequiredSemantics = errors.New("required semantics are unsupported")
+	// ErrGeneratedValueInvalid is returned when synthesis produces an invalid value.
+	ErrGeneratedValueInvalid = errors.New("generated value is invalid")
 )

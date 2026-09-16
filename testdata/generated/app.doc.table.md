@@ -1814,8 +1814,32 @@ End is end minute in a one-hour window.
   },
   "schedule": [
     {
-      "end": "<string>",
-      "start": "<string>"
+      "end": "00:00",
+      "start": "00:00"
+    },
+    {
+      "end": "00:00",
+      "start": "00:00"
+    },
+    {
+      "end": "00:00",
+      "start": "00:00"
+    },
+    {
+      "end": "00:00",
+      "start": "00:00"
+    },
+    {
+      "end": "00:00",
+      "start": "00:00"
+    },
+    {
+      "end": "00:00",
+      "start": "00:00"
+    },
+    {
+      "end": "00:00",
+      "start": "00:00"
     }
   ],
   "shared": {

@@ -104,9 +104,33 @@ retry:
 # Schedule is fixed-size weekly maintenance windows.
 schedule:
   - # End is end time (HH:MM).
-    end: <string>
+    end: 00:00
     # Start is start time (HH:MM).
-    start: <string>
+    start: 00:00
+  - # End is end time (HH:MM).
+    end: 00:00
+    # Start is start time (HH:MM).
+    start: 00:00
+  - # End is end time (HH:MM).
+    end: 00:00
+    # Start is start time (HH:MM).
+    start: 00:00
+  - # End is end time (HH:MM).
+    end: 00:00
+    # Start is start time (HH:MM).
+    start: 00:00
+  - # End is end time (HH:MM).
+    end: 00:00
+    # Start is start time (HH:MM).
+    start: 00:00
+  - # End is end time (HH:MM).
+    end: 00:00
+    # Start is start time (HH:MM).
+    start: 00:00
+  - # End is end time (HH:MM).
+    end: 00:00
+    # Start is start time (HH:MM).
+    start: 00:00
 # EndpointTLSOverrides overrides TLS by endpoint name.
 endpoint_tls_overrides: {}
 # OptionalRetry allows temporary retry override.

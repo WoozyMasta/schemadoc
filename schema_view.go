@@ -22,6 +22,7 @@ type schemaSemanticView struct {
 type effectiveSchema struct {
 	terms             []schemaValue
 	compositionGroups []schemaComposition
+	referenceKeys     []string
 }
 
 // schemaComposition is one anyOf or oneOf group preserved for later evaluation.
@@ -131,6 +132,7 @@ func (view *schemaSemanticView) expand(node schemaValue, active map[string]struc
 		if err != nil {
 			return effectiveSchema{}, err
 		}
+		resolved.referenceKeys = append(resolved.referenceKeys, ref)
 
 		if !view.refSiblingsApply() {
 			return resolved, nil
@@ -214,11 +216,14 @@ func combineEffectiveSchemas(left, right effectiveSchema) effectiveSchema {
 	combined := effectiveSchema{
 		terms:             make([]schemaValue, 0, len(left.terms)+len(right.terms)),
 		compositionGroups: make([]schemaComposition, 0, len(left.compositionGroups)+len(right.compositionGroups)),
+		referenceKeys:     make([]string, 0, len(left.referenceKeys)+len(right.referenceKeys)),
 	}
 	combined.terms = append(combined.terms, left.terms...)
 	combined.terms = append(combined.terms, right.terms...)
 	combined.compositionGroups = append(combined.compositionGroups, left.compositionGroups...)
 	combined.compositionGroups = append(combined.compositionGroups, right.compositionGroups...)
+	combined.referenceKeys = append(combined.referenceKeys, left.referenceKeys...)
+	combined.referenceKeys = append(combined.referenceKeys, right.referenceKeys...)
 
 	return combined
 }
@@ -288,29 +293,21 @@ func (schema effectiveSchema) annotation(keyword string) (any, bool) {
 }
 
 // types returns every declared type constraint in semantic source order.
-//
-//nolint:unused // Reserved for the materializer's constraint evaluator.
 func (schema effectiveSchema) types() []any {
 	return schema.keywordValues("type")
 }
 
 // consts returns every declared const constraint in semantic source order.
-//
-//nolint:unused // Reserved for the materializer's constraint evaluator.
 func (schema effectiveSchema) consts() []any {
 	return schema.keywordValues("const")
 }
 
 // enums returns every declared enum constraint in semantic source order.
-//
-//nolint:unused // Reserved for the materializer's constraint evaluator.
 func (schema effectiveSchema) enums() []any {
 	return schema.keywordValues("enum")
 }
 
 // keywordValues returns raw values for a keyword from all conjunctive terms.
-//
-//nolint:unused // Reserved for the materializer's constraint evaluator.
 func (schema effectiveSchema) keywordValues(keyword string) []any {
 	values := make([]any, 0)
 	for _, term := range schema.terms {
@@ -335,6 +332,7 @@ func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveA
 		}
 
 		current := effectiveArrayItems{}
+		applicable := false
 		if !view.legacyArraySemantics() {
 			if prefix := asSlice(term.Object["prefixItems"]); len(prefix) > 0 {
 				expanded, err := expandSchemaSlice(view, prefix)
@@ -342,6 +340,7 @@ func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveA
 					return nil, err
 				}
 				current.PrefixItems = &expanded
+				applicable = true
 			}
 		}
 
@@ -353,11 +352,13 @@ func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveA
 						return nil, err
 					}
 					current.PrefixItems = &expanded
+					applicable = true
 				}
 			} else if item, ok := toSchemaValue(rawItems); ok {
 				expanded, err := view.expand(item, make(map[string]struct{}))
 				if err == nil {
 					current.Items = &expanded
+					applicable = true
 				} else {
 					return nil, err
 				}
@@ -370,13 +371,16 @@ func (schema effectiveSchema) arrayItems(view *schemaSemanticView) ([]effectiveA
 					expanded, err := view.expand(additional, make(map[string]struct{}))
 					if err == nil {
 						current.AdditionalItems = &expanded
+						applicable = true
 					} else {
 						return nil, err
 					}
 				}
 			}
 		}
-		items = append(items, current)
+		if applicable {
+			items = append(items, current)
+		}
 	}
 
 	return items, nil
@@ -424,8 +428,6 @@ func (schema effectiveSchema) patternProperties(view *schemaSemanticView) ([]map
 }
 
 // compositions returns preserved anyOf/oneOf groups in source order.
-//
-//nolint:unused // Used by the materializer and schema compatibility bridge.
 func (schema effectiveSchema) compositions(kind string) [][]effectiveSchema {
 	result := make([][]effectiveSchema, 0)
 	for _, composition := range schema.compositionGroups {

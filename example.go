@@ -69,8 +69,6 @@ var exampleScalarPlaceholders = map[string]any{
 // exampleBuilder converts normalized schema tree into example values.
 type exampleBuilder struct {
 	semantic            *schemaSemanticView
-	activeRefs          map[string]int
-	mode                ExampleMode
 	disableYAMLComments bool
 }
 
@@ -120,14 +118,16 @@ func GenerateExampleYAMLWithOptions(
 	}
 	normalizedOptions := normalizeExampleOptions(options)
 
-	builder := exampleBuilder{
-		mode:                mode,
-		activeRefs:          make(map[string]int),
-		semantic:            newSchemaSemanticViewPointer(doc),
-		disableYAMLComments: normalizedOptions.DisableExampleComments,
+	materializer := newExampleMaterializer(doc, mode)
+	value, err := materializer.materialize(doc.Root)
+	if err != nil {
+		return nil, err
 	}
 
-	value := builder.buildNode(doc.Root)
+	builder := exampleBuilder{
+		semantic:            materializer.semantic,
+		disableYAMLComments: normalizedOptions.DisableExampleComments,
+	}
 	rootNode, err := yamlNodeForValue(value)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrEncodeExampleYAML, err)
@@ -204,13 +204,7 @@ func generateExampleValue(schemaBytes []byte, mode ExampleMode) (any, error) {
 		return nil, err
 	}
 
-	builder := exampleBuilder{
-		mode:       mode,
-		activeRefs: make(map[string]int),
-		semantic:   newSchemaSemanticViewPointer(doc),
-	}
-
-	return builder.buildNode(doc.Root), nil
+	return newExampleMaterializer(doc, mode).materialize(doc.Root)
 }
 
 // normalizeExampleMode validates and normalizes caller mode value.
@@ -235,171 +229,6 @@ func normalizeExampleFormat(format ExampleFormat) (ExampleFormat, error) {
 	}
 }
 
-// buildNode recursively builds example value for one schema node.
-func (builder *exampleBuilder) buildNode(node schemaValue) any {
-	if node.Bool != nil {
-		return nil
-	}
-
-	if node.Object == nil {
-		return nil
-	}
-
-	object := node.Object
-	if resolved, release, handled := builder.resolvedObjectForReference(object); handled {
-		if release != nil {
-			defer release()
-		}
-
-		if resolved == nil {
-			return nil
-		}
-
-		return builder.buildNode(schemaValue{Object: resolved})
-	}
-
-	return builder.buildFromObject(object)
-}
-
-// buildFromObject builds example from non-boolean schema object.
-func (builder *exampleBuilder) buildFromObject(object map[string]any) any {
-	schemaType := schemaTypeName(object)
-	properties, required := builder.collectObjectShape(schemaValue{Object: object})
-
-	if schemaType == "object" || len(properties) > 0 || len(required) > 0 {
-		return builder.buildObjectFromShape(properties, required)
-	}
-
-	if schemaType == "array" || hasArrayShape(object) {
-		return builder.buildArrayFromObject(object)
-	}
-
-	if value, ok := explicitExampleValue(object); ok {
-		return cloneJSONValue(value)
-	}
-
-	if value, ok := constExampleValue(object); ok {
-		return cloneJSONValue(value)
-	}
-
-	if value, ok := enumExampleValue(object); ok {
-		return cloneJSONValue(value)
-	}
-
-	if value, ok := builder.buildCompositionFallback(object); ok {
-		return value
-	}
-
-	if value, ok := scalarPlaceholder(schemaType); ok {
-		return value
-	}
-
-	return nil
-}
-
-// buildObjectFromShape materializes object value from collected property shape.
-func (builder *exampleBuilder) buildObjectFromShape(properties map[string]schemaValue, required []string) map[string]any {
-	out := make(map[string]any)
-	if len(properties) == 0 {
-		return out
-	}
-
-	order := propertyOrder(required, properties)
-	if builder.mode == ExampleModeRequired {
-		order = requiredPropertyOrder(required, properties)
-	}
-
-	for _, key := range order {
-		value := builder.buildNode(properties[key])
-		out[key] = value
-	}
-
-	return out
-}
-
-// buildArrayFromObject materializes array value from schema items/prefixItems.
-func (builder *exampleBuilder) buildArrayFromObject(object map[string]any) []any {
-	if value, ok := explicitExampleValue(object); ok {
-		items, ok := value.([]any)
-		if ok {
-			return cloneJSONValue(items).([]any)
-		}
-	}
-
-	if value, ok := constExampleValue(object); ok {
-		items, ok := value.([]any)
-		if ok {
-			return cloneJSONValue(items).([]any)
-		}
-	}
-
-	if value, ok := enumExampleValue(object); ok {
-		items, ok := value.([]any)
-		if ok {
-			return cloneJSONValue(items).([]any)
-		}
-	}
-
-	prefixItems := asSlice(object["prefixItems"])
-	if len(prefixItems) > 0 {
-		out := make([]any, 0, len(prefixItems))
-		for _, raw := range prefixItems {
-			item, ok := toSchemaValue(raw)
-			if !ok {
-				out = append(out, nil)
-				continue
-			}
-
-			out = append(out, builder.buildNode(item))
-		}
-
-		return out
-	}
-
-	item, ok := toSchemaValue(object["items"])
-	if ok {
-		if item.Object != nil {
-			if values := asSlice(item.Object["examples"]); len(values) > 0 {
-				out := make([]any, 0, len(values))
-				for _, value := range values {
-					out = append(out, cloneJSONValue(value))
-				}
-
-				return out
-			}
-		}
-
-		return []any{builder.buildNode(item)}
-	}
-
-	return []any{}
-}
-
-// collectObjectShape returns effective object properties and required keys for node.
-func (builder *exampleBuilder) collectObjectShape(node schemaValue) (map[string]schemaValue, []string) {
-	if builder.semantic == nil {
-		return nil, nil
-	}
-
-	effective, err := builder.semantic.effective(node)
-	if err != nil {
-		return nil, nil
-	}
-
-	properties, err := effective.properties(builder.semantic)
-	if err != nil {
-		return nil, nil
-	}
-
-	values := make(map[string]schemaValue)
-	for name, property := range properties {
-		values[name] = property.asSchemaValue()
-	}
-	required := effective.required()
-
-	return values, required
-}
-
 // requiredPropertyOrder returns deterministic order for required properties only.
 func requiredPropertyOrder(required []string, properties map[string]schemaValue) []string {
 	if len(required) == 0 || len(properties) == 0 {
@@ -419,165 +248,6 @@ func requiredPropertyOrder(required []string, properties map[string]schemaValue)
 
 		seen[key] = struct{}{}
 		out = append(out, key)
-	}
-
-	return out
-}
-
-// buildCompositionFallback builds value from first schema of oneOf/anyOf/allOf.
-func (builder *exampleBuilder) buildCompositionFallback(object map[string]any) (any, bool) {
-	for _, keyword := range []string{"oneOf", "anyOf", "allOf"} {
-		items := asSlice(object[keyword])
-		for _, item := range items {
-			schema, ok := toSchemaValue(item)
-			if !ok {
-				continue
-			}
-
-			return builder.buildNode(schema), true
-		}
-	}
-
-	return nil, false
-}
-
-// resolvedObjectForReference resolves local ref through the effective schema view.
-func (builder *exampleBuilder) resolvedObjectForReference(object map[string]any) (map[string]any, func(), bool) {
-	ref := asString(object["$ref"])
-	if ref == "" {
-		return nil, nil, false
-	}
-
-	if builder.semantic == nil {
-		return stripReferenceKeyword(object), nil, true
-	}
-
-	effective, err := builder.semantic.effective(schemaValue{Object: object})
-	if err != nil {
-		return stripReferenceKeyword(object), nil, true
-	}
-
-	release, ok := builder.enterReference(ref)
-	if !ok {
-		return nil, nil, true
-	}
-
-	resolved := effective.asSchemaValue()
-	if resolved.Object == nil {
-		return nil, release, true
-	}
-
-	return resolved.Object, release, true
-}
-
-// enterReference registers active local ref and returns release callback.
-func (builder *exampleBuilder) enterReference(ref string) (func(), bool) {
-	ref = strings.TrimSpace(ref)
-	if ref == "" {
-		return nil, true
-	}
-
-	if builder.activeRefs[ref] > 0 {
-		return nil, false
-	}
-
-	builder.activeRefs[ref]++
-	return func() {
-		builder.activeRefs[ref]--
-		if builder.activeRefs[ref] <= 0 {
-			delete(builder.activeRefs, ref)
-		}
-	}, true
-}
-
-// schemaTypeName returns first non-null type value from schema "type" keyword.
-func schemaTypeName(object map[string]any) string {
-	typeValue, exists := object["type"]
-	if !exists {
-		return ""
-	}
-
-	if text := strings.ToLower(asString(typeValue)); text != "" {
-		return text
-	}
-
-	items := asSlice(typeValue)
-	for _, item := range items {
-		text := strings.ToLower(asString(item))
-		if text == "" || text == "null" {
-			continue
-		}
-
-		return text
-	}
-
-	for _, item := range items {
-		text := strings.ToLower(asString(item))
-		if text == "null" {
-			return text
-		}
-	}
-
-	return ""
-}
-
-// hasArrayShape reports whether schema has array structure keywords.
-func hasArrayShape(object map[string]any) bool {
-	if _, ok := toSchemaValue(object["items"]); ok {
-		return true
-	}
-
-	return len(asSlice(object["prefixItems"])) > 0
-}
-
-// explicitExampleValue returns preferred explicit example value from schema object.
-func explicitExampleValue(object map[string]any) (any, bool) {
-	if value, ok := object["default"]; ok {
-		return value, true
-	}
-
-	if value := asSlice(object["examples"]); len(value) > 0 {
-		return value[0], true
-	}
-
-	if value, ok := object["example"]; ok {
-		return value, true
-	}
-
-	return nil, false
-}
-
-// constExampleValue returns const value as example when available.
-func constExampleValue(object map[string]any) (any, bool) {
-	value, ok := object["const"]
-	return value, ok
-}
-
-// enumExampleValue returns first enum value as example when available.
-func enumExampleValue(object map[string]any) (any, bool) {
-	values := asSlice(object["enum"])
-	if len(values) == 0 {
-		return nil, false
-	}
-
-	return values[0], true
-}
-
-// scalarPlaceholder returns fallback placeholder for known scalar schema types.
-func scalarPlaceholder(schemaType string) (any, bool) {
-	value, ok := exampleScalarPlaceholders[schemaType]
-	return value, ok
-}
-
-// stripReferenceKeyword returns shallow copy without $ref keyword.
-func stripReferenceKeyword(object map[string]any) map[string]any {
-	out := make(map[string]any, len(object))
-	for key, value := range object {
-		if key == "$ref" {
-			continue
-		}
-
-		out[key] = value
 	}
 
 	return out
