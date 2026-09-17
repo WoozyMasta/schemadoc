@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.8.0][] - 2026-09-17
 
 ### Added
 
@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning][].
 
 * `DisableExampleComments` from the Go API and build configuration.
 * `--disable-example-comments` CLI flag.
+
+[0.8.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.7.1...v0.8.0
 
 ## [0.7.1][] - 2026-09-05
 
