@@ -54,6 +54,16 @@ func TestRenderInlineMarkdownHTMLMultiLineCodeSpan(t *testing.T) {
 	}
 }
 
+func TestRenderInlineMarkdownHTMLPreservesUTF8(t *testing.T) {
+	t.Parallel()
+
+	got := renderInlineMarkdownHTML("Привет & <мир>")
+	want := "Привет &amp; &lt;мир&gt;"
+	if got != want {
+		t.Fatalf("renderInlineMarkdownHTML() = %q, want %q", got, want)
+	}
+}
+
 func TestRenderMarkdownBlockHTMLSupportsLists(t *testing.T) {
 	t.Parallel()
 

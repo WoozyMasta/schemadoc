@@ -57,3 +57,14 @@ func TestParseDocumentPreservesJSONNumbers(t *testing.T) {
 		}
 	}
 }
+
+func TestJSONContainsNumberIgnoresStringContent(t *testing.T) {
+	t.Parallel()
+
+	if jsonContainsNumber([]byte(`{"message":"retry 3 times"}`)) {
+		t.Fatal("jsonContainsNumber reported a number inside a string")
+	}
+	if !jsonContainsNumber([]byte(`{"minimum":3}`)) {
+		t.Fatal("jsonContainsNumber missed a JSON number")
+	}
+}

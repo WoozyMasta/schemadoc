@@ -222,6 +222,10 @@ func renderInlineMarkdownHTML(value any) string {
 				index += end + 2
 				continue
 			}
+
+			out.WriteString(html.EscapeString(text[index : index+1]))
+			index++
+			continue
 		}
 
 		if text[index] == '\n' {
@@ -230,19 +234,28 @@ func renderInlineMarkdownHTML(value any) string {
 			continue
 		}
 
-		linkText, href, consumed, ok := parseInlineMarkdownLink(text[index:])
-		if ok {
-			out.WriteString("<a href=\"")
-			out.WriteString(html.EscapeString(href))
-			out.WriteString("\">")
-			out.WriteString(renderInlineMarkdownHTML(linkText))
-			out.WriteString("</a>")
-			index += consumed
+		if text[index] == '[' {
+			linkText, href, consumed, ok := parseInlineMarkdownLink(text[index:])
+			if ok {
+				out.WriteString("<a href=\"")
+				out.WriteString(html.EscapeString(href))
+				out.WriteString("\">")
+				out.WriteString(renderInlineMarkdownHTML(linkText))
+				out.WriteString("</a>")
+				index += consumed
+				continue
+			}
+
+			out.WriteString(html.EscapeString(text[index : index+1]))
+			index++
 			continue
 		}
 
-		out.WriteString(html.EscapeString(string(text[index])))
-		index++
+		start := index
+		for index < len(text) && text[index] != '`' && text[index] != '\n' && text[index] != '[' {
+			index++
+		}
+		out.WriteString(html.EscapeString(text[start:index]))
 	}
 
 	return out.String()

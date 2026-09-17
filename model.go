@@ -170,6 +170,10 @@ func parseDocument(schemaBytes []byte) (schemaDocument, error) {
 
 // decodeJSONWithNumbers decodes JSON without reducing numbers to float64.
 func decodeJSONWithNumbers(content []byte, target any) error {
+	if !jsonContainsNumber(content) {
+		return json.Unmarshal(content, target)
+	}
+
 	decoder := json.NewDecoder(bytes.NewReader(content))
 	decoder.UseNumber()
 	if err := decoder.Decode(target); err != nil {
@@ -186,6 +190,34 @@ func decodeJSONWithNumbers(content []byte, target any) error {
 	default:
 		return err
 	}
+}
+
+// jsonContainsNumber reports whether content contains a JSON number outside a string.
+func jsonContainsNumber(content []byte) bool {
+	inString := false
+	escaped := false
+	for _, character := range content {
+		if inString {
+			switch {
+			case escaped:
+				escaped = false
+			case character == '\\':
+				escaped = true
+			case character == '"':
+				inString = false
+			}
+			continue
+		}
+
+		switch {
+		case character == '"':
+			inString = true
+		case character == '-' || character >= '0' && character <= '9':
+			return true
+		}
+	}
+
+	return false
 }
 
 // mergeDefinitions merges legacy and modern definition maps into one normalized map.
