@@ -11,8 +11,9 @@ import (
 
 // schemaSemanticView expands schema structure while retaining simultaneous constraints.
 type schemaSemanticView struct {
-	resolver localSchemaResolver
-	dialect  schemaDialect
+	resolver           localSchemaResolver
+	dialect            schemaDialect
+	deferRecursiveRefs bool
 }
 
 // effectiveSchema is the semantic view of one schema location.
@@ -26,6 +27,7 @@ type effectiveSchema struct {
 	terms             []schemaValue
 	compositionGroups []schemaComposition
 	referenceKeys     []string
+	deferredRefs      []string
 }
 
 // schemaComposition is one anyOf or oneOf group preserved for later evaluation.
@@ -77,13 +79,16 @@ type effectiveArrayContains struct {
 // Multiple terms are kept under allOf so simultaneous constraints are not overwritten
 // while the semantic accessors remain authoritative.
 func (schema effectiveSchema) asSchemaValue() schemaValue {
-	if len(schema.terms) == 1 && len(schema.compositionGroups) == 0 {
+	if len(schema.terms) == 1 && len(schema.compositionGroups) == 0 && len(schema.deferredRefs) == 0 {
 		return schema.terms[0]
 	}
 
-	allOfBranches := make([]any, 0, len(schema.terms)+len(schema.compositionGroups))
+	allOfBranches := make([]any, 0, len(schema.terms)+len(schema.compositionGroups)+len(schema.deferredRefs))
 	for _, term := range schema.terms {
 		allOfBranches = append(allOfBranches, rawSchemaValue(term))
+	}
+	for _, ref := range schema.deferredRefs {
+		allOfBranches = append(allOfBranches, map[string]any{"$ref": ref})
 	}
 
 	for _, keyword := range []string{"anyOf", "oneOf"} {
@@ -120,6 +125,7 @@ func newSchemaSemanticView(doc schemaDocument) schemaSemanticView {
 // newSchemaSemanticViewPointer creates a view suitable for an example builder.
 func newSchemaSemanticViewPointer(doc schemaDocument) *schemaSemanticView {
 	view := newSchemaSemanticView(doc)
+	view.deferRecursiveRefs = true
 	return &view
 }
 
@@ -141,10 +147,27 @@ func (view *schemaSemanticView) expand(node schemaValue, active map[string]struc
 	ref := asString(object["$ref"])
 	if ref != "" {
 		if _, exists := active[ref]; exists {
-			return effectiveSchema{}, &schemaReferenceError{
-				Kind:      schemaReferenceCycle,
-				Reference: ref,
+			if !view.deferRecursiveRefs {
+				return effectiveSchema{}, &schemaReferenceError{
+					Kind:      schemaReferenceCycle,
+					Reference: ref,
+				}
 			}
+
+			// Keep the recursive edge in the semantic view.
+			// The materializer can then try sibling terminal branches before rejecting this edge.
+			deferred := effectiveSchema{deferredRefs: []string{ref}}
+			if !view.refSiblingsApply() {
+				return deferred, nil
+			}
+
+			local := schemaValue{Object: withoutSchemaKeywords(object, "$ref")}
+			localView, err := view.expandLocal(local, active)
+			if err != nil {
+				return effectiveSchema{}, err
+			}
+
+			return combineEffectiveSchemas(deferred, localView), nil
 		}
 
 		active[ref] = struct{}{}
@@ -268,6 +291,7 @@ func combineEffectiveSchemas(left, right effectiveSchema) effectiveSchema {
 		terms:             make([]schemaValue, 0, len(left.terms)+len(right.terms)),
 		compositionGroups: make([]schemaComposition, 0, len(left.compositionGroups)+len(right.compositionGroups)),
 		referenceKeys:     make([]string, 0, len(left.referenceKeys)+len(right.referenceKeys)),
+		deferredRefs:      make([]string, 0, len(left.deferredRefs)+len(right.deferredRefs)),
 	}
 	combined.terms = append(combined.terms, left.terms...)
 	combined.terms = append(combined.terms, right.terms...)
@@ -275,6 +299,8 @@ func combineEffectiveSchemas(left, right effectiveSchema) effectiveSchema {
 	combined.compositionGroups = append(combined.compositionGroups, right.compositionGroups...)
 	combined.referenceKeys = append(combined.referenceKeys, left.referenceKeys...)
 	combined.referenceKeys = append(combined.referenceKeys, right.referenceKeys...)
+	combined.deferredRefs = append(combined.deferredRefs, left.deferredRefs...)
+	combined.deferredRefs = append(combined.deferredRefs, right.deferredRefs...)
 
 	return combined
 }

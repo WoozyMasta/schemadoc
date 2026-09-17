@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:schemadoc:recursive-terminal",
+  "$ref": "#/$defs/Node",
+  "$defs": {
+    "Node": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Node"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

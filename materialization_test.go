@@ -435,6 +435,95 @@ func TestMaterializationEvaluatesCompositionBranches(t *testing.T) {
 	}
 }
 
+func TestMaterializationCompositionSearch(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		schema map[string]any
+		want   string
+	}{
+		{
+			name: "oneOf boundary overlap finds exclusive value",
+			schema: map[string]any{
+				"oneOf": []any{
+					map[string]any{
+						"type":    "integer",
+						"minimum": 5,
+						"maximum": 10,
+					},
+					map[string]any{
+						"type":    "integer",
+						"minimum": 5,
+						"maximum": 15,
+					},
+				},
+			},
+			want: "15",
+		},
+		{
+			name: "mutually exclusive object branches",
+			schema: map[string]any{
+				"oneOf": []any{
+					map[string]any{
+						"type":     "object",
+						"required": []any{"kind"},
+						"properties": map[string]any{
+							"kind": map[string]any{"const": "alpha"},
+						},
+					},
+					map[string]any{
+						"type":     "object",
+						"required": []any{"kind"},
+						"properties": map[string]any{
+							"kind": map[string]any{"const": "beta"},
+						},
+					},
+				},
+			},
+			want: "{\n  \"kind\": \"alpha\"\n}",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := GenerateExampleJSON(minimalSchemaBytes(t, test.schema), ExampleModeAll)
+			if err != nil {
+				t.Fatalf("GenerateExampleJSON: %v", err)
+			}
+			if strings.TrimSpace(string(got)) != test.want {
+				t.Fatalf("example = %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
+func TestMaterializationRecursiveTerminalBranch(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"$ref": "#/$defs/Node",
+		"$defs": map[string]any{
+			"Node": map[string]any{
+				"anyOf": []any{
+					map[string]any{"$ref": "#/$defs/Node"},
+					map[string]any{"type": "null"},
+				},
+			},
+		},
+	})
+
+	got, err := GenerateExampleJSON(schema, ExampleModeAll)
+	if err != nil {
+		t.Fatalf("GenerateExampleJSON: %v", err)
+	}
+	if strings.TrimSpace(string(got)) != "null" {
+		t.Fatalf("example = %s, want null terminal branch", got)
+	}
+}
+
 func TestMaterializationObjectsAndDynamicMaps(t *testing.T) {
 	t.Parallel()
 

@@ -24,6 +24,14 @@
     "description": "Modern $ref sibling behavior."
   },
   {
+    "name": "refs/recursive-terminal",
+    "group": "positive",
+    "schema": "positive/refs/recursive-terminal.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "A recursive schema can select its finite terminal branch."
+  },
+  {
     "name": "composition/nested-all-of",
     "group": "positive",
     "schema": "positive/composition/nested-all-of.json",
@@ -293,7 +301,7 @@
     "dialect": "2020-12",
     "status": "characterization",
     "error": {
-      "category": "unsatisfiable_schema"
+      "category": "unsupported_materialization"
     }
   },
   {

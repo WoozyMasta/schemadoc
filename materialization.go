@@ -21,6 +21,11 @@ import (
 
 const maxGeneratedStringLength = 4096
 
+const (
+	maxCompositionCandidates = 64
+	maxCompositionDepth      = 32
+)
+
 const materializationSchemaURL = "urn:schemadoc:materialization-schema"
 
 // MaterializationErrorCode identifies a stable example-generation failure.
@@ -74,11 +79,12 @@ type MaterializationError struct {
 
 // exampleMaterializer selects and validates one deterministic example value.
 type exampleMaterializer struct {
-	validatorError error
-	semantic       *schemaSemanticView
-	activeRefs     map[string]int
-	rootValidator  *jsonschema.Schema
-	mode           ExampleMode
+	validatorError   error
+	semantic         *schemaSemanticView
+	activeRefs       map[string]int
+	rootValidator    *jsonschema.Schema
+	mode             ExampleMode
+	compositionDepth int
 }
 
 // materializationCandidate records an explicit value and its source keyword.
@@ -225,6 +231,10 @@ func (materializer *exampleMaterializer) materializeAt(node schemaValue, path sc
 
 // materializeEffective builds a value while retaining expanded reference keys.
 func (materializer *exampleMaterializer) materializeEffective(effective effectiveSchema, path schemaPath) (any, error) {
+	if len(effective.deferredRefs) > 0 {
+		return materializer.materializeDeferredReference(effective, path)
+	}
+
 	for _, ref := range effective.referenceKeys {
 		if materializer.activeRefs[ref] > 0 {
 			return nil, newMaterializationError(
@@ -306,6 +316,49 @@ func (materializer *exampleMaterializer) materializeEffective(effective effectiv
 	}
 
 	return value, nil
+}
+
+// materializeDeferredReference follows a recursive edge only when it is not already active;
+// this lets a finite composition branch win over recursion.
+func (materializer *exampleMaterializer) materializeDeferredReference(
+	effective effectiveSchema,
+	path schemaPath,
+) (any, error) {
+	for _, ref := range effective.deferredRefs {
+		if materializer.activeRefs[ref] > 0 {
+			return nil, newMaterializationError(
+				MaterializationCodeReferenceRecursion,
+				MaterializationCategoryReferenceCycle,
+				materializationKeywordPath(path, "$ref"),
+				ErrSchemaReferenceCycle,
+			)
+		}
+
+		target, err := materializer.semantic.resolver.lookup(ref)
+		if err != nil {
+			return nil, materializationReferenceError(err, path)
+		}
+
+		materializer.activeRefs[ref]++
+		value, err := materializer.materializeAt(target, path)
+		materializer.activeRefs[ref]--
+		if materializer.activeRefs[ref] <= 0 {
+			delete(materializer.activeRefs, ref)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		local := effective
+		local.deferredRefs = nil
+		if err := validateEffectiveInstance(materializer.semantic, local, value, path); err != nil {
+			return nil, err
+		}
+
+		return value, nil
+	}
+
+	return nil, nil
 }
 
 // explicitCandidates returns candidates in the public selection order.
@@ -395,25 +448,7 @@ func (materializer *exampleMaterializer) synthesize(schema effectiveSchema, path
 // synthesizeString tries readable format and conservative pattern candidates
 // before adjusting the generic placeholder to the declared Unicode length.
 func (materializer *exampleMaterializer) synthesizeString(schema effectiveSchema, path schemaPath) (string, error) {
-	candidates := make([]string, 0, 4)
-	minimum, maximum := stringBounds(schema)
-	if value, ok := knownPatternExample(schema); ok {
-		candidates = append(candidates, value)
-	}
-	if value, ok := formatStringExample(schema); ok {
-		candidates = append(candidates, value)
-	}
-	for _, value := range simplePatternExamples(schema) {
-		candidates = append(candidates, value)
-		if minimum <= maximum && minimum > 1 && minimum <= maxGeneratedStringLength {
-			candidates = append(candidates, strings.Repeat(value, minimum))
-		}
-	}
-	candidates = append(candidates, "<string>")
-
-	if minimum <= maximum && minimum <= maxGeneratedStringLength {
-		candidates = append(candidates, strings.Repeat("a", minimum))
-	}
+	candidates := stringCandidates(schema)
 
 	seen := make(map[string]struct{}, len(candidates))
 	for _, candidate := range candidates {
@@ -447,6 +482,32 @@ func (materializer *exampleMaterializer) synthesizeString(schema effectiveSchema
 		materializationKeywordPath(path, keyword),
 		ErrUnsupportedMaterialization,
 	)
+}
+
+// stringCandidates returns the finite fallback
+// set shared by scalar synthesis and composition search.
+func stringCandidates(schema effectiveSchema) []string {
+	candidates := make([]string, 0, 8)
+	minimum, maximum := stringBounds(schema)
+	if value, ok := knownPatternExample(schema); ok {
+		candidates = append(candidates, value)
+	}
+	if value, ok := formatStringExample(schema); ok {
+		candidates = append(candidates, value)
+	}
+	for _, value := range simplePatternExamples(schema) {
+		candidates = append(candidates, value)
+		if minimum <= maximum && minimum > 1 && minimum <= maxGeneratedStringLength {
+			candidates = append(candidates, strings.Repeat(value, minimum))
+		}
+	}
+	candidates = append(candidates, "<string>")
+
+	if minimum <= maximum && minimum <= maxGeneratedStringLength {
+		candidates = append(candidates, strings.Repeat("a", minimum))
+	}
+
+	return candidates
 }
 
 // synthesizeNumber tries boundary and multipleOf-derived values in stable order.
@@ -485,43 +546,104 @@ func (materializer *exampleMaterializer) synthesizeNumber(schema effectiveSchema
 
 // synthesizeComposition evaluates branch-generated candidates against the whole schema.
 func (materializer *exampleMaterializer) synthesizeComposition(schema effectiveSchema, path schemaPath) (any, error) {
-	var selected any
+	if materializer.compositionDepth >= maxCompositionDepth {
+		return nil, materializationCompositionSearchError(schema, path)
+	}
+
+	materializer.compositionDepth++
+	defer func() { materializer.compositionDepth-- }()
+
+	candidates := make([]any, 0, maxCompositionCandidates)
 	for _, group := range schema.compositionGroups {
-		valid := 0
 		for _, branch := range group.branches {
-			value, err := materializer.materializeEffective(branch, path)
-			if err != nil {
-				continue
-			}
-			if err := validateEffectiveInstance(materializer.semantic, schema, value, path); err != nil {
-				continue
-			}
-
-			valid++
-			selected = value
-			if group.kind == schemaCompositionAnyOf {
-				return value, nil
-			}
-		}
-
-		if group.kind == schemaCompositionOneOf && valid == 1 {
-			return selected, nil
-		}
-		if group.kind == schemaCompositionOneOf && valid > 1 {
-			return nil, newMaterializationError(
-				MaterializationCodeUnsatisfiable,
-				MaterializationCategoryUnsatisfiableSchema,
-				materializationKeywordPath(path, "oneOf"),
-				ErrMaterializationUnsatisfiable,
-			)
+			materializer.appendCompositionCandidates(&candidates, branch, path)
 		}
 	}
 
-	return nil, newMaterializationError(
-		MaterializationCodeUnsatisfiable,
-		MaterializationCategoryUnsatisfiableSchema,
-		pathPointer(path),
-		ErrMaterializationUnsatisfiable,
+	for _, candidate := range candidates {
+		if err := validateEffectiveInstance(materializer.semantic, schema, candidate, path); err == nil {
+			return candidate, nil
+		} else if isMaterializationReferenceError(err) {
+			return nil, err
+		}
+	}
+
+	if isDefinitelyUnsatisfiable(schema) {
+		return nil, newMaterializationError(
+			MaterializationCodeUnsatisfiable,
+			MaterializationCategoryUnsatisfiableSchema,
+			pathPointer(path),
+			ErrMaterializationUnsatisfiable,
+		)
+	}
+
+	return nil, materializationCompositionSearchError(schema, path)
+}
+
+// appendCompositionCandidates gathers a bounded set of branch-local values.
+// The whole composition is checked again by the caller.
+func (materializer *exampleMaterializer) appendCompositionCandidates(
+	candidates *[]any,
+	branch effectiveSchema,
+	path schemaPath,
+) {
+	appendCandidate := func(value any) {
+		if len(*candidates) >= maxCompositionCandidates {
+			return
+		}
+		if err := validateEffectiveInstance(materializer.semantic, branch, value, path); err != nil {
+			return
+		}
+		for _, existing := range *candidates {
+			if equalJSONValue(existing, value) {
+				return
+			}
+		}
+		*candidates = append(*candidates, value)
+	}
+
+	for _, candidate := range materializer.explicitCandidates(branch) {
+		appendCandidate(candidate.value)
+	}
+
+	switch effectiveSchemaType(branch) {
+	case "number", "integer":
+		for _, candidate := range numberCandidates(branch) {
+			appendCandidate(candidate)
+		}
+	case "string":
+		for _, candidate := range stringCandidates(branch) {
+			appendCandidate(candidate)
+		}
+	default:
+		if candidate, ok := scalarPlaceholder(effectiveSchemaType(branch)); ok {
+			appendCandidate(candidate)
+		}
+	}
+
+	// Object and array branches need nested schemas materialized;
+	// an error here does not invalidate other composition branches.
+	if value, err := materializer.materializeEffective(branch, path); err == nil {
+		appendCandidate(value)
+	}
+}
+
+// materializationCompositionSearchError distinguishes bounded search failure
+// from a proof that the composition has no valid instance.
+func materializationCompositionSearchError(schema effectiveSchema, path schemaPath) error {
+	keyword := "anyOf"
+	for _, group := range schema.compositionGroups {
+		if group.kind == schemaCompositionOneOf {
+			keyword = "oneOf"
+			break
+		}
+	}
+
+	return newMaterializationError(
+		MaterializationCodeUnsupported,
+		MaterializationCategoryUnsupportedMaterialization,
+		materializationKeywordPath(path, keyword),
+		ErrUnsupportedMaterialization,
 	)
 }
 
@@ -1732,6 +1854,13 @@ func validateEffectiveInstance(
 	value any,
 	path schemaPath,
 ) error {
+	if len(schema.deferredRefs) > 0 {
+		return newCandidateValidationError(
+			materializationKeywordPath(path, "$ref"),
+			"$ref",
+			"recursive reference is deferred")
+	}
+
 	for _, term := range schema.terms {
 		if term.Bool != nil {
 			if !*term.Bool {
@@ -2691,6 +2820,19 @@ func validationPath(err error, fallback schemaPath) string {
 
 // isDefinitelyUnsatisfiable detects contradictions that need no search.
 func isDefinitelyUnsatisfiable(schema effectiveSchema) bool {
+	for _, group := range schema.compositionGroups {
+		allBranchesUnsatisfiable := len(group.branches) > 0
+		for _, branch := range group.branches {
+			if !isFalseEffectiveSchema(branch) && !isDefinitelyUnsatisfiable(branch) {
+				allBranchesUnsatisfiable = false
+				break
+			}
+		}
+		if allBranchesUnsatisfiable {
+			return true
+		}
+	}
+
 	if schemaTypesContradict(schema) {
 		return true
 	}
