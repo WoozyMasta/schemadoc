@@ -14,6 +14,20 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.9.0][] - 2026-09-17
+
+### Added
+
+* `root_id` in build configuration and `--root-id` for module reflection
+  to override the generated root JSON Schema `$id`.
+
+### Changed
+
+* Root schema identifiers are applied after Go reflection and schema extensions,
+  preserving local definition references.
+
+[0.9.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.8.0...v0.9.0
+
 ## [0.8.0][] - 2026-09-17
 
 ### Added
