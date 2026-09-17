@@ -272,6 +272,16 @@ type Schema2DocStage struct {
 	// Empty value disables embedded example block.
 	Format string `json:"format,omitempty" yaml:"format,omitempty" jsonschema_extras:"x-order=8" jsonschema:"enum=json,enum=yaml"`
 
+	// SourcePath overrides the source path shown in document metadata.
+	//
+	// It does not affect the working schema file or schema processing.
+	SourcePath string `json:"source_path,omitempty" yaml:"source_path,omitempty" jsonschema_extras:"x-order=13" jsonschema:"example=docs/config.schema.json"`
+
+	// SourceRawPath overrides the raw schema URL shown in document metadata.
+	//
+	// When empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.
+	SourceRawPath string `json:"source_raw_path,omitempty" yaml:"source_raw_path,omitempty" jsonschema_extras:"x-order=14" jsonschema:"format=uri,example=https://raw.githubusercontent.com/acme/project/HEAD/schema.json"`
+
 	// Wrap sets wrap width for plain-text description blocks.
 	Wrap int `json:"wrap,omitempty" yaml:"wrap,omitempty" jsonschema_extras:"x-order=9" jsonschema:"minimum=1,default=80"`
 
@@ -285,16 +295,6 @@ type Schema2DocStage struct {
 
 	// Footer includes schemadoc version metadata in rendered documentation.
 	Footer bool `json:"footer,omitempty" yaml:"footer,omitempty" jsonschema_extras:"x-order=12" jsonschema:"default=false"`
-
-	// SourcePath overrides the source path shown in document metadata.
-	//
-	// It does not affect the working schema file or schema processing.
-	SourcePath string `json:"source_path,omitempty" yaml:"source_path,omitempty" jsonschema_extras:"x-order=13" jsonschema:"example=docs/config.schema.json"`
-
-	// SourceRawPath overrides the raw schema URL shown in document metadata.
-	//
-	// When empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.
-	SourceRawPath string `json:"source_raw_path,omitempty" yaml:"source_raw_path,omitempty" jsonschema_extras:"x-order=14" jsonschema:"format=uri,example=https://raw.githubusercontent.com/acme/project/HEAD/schema.json"`
 }
 
 // Schema2JSONStage describes schema2json stage.
