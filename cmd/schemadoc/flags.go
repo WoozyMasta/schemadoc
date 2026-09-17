@@ -52,21 +52,21 @@ type exampleModeFlags struct {
 
 // jsonFormatFlags groups JSON output formatting flags.
 type jsonFormatFlags struct {
-	IndentType string `long:"json-indent-type" description:"JSON indentation type"              default:"space" choices:"space;tab"`
-	Indent     int    `long:"json-indent"      description:"JSON indentation width"             default:"2" validate-min:"1"`
-	Minify     bool   `long:"json-minify"      description:"Write compact minified JSON output"`
+	IndentType string `long:"indent-type" description:"JSON indentation type"              default:"space" choices:"space;tab"`
+	Indent     int    `long:"indent"      description:"JSON indentation width"             default:"2" validate-min:"1"`
+	Minify     bool   `long:"minify"      description:"Write compact minified JSON output"`
 }
 
 // yamlExampleFlags groups YAML example output flags.
 type yamlExampleFlags struct {
-	CommentExamples string `long:"yaml-comments-examples"       description:"Schema examples to include in comments" default:"scalar" choices:"none;scalar;all"`
-	CommentFormat   string `long:"yaml-comments-example-format" description:"Annotation value format" default:"block" choices:"inline;block"`
-	CommentSpacing  string `long:"yaml-comments-spacing"        description:"Annotation comment spacing" default:"compact" choices:"compact;full"`
-	Indent          int    `long:"yaml-indent"                  description:"YAML indentation width" default:"2" validate-min:"1"`
-	NoTitles        bool   `long:"yaml-no-titles"               description:"Disable schema title comments"`
-	NoDescriptions  bool   `long:"yaml-no-descriptions"         description:"Disable schema description comments"`
-	NoDefaults      bool   `long:"yaml-no-defaults"             description:"Disable schema default comments"`
-	NoEnums         bool   `long:"yaml-no-enums"                description:"Disable schema enum comments"`
+	CommentExamples string `long:"comments-examples"       description:"Schema examples to include in comments" default:"scalar" choices:"none;scalar;all"`
+	CommentFormat   string `long:"comments-example-format" description:"Annotation value format" default:"block" choices:"inline;block"`
+	CommentSpacing  string `long:"comments-spacing"        description:"Annotation comment spacing" default:"compact" choices:"compact;full"`
+	Indent          int    `long:"indent"                  description:"YAML indentation width" default:"2" validate-min:"1"`
+	NoTitles        bool   `long:"no-titles"               description:"Disable schema title comments"`
+	NoDescriptions  bool   `long:"no-descriptions"         description:"Disable schema description comments"`
+	NoDefaults      bool   `long:"no-defaults"             description:"Disable schema default comments"`
+	NoEnums         bool   `long:"no-enums"                description:"Disable schema enum comments"`
 }
 
 // markdownExampleFlags groups embedded example mode and format flags.
@@ -88,8 +88,8 @@ type moduleToMarkdownCommand struct {
 	ExampleFlags  markdownExampleFlags `group:"Embedded Example"`
 	TemplateFlags templateSelectFlags  `group:"Template Select"`
 	RenderFlags   markdownRenderFlags  `group:"Document Render"`
-	JSONFlags     jsonFormatFlags      `group:"JSON Output"`
-	YAMLFlags     yamlExampleFlags     `group:"YAML Output"`
+	JSONFlags     jsonFormatFlags      `group:"JSON Output" namespace:"json"`
+	YAMLFlags     yamlExampleFlags     `group:"YAML Output" namespace:"yaml"`
 }
 
 // moduleToSchemaCommand generates JSON Schema from a Go module model.
@@ -101,7 +101,7 @@ type moduleToSchemaCommand struct {
 	} `positional-args:"yes"`
 
 	ModuleFlags moduleReflectFlags `group:"Module Reflection"`
-	JSONFlags   jsonFormatFlags    `group:"JSON Format"`
+	JSONFlags   jsonFormatFlags    `group:"JSON Format" namespace:"json"`
 }
 
 // schemaToDocCommand converts schema JSON to docs.
@@ -115,8 +115,8 @@ type schemaToDocCommand struct {
 	ExampleFlags  markdownExampleFlags `group:"Embedded Example"`
 	TemplateFlags templateSelectFlags  `group:"Template Select"`
 	RenderFlags   markdownRenderFlags  `group:"Document Render"`
-	JSONFlags     jsonFormatFlags      `group:"JSON Output"`
-	YAMLFlags     yamlExampleFlags     `group:"YAML Output"`
+	JSONFlags     jsonFormatFlags      `group:"JSON Output" namespace:"json"`
+	YAMLFlags     yamlExampleFlags     `group:"YAML Output" namespace:"yaml"`
 }
 
 // schemaToJSONCommand generates example JSON payload from schema.
@@ -128,7 +128,7 @@ type schemaToJSONCommand struct {
 	} `positional-args:"yes"`
 
 	ExampleFlags exampleModeFlags `group:"Example Generate"`
-	JSONFlags    jsonFormatFlags  `group:"JSON Format"`
+	JSONFlags    jsonFormatFlags  `group:"JSON Format" namespace:"json"`
 }
 
 // schemaToYAMLCommand generates example YAML payload from schema.
@@ -140,7 +140,7 @@ type schemaToYAMLCommand struct {
 	} `positional-args:"yes"`
 
 	ExampleFlags exampleModeFlags `group:"Example Generate"`
-	YAMLFlags    yamlExampleFlags `group:"YAML Output"`
+	YAMLFlags    yamlExampleFlags `group:"YAML Output" namespace:"yaml"`
 }
 
 // configCommand generates config example.

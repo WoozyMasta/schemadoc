@@ -88,6 +88,7 @@ func runWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			flags.DetectShellFlagStyle|
 			flags.DetectShellEnvStyle,
 	)
+	parser.NamespaceDelimiter = "-"
 	parser.Name = runner.programName
 
 	fields := flags.VersionFieldsCore
