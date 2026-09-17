@@ -150,6 +150,9 @@ func run() error {
 	if schema == nil {
 		return errors.New("reflect schema: empty result")
 	}
+	if rootID := strings.TrimSpace({{ printf "%q" .RootID }}); rootID != "" {
+		schema.ID = jsonschema.ID(rootID)
+	}
 
 	data, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {

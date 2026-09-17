@@ -7,6 +7,9 @@ package modschema
 import "errors"
 
 var (
+	// ErrInvalidRootID reports an invalid canonical root schema identifier.
+	ErrInvalidRootID = errors.New("invalid root schema id")
+
 	// ErrMainPackageUnsupported reports unsupported reflection from package main.
 	ErrMainPackageUnsupported = errors.New("package main is not supported for module reflection")
 )

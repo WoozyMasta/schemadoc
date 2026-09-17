@@ -228,6 +228,7 @@ schemadoc mod2doc --type Config --key-namer snake . > model.snake.md
 |`-p`, `--package`|Go package import path where type is declared (optional; default: module path)||no|
 |`-y`, `--type`|Go type name (for example: Config)||yes|
 |`--key-namer`|Field name style for fields without explicit json tags; choices: `none, snake, kebab, lower`|`none`|no|
+|`--root-id`|Override generated root JSON Schema $id (absolute URI without fragment)||no|
 |`--jsonschema-version`|Override github.com/invopop/jsonschema version for helper module (for example: v0.14.0)||no|
 
 #### Embedded Example
@@ -313,6 +314,7 @@ schemadoc mod2schema --type Config --key-namer snake github.com/acme/project@lat
 |`-p`, `--package`|Go package import path where type is declared (optional; default: module path)||no|
 |`-y`, `--type`|Go type name (for example: Config)||yes|
 |`--key-namer`|Field name style for fields without explicit json tags; choices: `none, snake, kebab, lower`|`none`|no|
+|`--root-id`|Override generated root JSON Schema $id (absolute URI without fragment)||no|
 |`--jsonschema-version`|Override github.com/invopop/jsonschema version for helper module (for example: v0.14.0)||no|
 
 #### JSON Format

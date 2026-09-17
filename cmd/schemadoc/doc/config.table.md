@@ -144,7 +144,7 @@ Mod2SchemaStage describes schema generation from one Go type.
 | Attribute | Value |
 | --- | --- |
 | Type | `object` |
-| Properties | 5 |
+| Properties | 6 |
 | Additional properties | boolean schema=false |
 
 ### Mod2SchemaStage.module
@@ -211,6 +211,23 @@ KeyNamer controls fallback field-name strategy when struct field has no explicit
 | Required | no |
 | Default | `none` |
 | Enum | `none`, `snake`, `kebab`, `lower` |
+
+### Mod2SchemaStage.root_id
+
+Key: `root_id`
+
+Path: [`mod2schema`](#configmod2schemastage).`root_id`
+
+RootID overrides the automatically generated root `$id` in the output JSON
+Schema. It must be an absolute URI without a fragment. Leave it empty to use the
+generator's default.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `https://example.com/schema.json` |
+| Format | `uri` |
 
 ### Mod2SchemaStage.JSONOutputOptions
 
@@ -1163,6 +1180,10 @@ mod2schema:
   # Default: none
   # Allowed values: none, snake, kebab, lower
   key_namer: none
+  # RootID overrides the automatically generated root `$id` in the output JSON Schema.
+  # It must be an absolute URI without a fragment. Leave it empty to use the generator's default.
+  # Example: https://example.com/schema.json
+  root_id: https://example.com/schema.json
   # JSON configures formatting of generated schema file.
   json:
     # Indent sets indentation width for one nesting level.

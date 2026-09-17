@@ -413,6 +413,7 @@ func TestCLI_ModCommands(t *testing.T) {
 
 	moduleRoot := findModuleRoot(t)
 	schemaOut := filepath.Join(t.TempDir(), "mod.schema.json")
+	rootIDSchemaOut := filepath.Join(t.TempDir(), "mod.root-id.schema.json")
 	schemaYAMLOut := filepath.Join(t.TempDir(), "mod.schema.yaml")
 	mdOut := filepath.Join(t.TempDir(), "mod.md")
 
@@ -432,6 +433,14 @@ func TestCLI_ModCommands(t *testing.T) {
 		{
 			name: "mod2schema file",
 			args: []string{"mod2schema", "--type", "SchemaModel", moduleRoot, schemaOut},
+			code: 0,
+		},
+		{
+			name: "mod2schema root id",
+			args: []string{
+				"mod2schema", "--type", "SchemaModel", "--root-id",
+				"https://example.com/schema.json", moduleRoot, rootIDSchemaOut,
+			},
 			code: 0,
 		},
 		{
@@ -477,6 +486,12 @@ func TestCLI_ModCommands(t *testing.T) {
 		t.Fatalf("read mod schema: %v", err)
 	}
 	checkContainsAll(t, string(schemaContent), []string{`"Options"`})
+
+	rootIDSchemaContent, err := os.ReadFile(rootIDSchemaOut)
+	if err != nil {
+		t.Fatalf("read root ID schema: %v", err)
+	}
+	checkContainsAll(t, string(rootIDSchemaContent), []string{`"$id": "https://example.com/schema.json"`})
 
 	schemaYAMLContent, err := os.ReadFile(schemaYAMLOut)
 	if err != nil {

@@ -344,7 +344,7 @@
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 5</li>
+<li><strong>Properties:</strong> 6</li>
 <li><strong>Additional properties:</strong> boolean schema=false</li>
 </ul>
       </div>
@@ -395,6 +395,18 @@
 <li><strong>Required:</strong> no</li>
 <li><strong>Default:</strong> <code>none</code></li>
 <li><strong>Enum:</strong> <code>none</code>, <code>snake</code>, <code>kebab</code>, <code>lower</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2schemastageroot_id">Mod2SchemaStage.root_id</h3>
+        <p><strong>Key:</strong> <code>root_id</code></p>
+<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>root_id</code></p>
+<p>RootID overrides the automatically generated root <code>$id</code> in the output JSON Schema. It must be an absolute URI without a fragment. Leave it empty to use the generator&#39;s default.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>https://example.com/schema.json</code></li>
+<li><strong>Format:</strong> <code>uri</code></li>
 </ul>
 </article>
 <article class="card">
@@ -1227,6 +1239,10 @@ mod2schema:
   # Default: none
   # Allowed values: none, snake, kebab, lower
   key_namer: none
+  # RootID overrides the automatically generated root `$id` in the output JSON Schema.
+  # It must be an absolute URI without a fragment. Leave it empty to use the generator&#39;s default.
+  # Example: https://example.com/schema.json
+  root_id: https://example.com/schema.json
   # JSON configures formatting of generated schema file.
   json:
     # Indent sets indentation width for one nesting level.

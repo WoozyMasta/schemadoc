@@ -277,7 +277,7 @@
         "json": {
           "$ref": "#/$defs/JSONOutputOptions",
           "description": "JSON configures formatting of generated schema file.",
-          "x-order": "5"
+          "x-order": "6"
         },
         "key_namer": {
           "default": "none",
@@ -308,6 +308,15 @@
           ],
           "type": "string",
           "x-order": "2"
+        },
+        "root_id": {
+          "description": "RootID overrides the automatically generated root `$id` in the output JSON Schema.\nIt must be an absolute URI without a fragment. Leave it empty to use the generator's default.",
+          "examples": [
+            "https://example.com/schema.json"
+          ],
+          "format": "uri",
+          "type": "string",
+          "x-order": "5"
         },
         "type": {
           "description": "Type is root Go type name to reflect into schema.",

@@ -36,6 +36,7 @@
     "key_namer": "none",
     "module": "../project",
     "package": "github.com/acme/project/pkg/config",
+    "root_id": "https://example.com/schema.json",
     "type": "Config"
   },
   "schema": "schema.json",

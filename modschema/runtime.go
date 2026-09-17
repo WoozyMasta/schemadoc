@@ -11,11 +11,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -33,6 +35,10 @@ const (
 // Generate reflects JSON Schema for selected module/package/type.
 func Generate(options Options) ([]byte, string, error) {
 	normalizedOptions := NormalizeOptions(options)
+	if err := validateRootID(normalizedOptions.RootID); err != nil {
+		return nil, "", err
+	}
+
 	jsonSchemaVersion, hasCustomJSONSchemaVersion := resolveJSONSchemaVersion(
 		normalizedOptions.JSONSchemaVersion,
 	)
@@ -68,6 +74,10 @@ func Generate(options Options) ([]byte, string, error) {
 		return nil, "", err
 	}
 
+	if err := downloadSchemaGeneratorDependencies(helperDir); err != nil {
+		return nil, "", err
+	}
+
 	if err := ensureImportableTargetPackage(helperDir, resolvedTarget); err != nil {
 		return nil, "", err
 	}
@@ -92,6 +102,7 @@ func Generate(options Options) ([]byte, string, error) {
 		ModulePath:  resolvedTarget.ModulePath,
 		ModuleDir:   resolvedTarget.ModuleDir,
 		KeyNamer:    normalizedOptions.KeyNamer,
+		RootID:      normalizedOptions.RootID,
 	})
 	if err != nil {
 		return nil, "", err
@@ -174,8 +185,30 @@ func NormalizeOptions(options Options) Options {
 		options.KeyNamer = "none"
 	}
 	options.JSONSchemaVersion = strings.TrimSpace(options.JSONSchemaVersion)
+	options.RootID = strings.TrimSpace(options.RootID)
 
 	return options
+}
+
+// validateRootID validates an optional canonical root schema identifier.
+func validateRootID(rootID string) error {
+	if rootID == "" {
+		return nil
+	}
+
+	parsed, err := url.Parse(rootID)
+	if err != nil ||
+		!parsed.IsAbs() ||
+		strings.Contains(rootID, "#") ||
+		strings.IndexFunc(rootID, unicode.IsSpace) >= 0 {
+		return fmt.Errorf(
+			"%w %q: must be an absolute URI without a fragment",
+			ErrInvalidRootID,
+			rootID,
+		)
+	}
+
+	return nil
 }
 
 // resolveJSONSchemaVersion returns helper JSON Schema dependency version.
@@ -878,6 +911,16 @@ func runSchemaGeneratorProgram(helperDir string) ([]byte, error) {
 func prepareSchemaGeneratorDependencies(helperDir string) error {
 	if err := runGoCommand(helperDir, "mod", "tidy"); err != nil {
 		return fmt.Errorf("tidy helper module: %w", err)
+	}
+
+	return nil
+}
+
+// downloadSchemaGeneratorDependencies populates helper module sums before the
+// target package is inspected, without pruning its declared requirements.
+func downloadSchemaGeneratorDependencies(helperDir string) error {
+	if err := runGoCommand(helperDir, "mod", "download"); err != nil {
+		return fmt.Errorf("download helper module dependencies: %w", err)
 	}
 
 	return nil

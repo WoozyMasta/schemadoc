@@ -22,6 +22,7 @@ type moduleReflectFlags struct {
 	PackagePath       string `long:"package"            description:"Go package import path where type is declared (optional; default: module path)" short:"p"`
 	TypeName          string `long:"type"               description:"Go type name (for example: Config)" short:"y" required:"yes"`
 	KeyNamer          string `long:"key-namer"          description:"Field name style for fields without explicit json tags" default:"none" choices:"none;snake;kebab;lower"`
+	RootID            string `long:"root-id"            description:"Override generated root JSON Schema $id (absolute URI without fragment)"`
 	JSONSchemaVersion string `long:"jsonschema-version" description:"Override github.com/invopop/jsonschema version for helper module (for example: v0.14.0)"`
 }
 

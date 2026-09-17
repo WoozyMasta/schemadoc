@@ -100,9 +100,9 @@ type YAMLCommentOptions struct {
 
 // YAMLOutputOptions configures YAML output formatting and comments.
 type YAMLOutputOptions struct {
-
 	// Comments configures schema-driven comments above YAML keys.
 	Comments *YAMLCommentOptions `json:"comments,omitempty" yaml:"comments,omitempty" jsonschema_extras:"x-order=2"`
+
 	// Indent sets YAML indentation width for one nesting level.
 	Indent int `json:"indent,omitempty" yaml:"indent,omitempty" jsonschema_extras:"x-order=1" jsonschema:"minimum=1,default=2"`
 }
@@ -110,7 +110,7 @@ type YAMLOutputOptions struct {
 // Mod2SchemaStage describes schema generation from one Go type.
 type Mod2SchemaStage struct {
 	// JSON configures formatting of generated schema file.
-	JSON *JSONOutputOptions `json:"json,omitempty" yaml:"json,omitempty" jsonschema_extras:"x-order=5"`
+	JSON *JSONOutputOptions `json:"json,omitempty" yaml:"json,omitempty" jsonschema_extras:"x-order=6"`
 
 	// Module selects reflection source.
 	//
@@ -128,6 +128,10 @@ type Mod2SchemaStage struct {
 
 	// KeyNamer controls fallback field-name strategy when struct field has no explicit `json` tag.
 	KeyNamer string `json:"key_namer,omitempty" yaml:"key_namer,omitempty" jsonschema_extras:"x-order=4" jsonschema:"enum=none,enum=snake,enum=kebab,enum=lower,default=none"`
+
+	// RootID overrides the automatically generated root `$id` in the output JSON Schema.
+	// It must be an absolute URI without a fragment. Leave it empty to use the generator's default.
+	RootID string `json:"root_id,omitempty" yaml:"root_id,omitempty" jsonschema_extras:"x-order=5" jsonschema:"format=uri,example=https://example.com/schema.json"`
 }
 
 // MergeStage describes merge execution over working schema.

@@ -84,6 +84,7 @@ func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Co
 			Type:     strings.TrimSpace(stage.Type),
 			Package:  strings.TrimSpace(stage.Package),
 			KeyNamer: strings.TrimSpace(stage.KeyNamer),
+			RootID:   strings.TrimSpace(stage.RootID),
 		}
 		if loadedConfig.Check {
 			if err := validateModuleReferenceForCheck(moduleOptions.Module); err != nil {

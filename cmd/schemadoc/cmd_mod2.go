@@ -15,6 +15,7 @@ func (command *moduleToSchemaCommand) Execute(_ []string) error {
 		Type:              command.ModuleFlags.TypeName,
 		Package:           command.ModuleFlags.PackagePath,
 		KeyNamer:          command.ModuleFlags.KeyNamer,
+		RootID:            command.ModuleFlags.RootID,
 		JSONSchemaVersion: command.ModuleFlags.JSONSchemaVersion,
 	}, command.Args.Output, jsonOutputOptions{
 		Indent:     command.JSONFlags.Indent,
@@ -31,6 +32,7 @@ func (command *moduleToMarkdownCommand) Execute(_ []string) error {
 			Type:              command.ModuleFlags.TypeName,
 			Package:           command.ModuleFlags.PackagePath,
 			KeyNamer:          command.ModuleFlags.KeyNamer,
+			RootID:            command.ModuleFlags.RootID,
 			JSONSchemaVersion: command.ModuleFlags.JSONSchemaVersion,
 		},
 		markdownRenderRequest{

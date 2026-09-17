@@ -25,6 +25,48 @@ func TestNormalizeOptions_Defaults(t *testing.T) {
 	if options.KeyNamer != "none" {
 		t.Fatalf("KeyNamer=%q, want %q", options.KeyNamer, "none")
 	}
+
+	if options.RootID != "" {
+		t.Fatalf("RootID=%q, want empty", options.RootID)
+	}
+}
+
+func TestNormalizeOptions_TrimsRootID(t *testing.T) {
+	t.Parallel()
+
+	options := NormalizeOptions(Options{RootID: " https://example.com/schema.json "})
+	if options.RootID != "https://example.com/schema.json" {
+		t.Fatalf("RootID=%q, want trimmed URI", options.RootID)
+	}
+}
+
+func TestValidateRootID(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name    string
+		rootID  string
+		wantErr bool
+	}{
+		{name: "empty", rootID: ""},
+		{name: "absolute uri", rootID: "https://example.com/schema.json"},
+		{name: "urn", rootID: "urn:example:schema"},
+		{name: "relative uri", rootID: "schema.json", wantErr: true},
+		{name: "fragment", rootID: "https://example.com/schema.json#root", wantErr: true},
+		{name: "empty fragment", rootID: "https://example.com/schema.json#", wantErr: true},
+		{name: "invalid uri", rootID: "https://example.com/schema with spaces.json", wantErr: true},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := validateRootID(testCase.rootID)
+			if (err != nil) != testCase.wantErr {
+				t.Fatalf("validateRootID(%q) error = %v, wantErr=%t", testCase.rootID, err, testCase.wantErr)
+			}
+		})
+	}
 }
 
 func TestResolveJSONSchemaVersion(t *testing.T) {
@@ -305,6 +347,7 @@ func TestBuildProgramSource(t *testing.T) {
 		Type:     "SchemaModel",
 		Package:  testModulePath,
 		KeyNamer: "snake",
+		RootID:   "https://example.com/schema.json",
 	})
 	if err != nil {
 		t.Fatalf("BuildProgramSource() error = %v", err)
@@ -316,6 +359,11 @@ func TestBuildProgramSource(t *testing.T) {
 
 	if !strings.Contains(source, `case "snake":`) {
 		t.Fatalf("generated source does not contain snake key namer case")
+	}
+
+	if !strings.Contains(source, `strings.TrimSpace("https://example.com/schema.json")`) ||
+		!strings.Contains(source, `schema.ID = jsonschema.ID(rootID)`) {
+		t.Fatalf("generated source does not contain root ID override")
 	}
 }
 

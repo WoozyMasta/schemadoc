@@ -32,6 +32,10 @@ mod2schema:
   # Default: none
   # Allowed values: none, snake, kebab, lower
   key_namer: none
+  # RootID overrides the automatically generated root `$id` in the output JSON Schema.
+  # It must be an absolute URI without a fragment. Leave it empty to use the generator's default.
+  # Example: https://example.com/schema.json
+  root_id: https://example.com/schema.json
   # JSON configures formatting of generated schema file.
   json:
     # Indent sets indentation width for one nesting level.

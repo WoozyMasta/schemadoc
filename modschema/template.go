@@ -25,10 +25,17 @@ var (
 
 // Options configures module-to-schema generation.
 type Options struct {
-	Module            string
-	Package           string
-	Type              string
-	KeyNamer          string
+	// Module selects the target module directory or module reference.
+	Module string
+	// Package selects the Go package containing the target type.
+	Package string
+	// Type selects the root Go type to reflect.
+	Type string
+	// KeyNamer controls names for fields without explicit JSON tags.
+	KeyNamer string
+	// RootID overrides the generated root JSON Schema $id when non-empty.
+	RootID string
+	// JSONSchemaVersion overrides the jsonschema helper dependency version.
 	JSONSchemaVersion string
 }
 
@@ -39,6 +46,7 @@ type templateData struct {
 	ModulePath  string
 	ModuleDir   string
 	KeyNamer    string
+	RootID      string
 }
 
 // BuildProgramSource renders temporary Go source for target type reflection.
@@ -49,6 +57,7 @@ func BuildProgramSource(options Options) (string, error) {
 		ModulePath:  options.Module,
 		ModuleDir:   options.Module,
 		KeyNamer:    options.KeyNamer,
+		RootID:      options.RootID,
 	})
 }
 
