@@ -395,18 +395,6 @@ func (schema effectiveSchema) property(view *schemaSemanticView, name string) (e
 		selected = append(selected, expanded)
 	}
 
-	for _, group := range schema.compositionGroups {
-		for _, branch := range group.branches {
-			property, found, err := branch.property(view, name)
-			if err != nil {
-				return effectiveSchema{}, false, err
-			}
-			if found {
-				selected = append(selected, property)
-			}
-		}
-	}
-
 	if len(selected) == 0 {
 		return effectiveSchema{}, false, nil
 	}
@@ -417,6 +405,65 @@ func (schema effectiveSchema) property(view *schemaSemanticView, name string) (e
 	}
 
 	return combined, true, nil
+}
+
+// propertyForValue selects child schemas from alternatives applicable to value.
+// Ambiguous anyOf branches remain grouped so annotation precedence can be safe.
+func (schema effectiveSchema) propertyForValue(
+	view *schemaSemanticView,
+	name string,
+	value any,
+	path schemaPath,
+) (effectiveSchema, bool, error) {
+	property, found, err := schema.property(view, name)
+	if err != nil {
+		return effectiveSchema{}, false, err
+	}
+
+	for _, group := range schema.compositionGroups {
+		applicable := make([]effectiveSchema, 0, len(group.branches))
+		for _, branch := range group.branches {
+			if err := validateEffectiveInstance(view, branch, value, path); err != nil {
+				continue
+			}
+
+			child, childFound, err := branch.propertyForValue(view, name, value, path)
+			if err != nil {
+				return effectiveSchema{}, false, err
+			}
+			if childFound {
+				applicable = append(applicable, child)
+			}
+		}
+
+		switch {
+		case group.kind == schemaCompositionOneOf && len(applicable) == 1:
+			property = combinePropertySchemas(property, applicable[0], found)
+			found = true
+
+		case group.kind == schemaCompositionAnyOf && len(applicable) == len(group.branches) && len(applicable) > 1:
+			property.compositionGroups = append(property.compositionGroups, schemaComposition{
+				kind:     schemaCompositionAnyOf,
+				branches: applicable,
+			})
+			found = true
+
+		case group.kind == schemaCompositionAnyOf && len(applicable) == 1:
+			property = combinePropertySchemas(property, applicable[0], found)
+			found = true
+		}
+	}
+
+	return property, found, nil
+}
+
+// combinePropertySchemas joins a selected branch with conjunctive properties.
+func combinePropertySchemas(left, right effectiveSchema, leftFound bool) effectiveSchema {
+	if !leftFound {
+		return right
+	}
+
+	return combineEffectiveSchemas(left, right)
 }
 
 // required returns a stable union because all terms apply simultaneously.
@@ -456,6 +503,73 @@ func (schema effectiveSchema) annotation(keyword string) (any, bool) {
 	}
 
 	return value, found
+}
+
+// annotationForValue returns annotations shared by all applicable alternatives.
+func (schema effectiveSchema) annotationForValue(keyword string) (any, bool) {
+	value, found := schema.annotation(keyword)
+	for _, group := range schema.compositionGroups {
+		annotated := 0
+		var common any
+		commonSet := false
+
+		for _, branch := range group.branches {
+			candidate, exists := branch.annotation(keyword)
+			if !exists {
+				continue
+			}
+
+			annotated++
+			if !commonSet {
+				common, commonSet = candidate, true
+				continue
+			}
+			if !equalJSONValue(common, candidate) {
+				return nil, false
+			}
+		}
+
+		if annotated == 0 {
+			continue
+		}
+		if annotated != len(group.branches) {
+			return nil, false
+		}
+		if found && !equalJSONValue(value, common) {
+			return nil, false
+		}
+
+		value, found = common, true
+	}
+
+	return value, found
+}
+
+// enumAnnotationForValue returns only a conjunctive enum intersection.
+// Alternative groups are omitted because their union is branch-specific.
+func (schema effectiveSchema) enumAnnotationForValue() ([]any, bool) {
+	if len(schema.compositionGroups) > 0 {
+		return nil, false
+	}
+
+	enums := schema.enums()
+	if len(enums) == 0 {
+		return nil, false
+	}
+
+	intersection := append([]any(nil), asSlice(enums[0])...)
+	for _, raw := range enums[1:] {
+		members := asSlice(raw)
+		filtered := intersection[:0]
+		for _, candidate := range intersection {
+			if containsJSONValue(members, candidate) {
+				filtered = append(filtered, candidate)
+			}
+		}
+		intersection = filtered
+	}
+
+	return intersection, len(intersection) > 0
 }
 
 // types returns every declared type constraint in semantic source order.

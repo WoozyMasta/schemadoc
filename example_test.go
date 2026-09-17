@@ -285,6 +285,110 @@ func TestGenerateExampleYAMLCommentPolicyExamplesAndValues(t *testing.T) {
 	assertContains(t, got, "value: \"\"")
 }
 
+func TestGenerateExampleYAMLCommentsFollowOneOfBranch(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"oneOf": []any{
+			map[string]any{
+				"type":     "object",
+				"required": []any{"kind"},
+				"properties": map[string]any{
+					"kind": map[string]any{"const": "alpha"},
+					"value": map[string]any{
+						"type":        "string",
+						"title":       "Alpha value",
+						"description": "Value used by alpha.",
+						"default":     "alpha-default",
+						"enum":        []any{"alpha-default"},
+					},
+				},
+			},
+			map[string]any{
+				"type":     "object",
+				"required": []any{"kind"},
+				"properties": map[string]any{
+					"kind": map[string]any{"const": "beta"},
+					"value": map[string]any{
+						"type":        "boolean",
+						"title":       "Beta value",
+						"description": "Value used by beta.",
+						"default":     true,
+						"enum":        []any{true},
+					},
+				},
+			},
+		},
+	})
+
+	gotBytes, err := GenerateExampleYAML(schema, ExampleModeAll)
+	if err != nil {
+		t.Fatalf("GenerateExampleYAML: %v", err)
+	}
+	got := string(gotBytes)
+	for _, marker := range []string{
+		"# Alpha value",
+		"# Value used by alpha.",
+		"# Default: alpha-default",
+		"# Allowed values: alpha-default",
+	} {
+		assertContains(t, got, marker)
+	}
+	assertNotContains(t, got, "Beta value")
+	assertNotContains(t, got, "Value used by beta.")
+}
+
+func TestGenerateExampleYAMLCommentsOmitAmbiguousAnyOfAnnotations(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"examples": []any{
+			map[string]any{"value": "common"},
+		},
+		"anyOf": []any{
+			map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"value": map[string]any{
+						"type":        "string",
+						"title":       "First value",
+						"description": "First branch.",
+						"default":     "first",
+						"enum":        []any{"common", "first"},
+					},
+				},
+			},
+			map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"value": map[string]any{
+						"type":        "string",
+						"title":       "Second value",
+						"description": "Second branch.",
+						"default":     "second",
+						"enum":        []any{"common", "second"},
+					},
+				},
+			},
+		},
+	})
+
+	gotBytes, err := GenerateExampleYAML(schema, ExampleModeAll)
+	if err != nil {
+		t.Fatalf("GenerateExampleYAML: %v", err)
+	}
+	got := string(gotBytes)
+	for _, marker := range []string{
+		"First value",
+		"Second value",
+		"First branch.",
+		"Second branch.",
+		"Allowed values:",
+	} {
+		assertNotContains(t, got, marker)
+	}
+}
+
 func TestGenerateExampleYAMLTraversesDynamicMapsAndArrayTuples(t *testing.T) {
 	t.Parallel()
 

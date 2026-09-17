@@ -401,6 +401,11 @@ func marshalExampleYAMLNode(node *yaml.Node, indent int) ([]byte, error) {
 
 // annotateYAMLNode assigns schema title/description comments to YAML map keys.
 func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaValue) {
+	builder.annotateYAMLNodeAt(node, schema, schemaPath{})
+}
+
+// annotateYAMLNodeAt applies comments using the actual emitted value at path.
+func (builder *exampleBuilder) annotateYAMLNodeAt(node *yaml.Node, schema schemaValue, path schemaPath) {
 	if builder.semantic == nil {
 		return
 	}
@@ -417,12 +422,21 @@ func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaVa
 			return
 		}
 		reorderMappingNodeByEffectiveSchema(node, properties)
+		objectValue, decoded := yamlNodeValue(node)
 
 		for index := 0; index+1 < len(node.Content); index += 2 {
 			keyNode := node.Content[index]
 			valueNode := node.Content[index+1]
 
 			property, ok, err := effective.property(builder.semantic, keyNode.Value)
+			if decoded {
+				property, ok, err = effective.propertyForValue(
+					builder.semantic,
+					keyNode.Value,
+					objectValue,
+					path.appendProperty(keyNode.Value),
+				)
+			}
 			if err != nil || !ok {
 				continue
 			}
@@ -431,7 +445,7 @@ func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaVa
 				keyNode.HeadComment = comment
 			}
 
-			builder.annotateYAMLNode(valueNode, property.asSchemaValue())
+			builder.annotateYAMLNodeAt(valueNode, property.asSchemaValue(), path.appendProperty(keyNode.Value))
 		}
 
 	case yaml.SequenceNode:
@@ -440,10 +454,34 @@ func (builder *exampleBuilder) annotateYAMLNode(node *yaml.Node, schema schemaVa
 		}
 
 		for index, item := range node.Content {
+			value, decoded := yamlNodeValue(node)
 			itemSchema := effectiveArrayItemSchemaAt(effective, index, builder.semantic)
-			builder.annotateYAMLNode(item, itemSchema)
+			if decoded {
+				itemSchema = effectiveArrayItemSchemaAtValue(
+					effective,
+					index,
+					value,
+					builder.semantic,
+					path,
+				)
+			}
+			builder.annotateYAMLNodeAt(item, itemSchema, path.appendArrayItem())
 		}
 	}
+}
+
+// yamlNodeValue decodes one emitted node for branch applicability checks.
+func yamlNodeValue(node *yaml.Node) (any, bool) {
+	if node == nil {
+		return nil, false
+	}
+
+	var value any
+	if err := node.Decode(&value); err != nil {
+		return nil, false
+	}
+
+	return value, true
 }
 
 // reorderMappingNodeByEffectiveSchema reorders keys using effective x-order annotations.
@@ -581,13 +619,84 @@ func sortKeysBySchemaOrder(keys []string, properties map[string]schemaValue) []s
 
 // effectiveArrayItemSchemaAt selects the schema applicable to one array index.
 func effectiveArrayItemSchemaAt(schema effectiveSchema, index int, view *schemaSemanticView) schemaValue {
+	item, ok := effectiveArrayItemSchemaAtEffective(schema, index, view)
+	if !ok {
+		return schemaValue{}
+	}
+
+	return item.asSchemaValue()
+}
+
+// effectiveArrayItemSchemaAtEffective returns one item's effective schema.
+func effectiveArrayItemSchemaAtEffective(
+	schema effectiveSchema,
+	index int,
+	view *schemaSemanticView,
+) (effectiveSchema, bool) {
 	items, err := schema.arrayItems(view)
 	if err != nil {
-		return schemaValue{}
+		return effectiveSchema{}, false
 	}
 
 	item, ok, err := arrayItemSchemaAt(items, index)
 	if err != nil || !ok {
+		return effectiveSchema{}, false
+	}
+
+	return item, true
+}
+
+// effectiveArrayItemSchemaAtValue selects item alternatives applicable to value.
+func effectiveArrayItemSchemaAtValue(
+	schema effectiveSchema,
+	index int,
+	value any,
+	view *schemaSemanticView,
+	path schemaPath,
+) schemaValue {
+	base := schema
+	base.compositionGroups = nil
+	item, found := effectiveArrayItemSchemaAtEffective(base, index, view)
+
+	for _, group := range schema.compositionGroups {
+		applicable := make([]effectiveSchema, 0, len(group.branches))
+		for _, branch := range group.branches {
+			if validateEffectiveInstance(view, branch, value, path) != nil {
+				continue
+			}
+			branchItem, branchFound := effectiveArrayItemSchemaAtEffective(branch, index, view)
+			if branchFound {
+				applicable = append(applicable, branchItem)
+			}
+		}
+
+		switch {
+		case group.kind == schemaCompositionOneOf && len(applicable) == 1:
+			if found {
+				item = combineEffectiveSchemas(item, applicable[0])
+			} else {
+				item = applicable[0]
+			}
+			found = true
+
+		case group.kind == schemaCompositionAnyOf && len(applicable) == len(group.branches) && len(applicable) > 1:
+			item.compositionGroups = append(item.compositionGroups, schemaComposition{
+				kind:     schemaCompositionAnyOf,
+				branches: applicable,
+			})
+			found = true
+
+		case group.kind == schemaCompositionAnyOf && len(applicable) == 1:
+			if found {
+				item = combineEffectiveSchemas(item, applicable[0])
+			} else {
+				item = applicable[0]
+			}
+			found = true
+		}
+	}
+
+	if !found {
 		return schemaValue{}
 	}
 
@@ -664,8 +773,8 @@ func schemaKeyComment(schema schemaValue, policy YAMLCommentPolicy) string {
 
 // schemaKeyCommentEffective builds comments using presentation annotation precedence.
 func schemaKeyCommentEffective(schema effectiveSchema, policy YAMLCommentPolicy) string {
-	titleValue, _ := schema.annotation("title")
-	descriptionValue, _ := schema.annotation("description")
+	titleValue, _ := schema.annotationForValue("title")
+	descriptionValue, _ := schema.annotationForValue("description")
 
 	title := strings.TrimSpace(asString(titleValue))
 	description := strings.TrimSpace(asString(descriptionValue))
@@ -673,10 +782,14 @@ func schemaKeyCommentEffective(schema effectiveSchema, policy YAMLCommentPolicy)
 		"title":       title,
 		"description": description,
 	}
-	for _, keyword := range []string{"default", "examples", "enum"} {
-		if value, exists := schema.annotation(keyword); exists {
+
+	for _, keyword := range []string{"default", "examples"} {
+		if value, exists := schema.annotationForValue(keyword); exists {
 			object[keyword] = value
 		}
+	}
+	if values, exists := schema.enumAnnotationForValue(); exists {
+		object["enum"] = values
 	}
 
 	return schemaKeyComment(schemaValue{Object: object}, policy)
