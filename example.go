@@ -54,6 +54,10 @@ const (
 	YAMLCommentFormatInline YAMLCommentFormat = "inline"
 	// YAMLCommentFormatBlock renders structured annotation values as YAML blocks.
 	YAMLCommentFormatBlock YAMLCommentFormat = "block"
+	// YAMLCommentSpacingCompact keeps annotation comments compact.
+	YAMLCommentSpacingCompact YAMLCommentSpacing = "compact"
+	// YAMLCommentSpacingFull preserves paragraph breaks and separates annotations.
+	YAMLCommentSpacingFull YAMLCommentSpacing = "full"
 )
 
 // YAMLCommentExamples controls which schema examples are copied to YAML comments.
@@ -61,6 +65,9 @@ type YAMLCommentExamples string
 
 // YAMLCommentFormat controls rendering of structured annotation values.
 type YAMLCommentFormat string
+
+// YAMLCommentSpacing controls whitespace between YAML annotation comments.
+type YAMLCommentSpacing string
 
 // YAMLCommentPolicy configures independent schema annotation comments in YAML.
 //
@@ -84,6 +91,9 @@ type YAMLCommentPolicy struct {
 
 	// ExampleFormat selects inline or block annotation value formatting.
 	ExampleFormat YAMLCommentFormat `json:"example_format,omitempty" yaml:"example_format,omitempty"`
+
+	// Spacing selects compact or paragraph-preserving annotation comments.
+	Spacing YAMLCommentSpacing `json:"spacing,omitempty" yaml:"spacing,omitempty"`
 }
 
 // ExampleOptions configures example output formatting.
@@ -261,6 +271,12 @@ func normalizeYAMLCommentPolicy(policy YAMLCommentPolicy) YAMLCommentPolicy {
 	case YAMLCommentFormatInline, YAMLCommentFormatBlock:
 	default:
 		policy.ExampleFormat = YAMLCommentFormatBlock
+	}
+
+	switch policy.Spacing {
+	case YAMLCommentSpacingCompact, YAMLCommentSpacingFull:
+	default:
+		policy.Spacing = YAMLCommentSpacingCompact
 	}
 
 	return policy
@@ -724,26 +740,30 @@ func schemaKeyComment(schema schemaValue, policy YAMLCommentPolicy) string {
 	switch {
 	case title == "" && description == "":
 		baseComment = ""
+
 	case title == "":
-		baseComment = normalizeYAMLComment(description)
+		baseComment = normalizeYAMLComment(description, policy.Spacing)
+
 	case description == "":
-		baseComment = normalizeYAMLComment(title)
+		baseComment = normalizeYAMLComment(title, policy.Spacing)
+
 	default:
 		if title == description {
-			baseComment = normalizeYAMLComment(title)
+			baseComment = normalizeYAMLComment(title, policy.Spacing)
 			break
 		}
 
-		baseComment = normalizeYAMLComment(title + "\n" + description)
+		baseComment = normalizeYAMLComment(title+"\n"+description, policy.Spacing)
 	}
 
 	lines := make([]string, 0, 6)
 	if baseComment != "" {
 		lines = append(lines, strings.Split(baseComment, "\n")...)
 	}
+	annotations := make([]string, 0, 6)
 
 	if value, ok := schema.Object["default"]; ok && *policy.Defaults {
-		appendYAMLCommentValue(&lines, "Default:", value, policy.ExampleFormat)
+		appendYAMLCommentValue(&annotations, "Default:", value, policy.ExampleFormat)
 	}
 
 	if values := asSlice(schema.Object["examples"]); policy.Examples != YAMLCommentExamplesNone && len(values) > 0 {
@@ -755,20 +775,25 @@ func schemaKeyComment(schema schemaValue, policy YAMLCommentPolicy) string {
 				continue
 			}
 
-			appendYAMLCommentValue(&lines, "Example:", value, policy.ExampleFormat)
+			appendYAMLCommentValue(&annotations, "Example:", value, policy.ExampleFormat)
 			break
 		}
 	}
 
 	if values := schemaEnumValues(schema.Object, policy); len(values) > 0 && *policy.Enums {
 		if policy.ExampleFormat == YAMLCommentFormatBlock && hasStructuredAnnotationValue(asSlice(schema.Object["enum"])) {
-			appendYAMLCommentValue(&lines, "Allowed values:", asSlice(schema.Object["enum"]), policy.ExampleFormat)
+			appendYAMLCommentValue(&annotations, "Allowed values:", asSlice(schema.Object["enum"]), policy.ExampleFormat)
 		} else {
-			lines = append(lines, "Allowed values: "+strings.Join(values, ", "))
+			annotations = append(annotations, "Allowed values: "+strings.Join(values, ", "))
 		}
 	}
 
-	return normalizeYAMLComment(strings.Join(lines, "\n"))
+	if len(lines) > 0 && len(annotations) > 0 && policy.Spacing == YAMLCommentSpacingFull {
+		lines = append(lines, "#")
+	}
+	lines = append(lines, annotations...)
+
+	return normalizeYAMLComment(strings.Join(lines, "\n"), policy.Spacing)
 }
 
 // schemaKeyCommentEffective builds comments using presentation annotation precedence.
@@ -905,8 +930,8 @@ func normalizeInlineWhitespace(value string) string {
 	return strings.TrimSpace(value)
 }
 
-// normalizeYAMLComment strips empty leading/trailing lines from comment body.
-func normalizeYAMLComment(comment string) string {
+// normalizeYAMLComment applies the selected whitespace policy to one comment.
+func normalizeYAMLComment(comment string, spacing YAMLCommentSpacing) string {
 	lines := strings.Split(comment, "\n")
 	start := 0
 	for start < len(lines) && strings.TrimSpace(lines[start]) == "" {
@@ -922,17 +947,24 @@ func normalizeYAMLComment(comment string) string {
 		return ""
 	}
 
-	normalized := make([]string, 0, end-start)
-	for _, line := range lines[start:end] {
-		if strings.TrimSpace(line) == "" {
-			continue
+	if spacing != YAMLCommentSpacingFull {
+		normalized := make([]string, 0, end-start)
+		for _, line := range lines[start:end] {
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+
+			normalized = append(normalized, line)
 		}
 
-		normalized = append(normalized, line)
+		return strings.Join(normalized, "\n")
 	}
 
-	if len(normalized) == 0 {
-		return ""
+	normalized := lines[start:end]
+	for index, line := range normalized {
+		if strings.TrimSpace(line) == "" {
+			normalized[index] = "#"
+		}
 	}
 
 	return strings.Join(normalized, "\n")

@@ -129,6 +129,42 @@ schemadoc:
 	}
 }
 
+func TestTemplateExtensionUsesPortableGrammar(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		extension string
+		valid     bool
+	}{
+		{extension: ".md", valid: true},
+		{extension: ".html", valid: true},
+		{extension: ".1", valid: true},
+		{extension: ".tar.md", valid: true},
+		{extension: ".", valid: false},
+		{extension: "..", valid: false},
+		{extension: "md", valid: false},
+		{extension: ".man page", valid: false},
+		{extension: ".md:backup", valid: false},
+		{extension: ".md*", valid: false},
+		{extension: ".md?", valid: false},
+		{extension: ".md\"", valid: false},
+		{extension: ".md|", valid: false},
+		{extension: ".md/extra", valid: false},
+		{extension: ".мд", valid: false},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.extension, func(t *testing.T) {
+			t.Parallel()
+
+			if got := validTemplateExtension(test.extension); got != test.valid {
+				t.Fatalf("validTemplateExtension(%q) = %t, want %t", test.extension, got, test.valid)
+			}
+		})
+	}
+}
+
 func TestTemplatePostProcessorOrdering(t *testing.T) {
 	t.Parallel()
 

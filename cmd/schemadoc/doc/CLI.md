@@ -270,6 +270,7 @@ schemadoc mod2doc --type Config --key-namer snake . > model.snake.md
 |---|---|---|---|
 |`--yaml-comments-examples`|Schema examples to include in comments; choices: `none, scalar, all`|`scalar`|no|
 |`--yaml-comments-example-format`|Annotation value format; choices: `inline, block`|`block`|no|
+|`--yaml-comments-spacing`|Annotation comment spacing; choices: `compact, full`|`compact`|no|
 |`--yaml-indent`|YAML indentation width|`2`|no|
 |`--yaml-no-titles`|Disable schema title comments||no|
 |`--yaml-no-descriptions`|Disable schema description comments||no|
@@ -397,6 +398,7 @@ schemadoc schema2doc --mode required --format yaml schema.json > schema.with-exa
 |---|---|---|---|
 |`--yaml-comments-examples`|Schema examples to include in comments; choices: `none, scalar, all`|`scalar`|no|
 |`--yaml-comments-example-format`|Annotation value format; choices: `inline, block`|`block`|no|
+|`--yaml-comments-spacing`|Annotation comment spacing; choices: `compact, full`|`compact`|no|
 |`--yaml-indent`|YAML indentation width|`2`|no|
 |`--yaml-no-titles`|Disable schema title comments||no|
 |`--yaml-no-descriptions`|Disable schema description comments||no|
@@ -481,6 +483,7 @@ schemadoc schema2yaml --mode all schema.json example.all.yaml
 |---|---|---|---|
 |`--yaml-comments-examples`|Schema examples to include in comments; choices: `none, scalar, all`|`scalar`|no|
 |`--yaml-comments-example-format`|Annotation value format; choices: `inline, block`|`block`|no|
+|`--yaml-comments-spacing`|Annotation comment spacing; choices: `compact, full`|`compact`|no|
 |`--yaml-indent`|YAML indentation width|`2`|no|
 |`--yaml-no-titles`|Disable schema title comments||no|
 |`--yaml-no-descriptions`|Disable schema description comments||no|

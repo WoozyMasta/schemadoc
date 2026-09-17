@@ -93,6 +93,9 @@ type YAMLCommentOptions struct {
 
 	// ExampleFormat selects inline or block annotation value formatting.
 	ExampleFormat string `json:"example_format,omitempty" yaml:"example_format,omitempty" jsonschema_extras:"x-order=6" jsonschema:"enum=inline,enum=block,default=block"`
+
+	// Spacing selects compact or paragraph-preserving annotation comments.
+	Spacing string `json:"spacing,omitempty" yaml:"spacing,omitempty" jsonschema_extras:"x-order=7" jsonschema:"enum=compact,enum=full,default=compact"`
 }
 
 // YAMLOutputOptions configures YAML output formatting and comments.

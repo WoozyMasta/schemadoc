@@ -196,6 +196,41 @@ func TestCLI_YAMLCommentPolicyFlags(t *testing.T) {
 	checkContainsAll(t, output, []string{"# Value description.", "value: selected"})
 }
 
+func TestCLI_YAMLCommentSpacingFull(t *testing.T) {
+	t.Parallel()
+
+	schemaPath := filepath.Join(t.TempDir(), "schema.json")
+	schema := `{
+  "type": "object",
+  "properties": {
+    "value": {
+      "type": "string",
+      "description": "Value description.",
+      "default": "selected"
+    }
+  }
+}`
+	if err := os.WriteFile(schemaPath, []byte(schema), 0o600); err != nil {
+		t.Fatalf("write schema: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := run([]string{
+		"schema2yaml",
+		"--yaml-comments-spacing",
+		"full",
+		schemaPath,
+	}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("run exit code = %d, want 0; stderr: %s", code, stderr.String())
+	}
+
+	checkContainsAll(t, stdout.String(), []string{
+		"# Value description.\n#\n# Default: selected\nvalue: selected",
+	})
+}
+
 func TestCLI_ConstrainedDynamicMapEmbeddedExamples(t *testing.T) {
 	t.Parallel()
 

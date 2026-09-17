@@ -516,6 +516,7 @@ func yamlOutputFromBuild(options *buildcfg.YAMLOutputOptions) yamlOutputOptions 
 			Enums:        boolValue(comments.Enums),
 			Examples:     comments.Examples,
 			Format:       comments.ExampleFormat,
+			Spacing:      comments.Spacing,
 		}
 	}
 

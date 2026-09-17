@@ -281,6 +281,30 @@ func TestRenderSummarizesStructuredAnnotations(t *testing.T) {
 	assertNotContains(t, output, "$vocabulary=")
 }
 
+func TestRenderClassifiesOnlyStandardExampleKeyword(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"$vocabulary": map[string]any{
+			"https://json-schema.org/draft/2020-12/vocab/core": true,
+		},
+		"type": "object",
+		"properties": map[string]any{
+			"value": map[string]any{
+				"type":    "string",
+				"example": "legacy",
+			},
+		},
+	})
+
+	output, err := Render(schema, Options{TemplateName: "list"})
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	assertContains(t, output, "example=legacy")
+	assertNotContains(t, output, "$vocabulary=")
+}
+
 func assertBefore(t *testing.T, text, first, second string) {
 	t.Helper()
 	firstIndex := strings.Index(text, first)

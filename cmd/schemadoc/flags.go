@@ -58,6 +58,7 @@ type jsonFormatFlags struct {
 type yamlExampleFlags struct {
 	CommentExamples string `long:"yaml-comments-examples"       description:"Schema examples to include in comments" default:"scalar" choices:"none;scalar;all"`
 	CommentFormat   string `long:"yaml-comments-example-format" description:"Annotation value format" default:"block" choices:"inline;block"`
+	CommentSpacing  string `long:"yaml-comments-spacing"         description:"Annotation comment spacing" default:"compact" choices:"compact;full"`
 	Indent          int    `long:"yaml-indent"                  description:"YAML indentation width" default:"2" validate-min:"1"`
 	NoTitles        bool   `long:"yaml-no-titles"               description:"Disable schema title comments"`
 	NoDescriptions  bool   `long:"yaml-no-descriptions"         description:"Disable schema description comments"`

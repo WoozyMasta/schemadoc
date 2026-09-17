@@ -946,7 +946,7 @@ YAMLCommentOptions configures independent schema annotation comments.
 | Attribute | Value |
 | --- | --- |
 | Type | `object` |
-| Properties | 6 |
+| Properties | 7 |
 | Additional properties | boolean schema=false |
 
 ### YAMLCommentOptions.titles
@@ -1052,6 +1052,24 @@ ExampleFormat selects inline or block annotation value formatting.
 | Required | no |
 | Default | `block` |
 | Enum | `inline`, `block` |
+
+### YAMLCommentOptions.spacing
+
+Key: `spacing`
+
+Paths:
+
+* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`spacing`
+* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`spacing`
+
+Spacing selects compact or paragraph-preserving annotation comments.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `compact` |
+| Enum | `compact`, `full` |
 
 ## Schema2YAMLStage
 
@@ -1345,6 +1363,10 @@ schema2doc:
       # Default: block
       # Allowed values: inline, block
       example_format: block
+      # Spacing selects compact or paragraph-preserving annotation comments.
+      # Default: compact
+      # Allowed values: compact, full
+      spacing: compact
 # Schema2YAML generates YAML example payload from current `schema`.
 # This stage is useful for human-readable config examples and snippets.
 schema2yaml:
@@ -1383,4 +1405,8 @@ schema2yaml:
       # Default: block
       # Allowed values: inline, block
       example_format: block
+      # Spacing selects compact or paragraph-preserving annotation comments.
+      # Default: compact
+      # Allowed values: compact, full
+      spacing: compact
 ```

@@ -164,7 +164,18 @@ func validTemplateExtension(extension string) bool {
 		return false
 	}
 
-	return !strings.ContainsAny(extension, "\\/ \t\r\n")
+	for _, character := range extension[1:] {
+		if character >= 'a' && character <= 'z' ||
+			character >= 'A' && character <= 'Z' ||
+			character >= '0' && character <= '9' ||
+			strings.ContainsRune("._-", character) {
+			continue
+		}
+
+		return false
+	}
+
+	return true
 }
 
 // applyTemplatePostProcessors executes declared processors in declaration order.

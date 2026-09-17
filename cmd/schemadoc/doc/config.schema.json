@@ -532,6 +532,16 @@
           "type": "string",
           "x-order": "5"
         },
+        "spacing": {
+          "default": "compact",
+          "description": "Spacing selects compact or paragraph-preserving annotation comments.",
+          "enum": [
+            "compact",
+            "full"
+          ],
+          "type": "string",
+          "x-order": "7"
+        },
         "titles": {
           "default": true,
           "description": "Titles enables comments sourced from schema titles.",

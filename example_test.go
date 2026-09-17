@@ -536,6 +536,73 @@ func TestGenerateExampleYAMLCommentValuesPreserveText(t *testing.T) {
 	}
 }
 
+func TestNormalizeYAMLCommentPreservesInternalBlankLines(t *testing.T) {
+	t.Parallel()
+
+	got := normalizeYAMLComment(
+		"\n\nfirst paragraph\n\nsecond paragraph\n\n",
+		YAMLCommentSpacingFull,
+	)
+	if want := "first paragraph\n#\nsecond paragraph"; got != want {
+		t.Fatalf("normalizeYAMLComment = %q, want %q", got, want)
+	}
+
+	compact := normalizeYAMLComment(
+		"\n\nfirst paragraph\n\nsecond paragraph\n\n",
+		YAMLCommentSpacingCompact,
+	)
+	if want := "first paragraph\nsecond paragraph"; compact != want {
+		t.Fatalf("compact normalizeYAMLComment = %q, want %q", compact, want)
+	}
+}
+
+func TestGenerateExampleYAMLPreservesParagraphComments(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"value": map[string]any{
+				"type":        "string",
+				"description": "first paragraph\n\nsecond paragraph",
+			},
+		},
+	})
+
+	output, err := GenerateExampleYAMLWithOptions(schema, ExampleModeAll, ExampleOptions{
+		YAMLComments: YAMLCommentPolicy{Spacing: YAMLCommentSpacingFull},
+	})
+	if err != nil {
+		t.Fatalf("GenerateExampleYAML: %v", err)
+	}
+
+	assertContains(t, string(output), "# first paragraph\n#\n# second paragraph\nvalue: <string>")
+}
+
+func TestGenerateExampleYAMLFullSpacingSeparatesAnnotations(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"value": map[string]any{
+				"type":        "string",
+				"description": "Description.",
+				"default":     "default",
+			},
+		},
+	})
+
+	output, err := GenerateExampleYAMLWithOptions(schema, ExampleModeAll, ExampleOptions{
+		YAMLComments: YAMLCommentPolicy{Spacing: YAMLCommentSpacingFull},
+	})
+	if err != nil {
+		t.Fatalf("GenerateExampleYAMLWithOptions: %v", err)
+	}
+
+	assertContains(t, string(output), "# Description.\n#\n# Default: default\nvalue: default")
+}
+
 func TestGenerateExampleJSONModeValidation(t *testing.T) {
 	t.Parallel()
 

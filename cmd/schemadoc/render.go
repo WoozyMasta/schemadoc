@@ -51,6 +51,7 @@ type yamlOutputOptions struct {
 type yamlCommentOptions struct {
 	Examples     string
 	Format       string
+	Spacing      string
 	Titles       bool
 	Descriptions bool
 	Defaults     bool
@@ -225,6 +226,7 @@ func toExampleOptions(options exampleOutputOptions) schemadoc.ExampleOptions {
 			Enums:         boolPointer(comments.Enums),
 			Examples:      schemadoc.YAMLCommentExamples(comments.Examples),
 			ExampleFormat: schemadoc.YAMLCommentFormat(comments.Format),
+			Spacing:       schemadoc.YAMLCommentSpacing(comments.Spacing),
 		}
 	}
 
@@ -242,6 +244,7 @@ func yamlOutputFromFlags(flags yamlExampleFlags) yamlOutputOptions {
 			Enums:        !flags.NoEnums,
 			Examples:     flags.CommentExamples,
 			Format:       flags.CommentFormat,
+			Spacing:      flags.CommentSpacing,
 		},
 	}
 }

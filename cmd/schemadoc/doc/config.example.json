@@ -64,6 +64,7 @@
         "enums": true,
         "example_format": "block",
         "examples": "scalar",
+        "spacing": "compact",
         "titles": true
       },
       "indent": 2
@@ -88,6 +89,7 @@
         "enums": true,
         "example_format": "block",
         "examples": "scalar",
+        "spacing": "compact",
         "titles": true
       },
       "indent": 2
