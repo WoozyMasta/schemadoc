@@ -165,6 +165,63 @@ func TestIntegrationCorpusOutputsAreDeterministic(t *testing.T) {
 	}
 }
 
+func TestIntegrationCorpusFullYAMLCommentsAreDeterministic(t *testing.T) {
+	t.Parallel()
+
+	for _, fixture := range loadSchemaCorpus(t) {
+		if fixture.Group != "integration" {
+			continue
+		}
+
+		fixture := fixture
+		t.Run(fixture.Name, func(t *testing.T) {
+			t.Parallel()
+
+			schema := fixture.readSchemaCorpusSchema(t)
+			options := ExampleOptions{
+				YAMLComments: YAMLCommentPolicy{
+					Spacing: YAMLCommentSpacingFull,
+				},
+			}
+			first, err := GenerateExampleWithOptions(schema, ExampleModeAll, ExampleFormatYAML, options)
+			if err != nil {
+				t.Fatalf("generate full-spacing YAML example: %v", err)
+			}
+			second, err := GenerateExampleWithOptions(schema, ExampleModeAll, ExampleFormatYAML, options)
+			if err != nil {
+				t.Fatalf("generate full-spacing YAML example second run: %v", err)
+			}
+			if !bytes.Equal(first, second) {
+				t.Fatal("full-spacing YAML comments are not deterministic")
+			}
+			if err := validateGeneratedYAML(schema, first); err != nil {
+				t.Fatalf("validate full-spacing YAML example: %v", err)
+			}
+
+			renderOptions := Options{
+				TemplateName:  "list",
+				ExampleFormat: ExampleFormatYAML,
+				ExampleOptions: ExampleOptions{
+					YAMLComments: YAMLCommentPolicy{
+						Spacing: YAMLCommentSpacingFull,
+					},
+				},
+			}
+			documentFirst, err := Render(schema, renderOptions)
+			if err != nil {
+				t.Fatalf("render full-spacing YAML document: %v", err)
+			}
+			documentSecond, err := Render(schema, renderOptions)
+			if err != nil {
+				t.Fatalf("render full-spacing YAML document second run: %v", err)
+			}
+			if documentFirst != documentSecond {
+				t.Fatal("full-spacing YAML document is not deterministic")
+			}
+		})
+	}
+}
+
 func generateCorpusExample(t *testing.T, schema []byte, format ExampleFormat) []byte {
 	t.Helper()
 

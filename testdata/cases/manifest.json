@@ -301,7 +301,9 @@
     "dialect": "2020-12",
     "status": "characterization",
     "error": {
-      "category": "unsupported_materialization"
+      "category": "unsupported_materialization",
+      "code": "unsupported_materialization",
+      "path": "#/anyOf"
     }
   },
   {
