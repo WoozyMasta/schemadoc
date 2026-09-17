@@ -14,12 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.10.0][] - 2026-09-18
 
 ### Added
 
 * `SourcePath`/`SourceRawPath` overrides in the rendering API,
   CLI, and `schema2doc` build configuration.
+
+[0.10.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.9.0...v0.10.0
 
 ## [0.9.0][] - 2026-09-17
 
