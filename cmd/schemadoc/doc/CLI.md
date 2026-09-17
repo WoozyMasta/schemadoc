@@ -251,6 +251,8 @@ schemadoc mod2doc --type Config --key-namer snake . > model.snake.md
 |`-f`, `--template-file`|Path to custom document template (.gotmpl)||no|
 |`-T`, `--title`|Document title|`schema reference`|no|
 |`-d`, `--description`|Optional top-level document description under title||no|
+|`--source-path`|Source path shown in document metadata||no|
+|`--source-raw-path`|Raw schema URL shown in document metadata||no|
 |`-l`, `--list-marker`|List marker used in generated lists; choices: `-, *`|`*`|no|
 |`-w`, `--wrap`|Wrap width for plain text descriptions|`80`|no|
 |`--hide-extra-keywords`|Hide non-standard schema keywords in Attributes||no|
@@ -380,6 +382,8 @@ schemadoc schema2doc --mode required --format yaml schema.json > schema.with-exa
 |`-f`, `--template-file`|Path to custom document template (.gotmpl)||no|
 |`-T`, `--title`|Document title|`schema reference`|no|
 |`-d`, `--description`|Optional top-level document description under title||no|
+|`--source-path`|Source path shown in document metadata||no|
+|`--source-raw-path`|Raw schema URL shown in document metadata||no|
 |`-l`, `--list-marker`|List marker used in generated lists; choices: `-, *`|`*`|no|
 |`-w`, `--wrap`|Wrap width for plain text descriptions|`80`|no|
 |`--hide-extra-keywords`|Hide non-standard schema keywords in Attributes||no|

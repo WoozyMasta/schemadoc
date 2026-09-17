@@ -285,6 +285,16 @@ type Schema2DocStage struct {
 
 	// Footer includes schemadoc version metadata in rendered documentation.
 	Footer bool `json:"footer,omitempty" yaml:"footer,omitempty" jsonschema_extras:"x-order=12" jsonschema:"default=false"`
+
+	// SourcePath overrides the source path shown in document metadata.
+	//
+	// It does not affect the working schema file or schema processing.
+	SourcePath string `json:"source_path,omitempty" yaml:"source_path,omitempty" jsonschema_extras:"x-order=13" jsonschema:"example=docs/config.schema.json"`
+
+	// SourceRawPath overrides the raw schema URL shown in document metadata.
+	//
+	// When empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.
+	SourceRawPath string `json:"source_raw_path,omitempty" yaml:"source_raw_path,omitempty" jsonschema_extras:"x-order=14" jsonschema:"format=uri,example=https://raw.githubusercontent.com/acme/project/HEAD/schema.json"`
 }
 
 // Schema2JSONStage describes schema2json stage.

@@ -28,11 +28,13 @@ type moduleReflectFlags struct {
 
 // markdownRenderFlags groups document rendering flags.
 type markdownRenderFlags struct {
-	TemplatePath         string `long:"template-file"          description:"Path to custom document template (.gotmpl)"           short:"f"`
-	Title                string `long:"title"                  description:"Document title"                                       short:"T" default:"schema reference"`
-	Description          string `long:"description"            description:"Optional top-level document description under title"  short:"d"`
-	ListMarker           string `long:"list-marker"            description:"List marker used in generated lists"                  short:"l" default:"*" choices:"-;*"`
-	WrapWidth            int    `long:"wrap"                   description:"Wrap width for plain text descriptions"               short:"w" default:"80" validate-min:"1"`
+	TemplatePath         string `long:"template-file"          description:"Path to custom document template (.gotmpl)" short:"f"`
+	Title                string `long:"title"                  description:"Document title" short:"T" default:"schema reference"`
+	Description          string `long:"description"            description:"Optional top-level document description under title" short:"d"`
+	SourcePath           string `long:"source-path"            description:"Source path shown in document metadata"`
+	SourceRawPath        string `long:"source-raw-path"        description:"Raw schema URL shown in document metadata"`
+	ListMarker           string `long:"list-marker"            description:"List marker used in generated lists" short:"l" default:"*" choices:"-;*"`
+	WrapWidth            int    `long:"wrap"                   description:"Wrap width for plain text descriptions" short:"w" default:"80" validate-min:"1"`
 	HideExtraKeywords    bool   `long:"hide-extra-keywords"    description:"Hide non-standard schema keywords in Attributes"`
 	ShowInternalKeywords bool   `long:"show-internal-keywords" description:"Show renderer-specific schema keywords in Attributes"`
 	Footer               bool   `long:"footer"                 description:"Include schemadoc version footer in generated output"`
@@ -59,7 +61,7 @@ type jsonFormatFlags struct {
 type yamlExampleFlags struct {
 	CommentExamples string `long:"yaml-comments-examples"       description:"Schema examples to include in comments" default:"scalar" choices:"none;scalar;all"`
 	CommentFormat   string `long:"yaml-comments-example-format" description:"Annotation value format" default:"block" choices:"inline;block"`
-	CommentSpacing  string `long:"yaml-comments-spacing"         description:"Annotation comment spacing" default:"compact" choices:"compact;full"`
+	CommentSpacing  string `long:"yaml-comments-spacing"        description:"Annotation comment spacing" default:"compact" choices:"compact;full"`
 	Indent          int    `long:"yaml-indent"                  description:"YAML indentation width" default:"2" validate-min:"1"`
 	NoTitles        bool   `long:"yaml-no-titles"               description:"Disable schema title comments"`
 	NoDescriptions  bool   `long:"yaml-no-descriptions"         description:"Disable schema description comments"`

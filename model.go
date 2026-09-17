@@ -34,6 +34,11 @@ type Options struct {
 	// It does not affect schema parsing, only rendered output.
 	SourcePath string `json:"source_path,omitempty" jsonschema:"example=internal/config/schema.json,example=schemas/project.schema.json"`
 
+	// SourceRawPath overrides the raw schema URL shown in the document header.
+	//
+	// When empty, the URL is derived from SourcePath and the schema $id when possible.
+	SourceRawPath string `json:"source_raw_path,omitempty" jsonschema:"format=uri,example=https://raw.githubusercontent.com/acme/project/HEAD/schema.json"`
+
 	// TemplateName selects one built-in template.
 	TemplateName string `json:"template_name,omitempty" jsonschema:"default=list,enum=list,enum=table,enum=html,example=list,example=table,example=html"`
 

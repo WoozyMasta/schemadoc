@@ -401,6 +401,23 @@
           "type": "boolean",
           "x-order": "11"
         },
+        "source_path": {
+          "description": "SourcePath overrides the source path shown in document metadata.\n\nIt does not affect the working schema file or schema processing.",
+          "examples": [
+            "docs/config.schema.json"
+          ],
+          "type": "string",
+          "x-order": "13"
+        },
+        "source_raw_path": {
+          "description": "SourceRawPath overrides the raw schema URL shown in document metadata.\n\nWhen empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.",
+          "examples": [
+            "https://raw.githubusercontent.com/acme/project/HEAD/schema.json"
+          ],
+          "format": "uri",
+          "type": "string",
+          "x-order": "14"
+        },
         "template": {
           "default": "list",
           "description": "Template selects built-in document template.",

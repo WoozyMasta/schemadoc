@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* `SourcePath`/`SourceRawPath` overrides in the rendering API,
+  CLI, and `schema2doc` build configuration.
+
 ## [0.9.0][] - 2026-09-17
 
 ### Added

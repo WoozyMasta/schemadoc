@@ -22,6 +22,8 @@ type markdownRenderRequest struct {
 	TemplateName         string
 	Title                string
 	Description          string
+	SourcePath           string
+	SourceRawPath        string
 	TemplatePath         string
 	ListMarker           string
 	ExampleMode          string
@@ -396,7 +398,8 @@ func (runner *cliRunner) renderSchemaToDoc(
 	options := schemadoc.Options{
 		Title:                request.Title,
 		Description:          request.Description,
-		SourcePath:           sourcePath,
+		SourcePath:           firstNonEmpty(strings.TrimSpace(request.SourcePath), sourcePath),
+		SourceRawPath:        strings.TrimSpace(request.SourceRawPath),
 		TemplateName:         request.TemplateName,
 		ListMarker:           request.ListMarker,
 		HideExtraKeywords:    request.HideExtraKeywords,

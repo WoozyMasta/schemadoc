@@ -161,6 +161,8 @@ func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Co
 			TemplatePath:         strings.TrimSpace(stage.TemplateFile),
 			Title:                strings.TrimSpace(stage.Title),
 			Description:          strings.TrimSpace(stage.Description),
+			SourcePath:           strings.TrimSpace(stage.SourcePath),
+			SourceRawPath:        strings.TrimSpace(stage.SourceRawPath),
 			ListMarker:           strings.TrimSpace(stage.ListMarker),
 			WrapWidth:            stage.Wrap,
 			HideExtraKeywords:    stage.HideExtraKeywords,

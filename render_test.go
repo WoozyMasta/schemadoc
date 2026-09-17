@@ -355,6 +355,24 @@ func TestRenderGoldenHTML(t *testing.T) {
 	testRenderGoldenTemplate(t, "html", filepath.Join("testdata", "generated", "app.doc.html"))
 }
 
+func TestRenderSourceMetadataOverrides(t *testing.T) {
+	schemaPath := filepath.Join("testdata", "generated", "app.schema.json")
+	got, err := RenderFile(schemaPath, Options{
+		SourcePath:    "docs/application.schema.json",
+		SourceRawPath: "https://schemas.example.com/application.json",
+	})
+	if err != nil {
+		t.Fatalf("RenderFile: %v", err)
+	}
+
+	if !strings.Contains(got, "Source file: [`docs/application.schema.json`](https://github.com/woozymasta/schemadoc-test-app/blob/HEAD/docs/application.schema.json)") {
+		t.Fatalf("rendered source path does not use override")
+	}
+	if !strings.Contains(got, "Source URL: [Raw schema URL](https://schemas.example.com/application.json)") {
+		t.Fatalf("rendered raw schema URL does not use override")
+	}
+}
+
 func testRenderGoldenTemplate(t *testing.T, templateName, goldenPath string) {
 	t.Helper()
 

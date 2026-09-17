@@ -40,6 +40,10 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 	if sourcePath == "" {
 		sourcePath = "(memory)"
 	}
+	rawSourceURL := strings.TrimSpace(opt.SourceRawPath)
+	if rawSourceURL == "" {
+		rawSourceURL = buildSchemaSourceURL(doc.ID, sourcePath)
+	}
 
 	rootName := rootDefinitionName(doc.Ref)
 	definitions := renderDefinitions(doc, rootName)
@@ -57,7 +61,7 @@ func buildRenderView(doc schemaDocument, opt Options) (renderView, error) {
 		Description:        sanitizeText(strings.TrimSpace(opt.Description)),
 		SourceSchema:       escapeInline(sourcePath),
 		SourceFileURL:      buildSourceFileURL(sourcePath, doc.ID),
-		SchemaSourceURL:    buildSchemaSourceURL(doc.ID, sourcePath),
+		SchemaSourceURL:    rawSourceURL,
 		SchemaBrowserURL:   buildSchemaBrowserURL(doc.ID, sourcePath),
 		SchemaID:           escapeInline(orNone(doc.ID)),
 		SchemaDraft:        escapeInline(orNone(doc.Schema)),

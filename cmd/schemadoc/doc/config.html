@@ -822,7 +822,7 @@
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 14</li>
+<li><strong>Properties:</strong> 16</li>
 <li><strong>Additional properties:</strong> boolean schema=false</li>
 </ul>
       </div>
@@ -983,6 +983,31 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#yamloutputoptions"><code>YAMLOutputOptions</code></a> (<code>#/$defs/YAMLOutputOptions</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagesource_path">Schema2DocStage.source_path</h3>
+        <p><strong>Key:</strong> <code>source_path</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>source_path</code></p>
+<p>SourcePath overrides the source path shown in document metadata.</p>
+<p>It does not affect the working schema file or schema processing.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>docs/config.schema.json</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="schema2docstagesource_raw_path">Schema2DocStage.source_raw_path</h3>
+        <p><strong>Key:</strong> <code>source_raw_path</code></p>
+<p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>source_raw_path</code></p>
+<p>SourceRawPath overrides the raw schema URL shown in document metadata.</p>
+<p>When empty, schemadoc derives the URL from SourcePath and the schema <code>$id</code> when possible.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>https://raw.githubusercontent.com/acme/project/HEAD/schema.json</code></li>
+<li><strong>Format:</strong> <code>uri</code></li>
 </ul>
 </article>
 </div>
@@ -1447,6 +1472,14 @@ schema2doc:
       # Default: compact
       # Allowed values: compact, full
       spacing: compact
+  # SourcePath overrides the source path shown in document metadata.
+  # It does not affect the working schema file or schema processing.
+  # Example: docs/config.schema.json
+  source_path: docs/config.schema.json
+  # SourceRawPath overrides the raw schema URL shown in document metadata.
+  # When empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.
+  # Example: https://raw.githubusercontent.com/acme/project/HEAD/schema.json
+  source_raw_path: https://raw.githubusercontent.com/acme/project/HEAD/schema.json
 # Schema2YAML generates YAML example payload from current `schema`.
 # This stage is useful for human-readable config examples and snippets.
 schema2yaml:

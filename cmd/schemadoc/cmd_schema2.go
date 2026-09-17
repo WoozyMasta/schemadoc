@@ -14,6 +14,8 @@ func (command *schemaToDocCommand) Execute(_ []string) error {
 		TemplateName:         command.TemplateFlags.TemplateName,
 		Title:                command.RenderFlags.Title,
 		Description:          command.RenderFlags.Description,
+		SourcePath:           command.RenderFlags.SourcePath,
+		SourceRawPath:        command.RenderFlags.SourceRawPath,
 		TemplatePath:         command.RenderFlags.TemplatePath,
 		WrapWidth:            command.RenderFlags.WrapWidth,
 		ListMarker:           command.RenderFlags.ListMarker,
