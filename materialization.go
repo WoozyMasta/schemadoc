@@ -15,9 +15,13 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
 const maxGeneratedStringLength = 4096
+
+const materializationSchemaURL = "urn:schemadoc:materialization-schema"
 
 // MaterializationErrorCode identifies a stable example-generation failure.
 type MaterializationErrorCode string
@@ -70,9 +74,11 @@ type MaterializationError struct {
 
 // exampleMaterializer selects and validates one deterministic example value.
 type exampleMaterializer struct {
-	semantic   *schemaSemanticView
-	activeRefs map[string]int
-	mode       ExampleMode
+	validatorError error
+	semantic       *schemaSemanticView
+	activeRefs     map[string]int
+	rootValidator  *jsonschema.Schema
+	mode           ExampleMode
 }
 
 // materializationCandidate records an explicit value and its source keyword.
@@ -144,16 +150,67 @@ func (err *MaterializationError) Is(target error) bool {
 
 // newExampleMaterializer creates a materializer for one parsed document.
 func newExampleMaterializer(doc schemaDocument, mode ExampleMode) *exampleMaterializer {
+	validator, err := compileMaterializationValidator(doc.Raw)
 	return &exampleMaterializer{
-		semantic:   newSchemaSemanticViewPointer(doc),
-		mode:       mode,
-		activeRefs: make(map[string]int),
+		semantic:       newSchemaSemanticViewPointer(doc),
+		mode:           mode,
+		activeRefs:     make(map[string]int),
+		rootValidator:  validator,
+		validatorError: err,
 	}
 }
 
 // materialize builds one valid value or returns a structured failure.
 func (materializer *exampleMaterializer) materialize(node schemaValue) (any, error) {
-	return materializer.materializeAt(node, schemaPath{})
+	value, err := materializer.materializeAt(node, schemaPath{})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := materializer.validateRoot(value); err != nil {
+		return nil, err
+	}
+
+	return value, nil
+}
+
+// compileMaterializationValidator compiles one in-memory root schema
+// without installing a URL loader, so final validation cannot perform implicit I/O.
+func compileMaterializationValidator(raw any) (*jsonschema.Schema, error) {
+	compiler := jsonschema.NewCompiler()
+	if err := compiler.AddResource(materializationSchemaURL, raw); err != nil {
+		return nil, fmt.Errorf("register schema: %w", err)
+	}
+
+	validator, err := compiler.Compile(materializationSchemaURL)
+	if err != nil {
+		return nil, fmt.Errorf("compile schema: %w", err)
+	}
+
+	return validator, nil
+}
+
+// validateRoot applies the authoritative independent validator once per output.
+func (materializer *exampleMaterializer) validateRoot(value any) error {
+	if materializer.validatorError != nil {
+		return newMaterializationError(
+			MaterializationCodeUnsupported,
+			MaterializationCategoryUnsupportedMaterialization,
+			"#",
+			materializer.validatorError,
+		)
+	}
+
+	if err := materializer.rootValidator.Validate(value); err != nil {
+		return newMaterializationError(
+			MaterializationCodeGeneratedValueInvalid,
+			MaterializationCategoryGeneratedValueInvalid,
+			"#",
+			fmt.Errorf("final schema validation: %w", err),
+		)
+	}
+
+	return nil
 }
 
 // materializeAt builds a value at one instance/schema location.
@@ -480,6 +537,8 @@ func (materializer *exampleMaterializer) synthesizeObject(
 	propertyNames []effectiveSchema,
 	path schemaPath,
 ) (map[string]any, error) {
+	required = materializer.objectDependentRequired(schema, properties, required)
+	required = materializer.objectDependentSchemaRequired(schema, properties, required)
 	requiredSet := make(map[string]struct{}, len(required))
 	for _, name := range required {
 		// A required field cannot be skipped, including when its schema is false.
@@ -576,6 +635,13 @@ func (materializer *exampleMaterializer) synthesizeObject(
 	)
 
 	additional, hasAdditional := combinedEffectiveSchema(additionalProperties)
+	if !hasAdditional {
+		unevaluated, err := schema.unevaluatedProperties(materializer.semantic)
+		if err != nil {
+			return nil, err
+		}
+		additional, hasAdditional = combinedEffectiveSchema(unevaluated)
+	}
 	if materializer.mode == ExampleModeAll && hasAdditional &&
 		!isFalseEffectiveSchema(additional) && (len(result) == 0 || len(result) < minimum) {
 		// A dynamic key is illustrative only.
@@ -627,6 +693,102 @@ func (materializer *exampleMaterializer) synthesizeObject(
 	}
 
 	return result, nil
+}
+
+// objectDependentRequired expands dependencies for properties selected by the mode.
+func (materializer *exampleMaterializer) objectDependentRequired(
+	schema effectiveSchema,
+	properties map[string]effectiveSchema,
+	required []string,
+) []string {
+	result := append([]string(nil), required...)
+	seen := make(map[string]struct{}, len(result))
+	for _, name := range result {
+		seen[name] = struct{}{}
+	}
+
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+		dependencies, ok := term.Object["dependentRequired"].(map[string]any)
+		if !ok {
+			continue
+		}
+
+		for _, trigger := range sortedKeys(dependencies) {
+			property, exists := properties[trigger]
+			if !exists || isFalseEffectiveSchema(property) {
+				continue
+			}
+			if materializer.mode == ExampleModeRequired && !slices.Contains(result, trigger) {
+				continue
+			}
+
+			for _, dependency := range asStringSlice(dependencies[trigger]) {
+				if _, exists := seen[dependency]; exists {
+					continue
+				}
+				result = append(result, dependency)
+				seen[dependency] = struct{}{}
+			}
+		}
+	}
+
+	return result
+}
+
+// objectDependentSchemaRequired adds direct required properties from active dependent schemas.
+func (materializer *exampleMaterializer) objectDependentSchemaRequired(
+	schema effectiveSchema,
+	properties map[string]effectiveSchema,
+	required []string,
+) []string {
+	result := append([]string(nil), required...)
+	seen := make(map[string]struct{}, len(result))
+	for _, name := range result {
+		seen[name] = struct{}{}
+	}
+
+	for _, term := range schema.terms {
+		if term.Object == nil {
+			continue
+		}
+		dependencies, ok := term.Object["dependentSchemas"].(map[string]any)
+		if !ok {
+			continue
+		}
+
+		for _, trigger := range sortedKeys(dependencies) {
+			property, exists := properties[trigger]
+			if !exists || isFalseEffectiveSchema(property) {
+				continue
+			}
+			if materializer.mode == ExampleModeRequired && !slices.Contains(result, trigger) {
+				continue
+			}
+
+			node, valid := toSchemaValue(dependencies[trigger])
+			if !valid {
+				continue
+			}
+
+			nested, err := materializer.semantic.effective(node)
+			if err != nil {
+				continue
+			}
+
+			for _, dependency := range nested.required() {
+				if _, exists := seen[dependency]; exists {
+					continue
+				}
+				result = append(result, dependency)
+				seen[dependency] = struct{}{}
+			}
+		}
+	}
+
+	return result
 }
 
 // pruneInvalidOptionalProperties repairs an initially invalid object
@@ -1637,6 +1799,12 @@ func validateSchemaTerm(view *schemaSemanticView, object map[string]any, value a
 			"enum",
 			"value is not an enum member")
 	}
+	if err := validateNotTerm(view, object, value, path); err != nil {
+		return err
+	}
+	if err := validateConditionalTerm(view, object, value, path); err != nil {
+		return err
+	}
 
 	if err := validateStringTerm(object, value, path); err != nil {
 		return err
@@ -1652,6 +1820,76 @@ func validateSchemaTerm(view *schemaSemanticView, object map[string]any, value a
 	}
 
 	return nil
+}
+
+// validateNotTerm rejects values accepted by the nested not schema.
+func validateNotTerm(view *schemaSemanticView, object map[string]any, value any, path schemaPath) error {
+	raw, exists := object["not"]
+	if !exists {
+		return nil
+	}
+
+	node, valid := toSchemaValue(raw)
+	if !valid {
+		return nil
+	}
+
+	nested, err := view.effective(node)
+	if err != nil {
+		return materializationReferenceError(err, path)
+	}
+	if err := validateEffectiveInstance(view, nested, value, path); err == nil {
+		return newCandidateValidationError(
+			materializationKeywordPath(path, "not"),
+			"not",
+			"value matches the forbidden schema")
+	} else if isMaterializationReferenceError(err) {
+		return err
+	}
+
+	return nil
+}
+
+// validateConditionalTerm applies then or else according to the if condition.
+func validateConditionalTerm(view *schemaSemanticView, object map[string]any, value any, path schemaPath) error {
+	rawCondition, exists := object["if"]
+	if !exists {
+		return nil
+	}
+
+	conditionNode, valid := toSchemaValue(rawCondition)
+	if !valid {
+		return nil
+	}
+	condition, err := view.effective(conditionNode)
+	if err != nil {
+		return materializationReferenceError(err, path)
+	}
+	conditionErr := validateEffectiveInstance(view, condition, value, path)
+	if isMaterializationReferenceError(conditionErr) {
+		return conditionErr
+	}
+	conditionMatches := conditionErr == nil
+
+	keyword := "else"
+	if conditionMatches {
+		keyword = "then"
+	}
+	rawBranch, exists := object[keyword]
+	if !exists {
+		return nil
+	}
+
+	branchNode, valid := toSchemaValue(rawBranch)
+	if !valid {
+		return nil
+	}
+	branch, err := view.effective(branchNode)
+	if err != nil {
+		return materializationReferenceError(err, path)
+	}
+
+	return validateEffectiveInstance(view, branch, value, path)
 }
 
 // validateStringTerm validates basic Unicode string constraints.
@@ -1793,6 +2031,13 @@ func validateObjectTerm(view *schemaSemanticView, object map[string]any, value a
 		}
 	}
 
+	if err := validateDependentRequired(object, properties, path); err != nil {
+		return err
+	}
+	if err := validateDependentSchemas(view, object, properties, path); err != nil {
+		return err
+	}
+
 	for name, rawSchema := range declared {
 		instance, ok := properties[name]
 		if !ok {
@@ -1888,6 +2133,134 @@ func validateObjectTerm(view *schemaSemanticView, object map[string]any, value a
 					return err
 				}
 			}
+		}
+	}
+
+	if err := validateUnevaluatedProperties(view, object, properties, declared, patterns, path); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateDependentRequired enforces property dependencies on object instances.
+func validateDependentRequired(
+	object map[string]any,
+	properties map[string]any,
+	path schemaPath,
+) error {
+	dependencies, ok := object["dependentRequired"].(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	for trigger, raw := range dependencies {
+		if _, exists := properties[trigger]; !exists {
+			continue
+		}
+
+		for _, dependency := range asStringSlice(raw) {
+			if _, exists := properties[dependency]; exists {
+				continue
+			}
+
+			return newCandidateValidationError(
+				materializationKeywordPath(path, "dependentRequired"),
+				"dependentRequired",
+				"dependent property is missing")
+		}
+	}
+
+	return nil
+}
+
+// validateDependentSchemas applies the schema selected by each present trigger property.
+func validateDependentSchemas(
+	view *schemaSemanticView,
+	object map[string]any,
+	properties map[string]any,
+	path schemaPath,
+) error {
+	dependencies, ok := object["dependentSchemas"].(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	for trigger, raw := range dependencies {
+		if _, exists := properties[trigger]; !exists {
+			continue
+		}
+
+		node, valid := toSchemaValue(raw)
+		if !valid {
+			continue
+		}
+		nested, err := view.effective(node)
+		if err != nil {
+			return materializationReferenceError(err, path)
+		}
+		if err := validateEffectiveInstance(view, nested, properties, path); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validateUnevaluatedProperties validates properties not covered by this term's applicators.
+func validateUnevaluatedProperties(
+	view *schemaSemanticView,
+	object map[string]any,
+	properties map[string]any,
+	declared map[string]schemaValue,
+	patterns map[string]*regexp.Regexp,
+	path schemaPath,
+) error {
+	if view.dialect != schemaDialect201909 && view.dialect != schemaDialect202012 {
+		return nil
+	}
+
+	raw, exists := object["unevaluatedProperties"]
+	if !exists {
+		return nil
+	}
+	node, valid := toSchemaValue(raw)
+	if !valid {
+		return nil
+	}
+	unevaluated, err := view.effective(node)
+	if err != nil {
+		return materializationReferenceError(err, path)
+	}
+
+	evaluated := make(map[string]struct{}, len(properties))
+	for name := range declared {
+		evaluated[name] = struct{}{}
+	}
+	for name := range properties {
+		if _, exists := evaluated[name]; exists {
+			continue
+		}
+		for _, pattern := range patterns {
+			if pattern.MatchString(name) {
+				evaluated[name] = struct{}{}
+				break
+			}
+		}
+	}
+
+	if _, exists := object["additionalProperties"]; exists {
+		for name := range properties {
+			evaluated[name] = struct{}{}
+		}
+	}
+
+	for name, value := range properties {
+		if _, exists := evaluated[name]; exists {
+			continue
+		}
+		if err := validateEffectiveInstance(view, unevaluated, value, path.appendProperty(name)); err != nil {
+			return err
 		}
 	}
 

@@ -808,6 +808,100 @@ func TestMaterializationRejectsTupleMinimumWithoutTrailingItems(t *testing.T) {
 	}
 }
 
+func TestMaterializationAdditionalObjectAssertions(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		schema map[string]any
+		want   string
+	}{
+		{
+			name: "not allows value outside nested schema",
+			schema: map[string]any{
+				"type": "string",
+				"not":  map[string]any{"const": "forbidden"},
+			},
+			want: `"<string>"`,
+		},
+		{
+			name: "if selects false condition branch",
+			schema: map[string]any{
+				"type": "string",
+				"if":   map[string]any{"const": "trigger"},
+				"then": false,
+			},
+			want: `"<string>"`,
+		},
+		{
+			name: "dependent required adds declared property",
+			schema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"a": map[string]any{"const": "trigger"},
+					"b": map[string]any{"type": "string"},
+				},
+				"required":          []any{"a"},
+				"dependentRequired": map[string]any{"a": []any{"b"}},
+			},
+			want: "{\n  \"a\": \"trigger\",\n  \"b\": \"<string>\"\n}",
+		},
+		{
+			name: "dependent schema adds direct requirement",
+			schema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"a": map[string]any{"const": "trigger"},
+					"b": map[string]any{"type": "string"},
+				},
+				"required": []any{"a"},
+				"dependentSchemas": map[string]any{
+					"a": map[string]any{"required": []any{"b"}},
+				},
+			},
+			want: "{\n  \"a\": \"trigger\",\n  \"b\": \"<string>\"\n}",
+		},
+		{
+			name: "unevaluated properties provide dynamic value",
+			schema: map[string]any{
+				"$schema":               "https://json-schema.org/draft/2020-12/schema",
+				"type":                  "object",
+				"minProperties":         1,
+				"unevaluatedProperties": map[string]any{"type": "string"},
+			},
+			want: "{\n  \"example\": \"<string>\"\n}",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := GenerateExampleJSON(minimalSchemaBytes(t, test.schema), ExampleModeAll)
+			if err != nil {
+				t.Fatalf("GenerateExampleJSON: %v", err)
+			}
+			if strings.TrimSpace(string(got)) != test.want {
+				t.Fatalf("example = %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
+func TestMaterializationRejectsImpossibleNotSchema(t *testing.T) {
+	t.Parallel()
+
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "string",
+		"not":  map[string]any{},
+	})
+
+	_, err := GenerateExampleJSON(schema, ExampleModeAll)
+	if !errors.Is(err, ErrUnsupportedMaterialization) {
+		t.Fatalf("GenerateExampleJSON error = %v, want unsupported materialization", err)
+	}
+}
+
 func TestMaterializationRejectsUnevaluatedItemsViolation(t *testing.T) {
 	t.Parallel()
 

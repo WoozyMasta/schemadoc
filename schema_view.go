@@ -598,6 +598,15 @@ func (schema effectiveSchema) propertyNames(view *schemaSemanticView) ([]effecti
 	return schema.expandKeywordSchemas(view, "propertyNames")
 }
 
+// unevaluatedProperties returns active modern unevaluated-property schemas.
+func (schema effectiveSchema) unevaluatedProperties(view *schemaSemanticView) ([]effectiveSchema, error) {
+	if view.dialect != schemaDialect201909 && view.dialect != schemaDialect202012 {
+		return nil, nil
+	}
+
+	return schema.expandKeywordSchemas(view, "unevaluatedProperties")
+}
+
 // patternProperties returns deterministic pattern-property schema maps.
 func (schema effectiveSchema) patternProperties(view *schemaSemanticView) ([]map[string]effectiveSchema, error) {
 	result := make([]map[string]effectiveSchema, 0)
