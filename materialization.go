@@ -38,6 +38,10 @@ const (
 	MaterializationCodeUnresolvedReference MaterializationErrorCode = "unresolved_reference"
 	// MaterializationCodeExternalReference means a network or external resource is required.
 	MaterializationCodeExternalReference MaterializationErrorCode = "unsupported_external_reference"
+	// MaterializationCodeUnsupportedReference means a valid local reference form is unsupported.
+	MaterializationCodeUnsupportedReference MaterializationErrorCode = "unsupported_reference"
+	// MaterializationCodeInvalidReference means a local reference fragment is malformed.
+	MaterializationCodeInvalidReference MaterializationErrorCode = "invalid_reference"
 	// MaterializationCodeReferenceRecursion means recursion has no finite generated value.
 	MaterializationCodeReferenceRecursion MaterializationErrorCode = "reference_recursion"
 	// MaterializationCodeUnsupportedRequired means required semantics cannot be materialized.
@@ -58,6 +62,10 @@ const (
 	MaterializationCategoryUnresolvedReference MaterializationErrorCategory = "unresolved_reference"
 	// MaterializationCategoryUnsupportedExternalReference identifies a non-local target.
 	MaterializationCategoryUnsupportedExternalReference MaterializationErrorCategory = "unsupported_external_reference"
+	// MaterializationCategoryUnsupportedReference identifies an unsupported local reference form.
+	MaterializationCategoryUnsupportedReference MaterializationErrorCategory = "unsupported_reference"
+	// MaterializationCategoryInvalidReference identifies a malformed local reference fragment.
+	MaterializationCategoryInvalidReference MaterializationErrorCategory = "invalid_reference"
 	// MaterializationCategoryReferenceCycle identifies recursion without a finite solution.
 	MaterializationCategoryReferenceCycle MaterializationErrorCategory = "reference_cycle"
 	// MaterializationCategoryUnsupportedRequired identifies unsupported required semantics.
@@ -69,7 +77,8 @@ const (
 )
 
 // MaterializationError describes a deterministic example-generation failure.
-// Path is a root-relative JSON Schema location such as #/properties/name/type.
+// Path is a logical instance/materialization location rendered in JSON Pointer-like notation;
+// it is not a JSON Schema pointer.
 type MaterializationError struct {
 	Cause    error
 	Code     MaterializationErrorCode
@@ -147,6 +156,10 @@ func (err *MaterializationError) Is(target error) bool {
 		return err.Code == MaterializationCodeUnsupported
 	case ErrUnsupportedRequiredSemantics:
 		return err.Code == MaterializationCodeUnsupportedRequired
+	case ErrUnsupportedSchemaReference:
+		return err.Code == MaterializationCodeUnsupportedReference
+	case ErrInvalidSchemaPointer:
+		return err.Code == MaterializationCodeInvalidReference
 	case ErrGeneratedValueInvalid:
 		return err.Code == MaterializationCodeGeneratedValueInvalid
 	default:
@@ -324,6 +337,9 @@ func (materializer *exampleMaterializer) materializeDeferredReference(
 	effective effectiveSchema,
 	path schemaPath,
 ) (any, error) {
+	var value any
+	hasValue := false
+
 	for _, ref := range effective.deferredRefs {
 		if materializer.activeRefs[ref] > 0 {
 			return nil, newMaterializationError(
@@ -340,7 +356,7 @@ func (materializer *exampleMaterializer) materializeDeferredReference(
 		}
 
 		materializer.activeRefs[ref]++
-		value, err := materializer.materializeAt(target, path)
+		candidate, err := materializer.materializeAt(target, path)
 		materializer.activeRefs[ref]--
 		if materializer.activeRefs[ref] <= 0 {
 			delete(materializer.activeRefs, ref)
@@ -349,16 +365,28 @@ func (materializer *exampleMaterializer) materializeDeferredReference(
 			return nil, err
 		}
 
-		local := effective
-		local.deferredRefs = nil
-		if err := validateEffectiveInstance(materializer.semantic, local, value, path); err != nil {
-			return nil, err
+		if hasValue {
+			if !equalJSONValue(value, candidate) {
+				return nil, newMaterializationError(
+					MaterializationCodeUnsupported,
+					MaterializationCategoryUnsupportedMaterialization,
+					materializationKeywordPath(path, "$ref"),
+					ErrUnsupportedMaterialization,
+				)
+			}
+		} else {
+			value = candidate
+			hasValue = true
 		}
-
-		return value, nil
 	}
 
-	return nil, nil
+	local := effective
+	local.deferredRefs = nil
+	if err := validateEffectiveInstance(materializer.semantic, local, value, path); err != nil {
+		return nil, err
+	}
+
+	return value, nil
 }
 
 // explicitCandidates returns candidates in the public selection order.
@@ -2791,6 +2819,14 @@ func materializationReferenceError(err error, path schemaPath) error {
 		code = MaterializationCodeExternalReference
 		category = MaterializationCategoryUnsupportedExternalReference
 
+	case schemaReferenceUnsupported:
+		code = MaterializationCodeUnsupportedReference
+		category = MaterializationCategoryUnsupportedReference
+
+	case schemaReferenceInvalid:
+		code = MaterializationCodeInvalidReference
+		category = MaterializationCategoryInvalidReference
+
 	case schemaReferenceCycle:
 		code = MaterializationCodeReferenceRecursion
 		category = MaterializationCategoryReferenceCycle
@@ -2805,6 +2841,8 @@ func isMaterializationReferenceError(err error) bool {
 	return errors.As(err, &materialization) &&
 		(materialization.Code == MaterializationCodeUnresolvedReference ||
 			materialization.Code == MaterializationCodeExternalReference ||
+			materialization.Code == MaterializationCodeUnsupportedReference ||
+			materialization.Code == MaterializationCodeInvalidReference ||
 			materialization.Code == MaterializationCodeReferenceRecursion)
 }
 
@@ -3049,7 +3087,7 @@ func schemaTypesContradict(schema effectiveSchema) bool {
 	return intersection != nil && len(intersection) == 0
 }
 
-// pathPointer returns a root-relative JSON Pointer for a schema location.
+// pathPointer renders a logical instance path in JSON Pointer-like notation.
 func pathPointer(path schemaPath) string {
 	if len(path.segments) == 0 {
 		return "#"
@@ -3070,12 +3108,12 @@ func pathPointer(path schemaPath) string {
 	return builder.String()
 }
 
-// materializationKeywordPath appends one keyword to an instance/schema path.
+// materializationKeywordPath appends one keyword to a logical instance path.
 func materializationKeywordPath(path schemaPath, keyword string) string {
 	return materializationKeywordPathValue(path, keyword)
 }
 
-// materializationKeywordPathValue returns a keyword pointer for a path.
+// materializationKeywordPathValue returns a keyword location for a logical path.
 func materializationKeywordPathValue(path schemaPath, keyword string) string {
 	return pathPointer(path.append(schemaPathSegment{kind: schemaPathProperty, value: keyword}))
 }

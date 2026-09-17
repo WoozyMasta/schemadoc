@@ -6,18 +6,21 @@ package schemadoc
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 // schemaReferenceErrorKind identifies a local-reference resolution failure.
 type schemaReferenceErrorKind string
 
 const (
-	schemaReferenceExternal   schemaReferenceErrorKind = "external"
-	schemaReferenceUnresolved schemaReferenceErrorKind = "unresolved"
-	schemaReferenceInvalid    schemaReferenceErrorKind = "invalid-pointer"
-	schemaReferenceCycle      schemaReferenceErrorKind = "cycle"
+	schemaReferenceExternal    schemaReferenceErrorKind = "external"
+	schemaReferenceUnresolved  schemaReferenceErrorKind = "unresolved"
+	schemaReferenceInvalid     schemaReferenceErrorKind = "invalid-pointer"
+	schemaReferenceUnsupported schemaReferenceErrorKind = "unsupported"
+	schemaReferenceCycle       schemaReferenceErrorKind = "cycle"
 )
 
 // schemaReferenceError carries machine-readable reference failure details.
@@ -43,6 +46,8 @@ func (err *schemaReferenceError) Error() string {
 		message = "schema reference target was not found"
 	case schemaReferenceInvalid:
 		message = "schema reference contains an invalid JSON pointer"
+	case schemaReferenceUnsupported:
+		message = "schema reference form is unsupported"
 	case schemaReferenceCycle:
 		message = "schema reference cycle detected"
 	}
@@ -66,6 +71,8 @@ func (err *schemaReferenceError) Is(target error) bool {
 		return err.Kind == schemaReferenceUnresolved
 	case ErrInvalidSchemaPointer:
 		return err.Kind == schemaReferenceInvalid
+	case ErrUnsupportedSchemaReference:
+		return err.Kind == schemaReferenceUnsupported
 	case ErrSchemaReferenceCycle:
 		return err.Kind == schemaReferenceCycle
 	default:
@@ -148,16 +155,30 @@ func parseLocalJSONPointer(ref string) (schemaPath, error) {
 	}
 
 	if !strings.HasPrefix(ref, "#/") {
-		kind := schemaReferenceExternal
 		if strings.HasPrefix(ref, "#") {
-			kind = schemaReferenceInvalid
+			return schemaPath{}, &schemaReferenceError{
+				Kind:      schemaReferenceUnsupported,
+				Reference: ref,
+			}
 		}
 
-		return schemaPath{}, &schemaReferenceError{Kind: kind, Reference: ref}
+		return schemaPath{}, &schemaReferenceError{
+			Kind:      schemaReferenceExternal,
+			Reference: ref,
+		}
+	}
+
+	fragment, err := url.PathUnescape(strings.TrimPrefix(ref, "#"))
+	if err != nil || !utf8.ValidString(fragment) {
+		return schemaPath{}, &schemaReferenceError{
+			Kind:      schemaReferenceInvalid,
+			Reference: ref,
+			Cause:     err,
+		}
 	}
 
 	path := schemaPath{}
-	for rawToken := range strings.SplitSeq(strings.TrimPrefix(ref, "#/"), "/") {
+	for rawToken := range strings.SplitSeq(strings.TrimPrefix(fragment, "/"), "/") {
 		token, err := decodeJSONPointerToken(rawToken)
 		if err != nil {
 			return schemaPath{}, &schemaReferenceError{

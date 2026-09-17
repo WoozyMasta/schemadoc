@@ -351,6 +351,22 @@ func TestMaterializationStructuredErrors(t *testing.T) {
 			is:       ErrUnresolvedSchemaReference,
 		},
 		{
+			name:     "invalid local reference",
+			schema:   minimalSchemaBytes(t, map[string]any{"$ref": "#/$defs/value~2"}),
+			category: MaterializationCategoryInvalidReference,
+			code:     MaterializationCodeInvalidReference,
+			path:     "#/$ref",
+			is:       ErrInvalidSchemaPointer,
+		},
+		{
+			name:     "unsupported plain-name reference",
+			schema:   minimalSchemaBytes(t, map[string]any{"$ref": "#value"}),
+			category: MaterializationCategoryUnsupportedReference,
+			code:     MaterializationCodeUnsupportedReference,
+			path:     "#/$ref",
+			is:       ErrUnsupportedSchemaReference,
+		},
+		{
 			name: "recursive reference",
 			schema: minimalSchemaBytes(t, map[string]any{
 				"$ref": "#/$defs/Node",
@@ -412,6 +428,69 @@ func TestMaterializationStructuredErrors(t *testing.T) {
 			}
 			if !errors.Is(err, test.is) {
 				t.Fatalf("errors.Is(%v, %v) = false", err, test.is)
+			}
+		})
+	}
+}
+
+func TestMaterializationErrorPathIsLogical(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		schema map[string]any
+		want   string
+	}{
+		{
+			name: "nested property",
+			schema: map[string]any{
+				"type":     "object",
+				"required": []any{"child"},
+				"properties": map[string]any{
+					"child": map[string]any{
+						"type":     "object",
+						"required": []any{"value"},
+						"properties": map[string]any{
+							"value": map[string]any{
+								"type":    "string",
+								"pattern": "^(?:[A-Z]{3}-){2}[0-9]{4}$",
+							},
+						},
+					},
+				},
+			},
+			want: "#/child/value/pattern",
+		},
+		{
+			name: "tuple item",
+			schema: map[string]any{
+				"type":     "array",
+				"minItems": 1,
+				"prefixItems": []any{
+					map[string]any{
+						"type":    "string",
+						"pattern": "^(?:[A-Z]{3}-){2}[0-9]{4}$",
+					},
+				},
+			},
+			want: "#/items/pattern",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := GenerateExampleJSON(minimalSchemaBytes(t, test.schema), ExampleModeAll)
+			if err == nil {
+				t.Fatal("GenerateExampleJSON unexpectedly succeeded")
+			}
+			var materialization *MaterializationError
+			if !errors.As(err, &materialization) {
+				t.Fatalf("error = %T %v, want MaterializationError", err, err)
+			}
+			if materialization.Path != test.want {
+				t.Fatalf("path = %q, want logical path %q", materialization.Path, test.want)
 			}
 		})
 	}

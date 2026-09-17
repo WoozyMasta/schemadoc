@@ -33,7 +33,10 @@ func TestLocalSchemaResolverEscapesAndDefinitionMaps(t *testing.T) {
 
 	root := map[string]any{
 		"$defs": map[string]any{
-			"a/b~c": map[string]any{"type": "string"},
+			"a/b~c":     map[string]any{"type": "string"},
+			"space key": map[string]any{"type": "boolean"},
+			"percent%":  map[string]any{"type": "number"},
+			"ключ":      map[string]any{"type": "null"},
 		},
 		"definitions": map[string]any{
 			"legacy": map[string]any{"type": "integer"},
@@ -48,6 +51,9 @@ func TestLocalSchemaResolverEscapesAndDefinitionMaps(t *testing.T) {
 	}{
 		{name: "modern", ref: "#/$defs/a~1b~0c", want: "string"},
 		{name: "legacy", ref: "#/definitions/legacy", want: "integer"},
+		{name: "space", ref: "#/$defs/space%20key", want: "boolean"},
+		{name: "percent", ref: "#/$defs/percent%25", want: "number"},
+		{name: "utf8", ref: "#/$defs/%D0%BA%D0%BB%D1%8E%D1%87", want: "null"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			value, err := resolver.lookup(test.ref)
@@ -78,6 +84,8 @@ func TestLocalSchemaResolverErrors(t *testing.T) {
 	}{
 		{name: "external", ref: "other.json#/x", want: ErrExternalSchemaReference},
 		{name: "invalid escape", ref: "#/$defs/cycle~2", want: ErrInvalidSchemaPointer},
+		{name: "plain name", ref: "#cycle", want: ErrUnsupportedSchemaReference},
+		{name: "malformed percent escape", ref: "#/$defs/%ZZ", want: ErrInvalidSchemaPointer},
 		{name: "missing", ref: "#/$defs/missing", want: ErrUnresolvedSchemaReference},
 	} {
 		t.Run(test.name, func(t *testing.T) {

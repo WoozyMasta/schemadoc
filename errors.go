@@ -41,8 +41,10 @@ var (
 	ErrExternalSchemaReference = errors.New("external schema reference")
 	// ErrUnresolvedSchemaReference is returned when a local reference target is missing.
 	ErrUnresolvedSchemaReference = errors.New("unresolved schema reference")
-	// ErrInvalidSchemaPointer is returned when a local reference is not a JSON Pointer.
+	// ErrInvalidSchemaPointer is returned when a local JSON Pointer fragment is malformed.
 	ErrInvalidSchemaPointer = errors.New("invalid schema JSON pointer")
+	// ErrUnsupportedSchemaReference is returned for valid but unsupported local reference forms.
+	ErrUnsupportedSchemaReference = errors.New("unsupported schema reference")
 	// ErrSchemaReferenceCycle is returned when local references form a cycle.
 	ErrSchemaReferenceCycle = errors.New("schema reference cycle")
 	// ErrMaterializationUnsatisfiable is returned when no valid example exists.
