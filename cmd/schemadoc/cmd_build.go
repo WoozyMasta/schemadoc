@@ -519,6 +519,7 @@ func moduleOptionsFromBuild(stage *buildcfg.Mod2SchemaStage) modschema.Options {
 		Package:           stage.Package,
 		Type:              stage.Type,
 		KeyNamer:          stage.KeyNamer,
+		TypeNamer:         modschema.TypeNamerMode(stage.TypeNamer),
 		RootID:            stage.RootID,
 		Comments:          modschema.CommentMode(stage.Comments),
 		JSONSchemaVersion: stage.JSONSchemaVersion,

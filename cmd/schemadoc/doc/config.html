@@ -355,7 +355,7 @@
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 8</li>
+<li><strong>Properties:</strong> 9</li>
 <li><strong>Additional properties:</strong> boolean schema=false</li>
 </ul>
       </div>
@@ -451,6 +451,18 @@
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
 <li><strong>Examples:</strong> <code>v0.14.0</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2schemastagetype_namer">Mod2SchemaStage.type_namer</h3>
+        <p><strong>Key:</strong> <code>type_namer</code></p>
+<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>type_namer</code></p>
+<p>TypeNamer controls external definition names; target-package types keep their names. Package mode preserves package-base prefixes and rejects naming collisions. Full mode adds the sanitized full import path and a stable SHA-256 suffix. The sibling mod2doc stage inherits this setting.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>package</code></li>
+<li><strong>Enum:</strong> <code>package</code>, <code>full</code></li>
 </ul>
 </article>
 </div>
@@ -1546,6 +1558,13 @@ mod2schema:
   # The sibling mod2doc stage inherits this version and all source/reflection settings.
   # Example: v0.14.0
   jsonschema_version: v0.14.0
+  # TypeNamer controls external definition names; target-package types keep their names.
+  # Package mode preserves package-base prefixes and rejects naming collisions.
+  # Full mode adds the sanitized full import path and a stable SHA-256 suffix.
+  # The sibling mod2doc stage inherits this setting.
+  # Default: package
+  # Allowed values: package, full
+  type_namer: package
 # Mod2Doc renders documentation directly from the sibling mod2schema Go target.
 # Requires mod2schema in the same document and runs immediately after it.
 # Uses raw Go comments by default and does not read the working schema or merge results.

@@ -145,6 +145,13 @@ type Mod2SchemaStage struct {
 	// JSONSchemaVersion overrides the pinned github.com/invopop/jsonschema helper version.
 	// The sibling mod2doc stage inherits this version and all source/reflection settings.
 	JSONSchemaVersion string `json:"jsonschema_version,omitempty" yaml:"jsonschema_version,omitempty" jsonschema_extras:"x-order=8" jsonschema:"example=v0.14.0"`
+
+	// TypeNamer controls external definition names; target-package types keep their names.
+	//
+	// Package mode preserves package-base prefixes and rejects naming collisions.
+	// Full mode adds the sanitized full import path and a stable SHA-256 suffix.
+	// The sibling mod2doc stage inherits this setting.
+	TypeNamer string `json:"type_namer,omitempty" yaml:"type_namer,omitempty" jsonschema_extras:"x-order=9" jsonschema:"enum=package,enum=full,default=package"`
 }
 
 // Mod2DocStage describes documentation generation directly from Go source.

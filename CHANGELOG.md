@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning][].
 * Build `mod2doc` stage inheriting its Go target from `mod2schema`,
   with independent raw/plain comments and write/check output modes.
 * Build `mod2schema.comments` and `mod2schema.jsonschema_version` settings.
+* Opt-in full-path external definition names via `modschema.Options.TypeNamer`,
+  `--type-namer full`, and build `mod2schema.type_namer`.
 
 ### Changed
 
@@ -32,6 +34,8 @@ and this project adheres to [Semantic Versioning][].
 * Share one module schema generator across all selected build documents.
 * Generate the build config schema with plain descriptions
   and its documentation directly from raw Go comments.
+* Reject conflicting definition names with both Go types
+  and remediation instead of emitting an ambiguous schema.
 
 ## [0.10.1][] - 2026-10-20
 

@@ -19,6 +19,11 @@ const (
 	CommentModeRaw CommentMode = "raw"
 	// CommentModePlain renders Go doc comments as canonical plain text.
 	CommentModePlain CommentMode = "plain"
+
+	// TypeNamerModePackage preserves package-base prefixes for external types.
+	TypeNamerModePackage TypeNamerMode = "package"
+	// TypeNamerModeFull uses full import paths and stable hashes for external types.
+	TypeNamerModeFull TypeNamerMode = "full"
 )
 
 //go:embed helper.go.tmpl
@@ -33,6 +38,9 @@ var (
 // CommentMode selects how Go comments become schema descriptions.
 type CommentMode string
 
+// TypeNamerMode selects how external Go types are named in schema definitions.
+type TypeNamerMode string
+
 // Options configures module-to-schema generation.
 type Options struct {
 	// Module selects the target module directory or module reference.
@@ -43,6 +51,8 @@ type Options struct {
 	Type string
 	// KeyNamer controls names for fields without explicit JSON tags.
 	KeyNamer string
+	// TypeNamer controls external schema definition names.
+	TypeNamer TypeNamerMode
 	// Comments controls normalization of Go comment descriptions.
 	Comments CommentMode
 	// RootID overrides the generated root JSON Schema $id when non-empty.
@@ -60,6 +70,7 @@ type templateData struct {
 	KeyNamer    string
 	RootID      string
 	Comments    CommentMode
+	TypeNamer   TypeNamerMode
 }
 
 // BuildProgramSource renders temporary Go source for target type reflection.
@@ -72,6 +83,14 @@ func BuildProgramSource(options Options) (string, error) {
 		return "", err
 	}
 
+	if options.TypeNamer == "" {
+		options.TypeNamer = TypeNamerModePackage
+	}
+
+	if err := validateTypeNamerMode(options.TypeNamer); err != nil {
+		return "", err
+	}
+
 	return renderProgramSource(templateData{
 		PackagePath: options.Package,
 		TypeName:    options.Type,
@@ -80,6 +99,7 @@ func BuildProgramSource(options Options) (string, error) {
 		KeyNamer:    options.KeyNamer,
 		RootID:      options.RootID,
 		Comments:    options.Comments,
+		TypeNamer:   options.TypeNamer,
 	})
 }
 

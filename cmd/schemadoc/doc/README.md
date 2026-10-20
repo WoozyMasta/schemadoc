@@ -92,6 +92,9 @@ Behavior:
 * `mod2doc` requires `mod2schema` in the same document and inherits its source,
   type, key namer, root ID, and helper dependency version
 * `mod2doc.comments` defaults to `raw`, independently of `mod2schema.comments`
+* `mod2schema.type_namer` defaults to `package` and is inherited by `mod2doc`;
+  use `full` for external definition names based on full import paths and
+  stable hashes when package-base names collide
 * `mod2doc` renders Go source through an in-memory schema;
   `schema2doc` renders the working schema, including merge results
 
@@ -117,6 +120,11 @@ schemadoc build schemadoc.build.yaml --index 2
 ```
 
 ## mod2schema/mod2doc Requirements
+
+Both commands accept `--type-namer package|full`. Package mode preserves existing
+definition names. Full mode uses sanitized import paths and 64 bits of SHA-256
+for external types; target-package names remain unchanged.
+Both modes reject definition-name collisions before writing schema output.
 
 `mod2schema` and `mod2doc` require installed Go toolchain
 (`go` must be available in `PATH`).

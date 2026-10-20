@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,6 +19,15 @@ import (
 
 // commentReferencePattern matches unresolved Go symbol references, not prose.
 var commentReferencePattern = regexp.MustCompile(`\[((?:[\pL\pN_][\pL\pN_./-]*/)?[\pL_][\pL\pN_]*(?:\.[\pL_][\pL\pN_]*)*)\]`)
+
+// errDefinitionNameCollision prevents emitting schemas with ambiguous definitions.
+var errDefinitionNameCollision = errors.New("definition name collision")
+
+// definitionNamer tracks ownership of generated names and the first collision.
+type definitionNamer struct {
+	seen map[string]reflect.Type // Named types registered under each definition name.
+	err  error                   // First conflicting name, reported before schema output.
+}
 
 // applyCommentMode transforms only extracted Go comments before reflection.
 func applyCommentMode(r *jsonschema.Reflector, mode string) error {
@@ -229,9 +239,20 @@ func sanitizeTypeNamePart(value string) string {
 	return strings.Trim(string(out), "_")
 }
 
-func applyTypeNamer(r *jsonschema.Reflector, targetPackagePath string) {
+// applyTypeNamer installs request-local naming and collision tracking.
+func applyTypeNamer(r *jsonschema.Reflector, targetPackagePath, mode string) (*definitionNamer, error) {
+	if mode == "" {
+		mode = "package"
+	}
+
+	if mode != "package" && mode != "full" {
+		return nil, fmt.Errorf("unsupported type namer %q", mode)
+	}
+
+	namer := &definitionNamer{seen: make(map[string]reflect.Type)}
+
 	if r == nil {
-		return
+		return namer, nil
 	}
 
 	targetPackagePath = strings.TrimSpace(targetPackagePath)
@@ -244,22 +265,67 @@ func applyTypeNamer(r *jsonschema.Reflector, targetPackagePath string) {
 		if typeName == "" {
 			return ""
 		}
-		if strings.TrimSpace(t.PkgPath()) == targetPackagePath {
-			return typeName
+		name := typeName
+		packagePath := t.PkgPath()
+
+		if strings.TrimSpace(packagePath) != targetPackagePath {
+			if mode == "full" && packagePath != "" {
+				digest := sha256.Sum256([]byte(packagePath))
+				name = fmt.Sprintf("%s_%x_%s", sanitizeFullTypeNamePart(packagePath), digest[:8], typeName)
+			} else if packageName := sanitizeTypeNamePart(path.Base(strings.TrimSpace(packagePath))); packageName != "" {
+				name = packageName + "_" + typeName
+			}
 		}
 
-		packageName := sanitizeTypeNamePart(path.Base(strings.TrimSpace(t.PkgPath())))
-		if packageName == "" {
-			return typeName
+		if previous, exists := namer.seen[name]; exists {
+			if previous != t && namer.err == nil {
+				namer.err = fmt.Errorf("%w %q:\n  %s\n  %s\nrename one of the types/packages or use --type-namer full",
+					errDefinitionNameCollision, name, qualifiedTypeName(previous), qualifiedTypeName(t))
+			}
+		} else {
+			namer.seen[name] = t
 		}
 
-		return packageName + "_" + typeName
+		return name
 	}
+
+	return namer, nil
+}
+
+// sanitizeFullTypeNamePart produces an ASCII import-path prefix without changing package mode.
+func sanitizeFullTypeNamePart(value string) string {
+	out := make([]byte, 0, len(value))
+
+	for _, r := range value {
+		if r >= 'A' && r <= 'Z' {
+			r += 'a' - 'A'
+		}
+
+		if r >= 'a' && r <= 'z' || r >= '0' && r <= '9' {
+			out = append(out, byte(r))
+		} else if len(out) > 0 && out[len(out)-1] != '_' {
+			out = append(out, '_')
+		}
+	}
+
+	return strings.Trim(string(out), "_")
+}
+
+// qualifiedTypeName identifies a named type without package-base ambiguity.
+func qualifiedTypeName(t reflect.Type) string {
+	if t.PkgPath() == "" {
+		return t.Name()
+	}
+
+	return t.PkgPath() + "." + t.Name()
 }
 
 func run() error {
 	reflector := new(jsonschema.Reflector)
-	applyTypeNamer(reflector, {{ printf "%q" .PackagePath }})
+	namer, err := applyTypeNamer(reflector, {{ printf "%q" .PackagePath }}, {{ printf "%q" .TypeNamer }})
+	if err != nil {
+		return fmt.Errorf("apply type namer: %w", err)
+	}
 	if err := applyKeyNamer(reflector, {{ printf "%q" .KeyNamer }}); err != nil {
 		return fmt.Errorf("apply key namer: %w", err)
 	}
@@ -273,6 +339,9 @@ func run() error {
 	}
 
 	schema := reflector.Reflect(&target.{{ .TypeName }}{})
+	if namer.err != nil {
+		return namer.err
+	}
 	if schema == nil {
 		return errors.New("reflect schema: empty result")
 	}

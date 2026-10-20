@@ -54,6 +54,10 @@ func (generator *Generator) Generate(options Options) ([]byte, string, error) {
 		return nil, "", err
 	}
 
+	if err := validateTypeNamerMode(options.TypeNamer); err != nil {
+		return nil, "", err
+	}
+
 	if err := validateRootID(options.RootID); err != nil {
 		return nil, "", err
 	}
@@ -191,6 +195,7 @@ func (workspace *schemaWorkspace) writeProgram(options Options) error {
 		KeyNamer:    options.KeyNamer,
 		RootID:      options.RootID,
 		Comments:    options.Comments,
+		TypeNamer:   options.TypeNamer,
 	})
 	if err != nil {
 		return err

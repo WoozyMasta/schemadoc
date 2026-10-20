@@ -7,6 +7,9 @@ package modschema
 import "errors"
 
 var (
+	// ErrInvalidTypeNamerMode reports an unsupported schema definition naming mode.
+	ErrInvalidTypeNamerMode = errors.New("invalid type namer mode")
+
 	// ErrGeneratorClosed reports generation attempted after session cleanup.
 	ErrGeneratorClosed = errors.New("schema generator is closed")
 

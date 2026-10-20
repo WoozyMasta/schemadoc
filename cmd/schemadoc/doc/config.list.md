@@ -160,7 +160,7 @@ Mod2SchemaStage describes schema generation from one Go type.
 Attributes:
 
 * Type: `object`
-* Properties: 8
+* Properties: 9
 * Additional properties: boolean schema=false
 
 ### Mod2SchemaStage.module
@@ -289,6 +289,24 @@ Attributes:
 * Type: `string`
 * Required: no
 * Examples: `v0.14.0`
+
+### Mod2SchemaStage.type_namer
+
+Key: `type_namer`
+
+Path: [`mod2schema`](#configmod2schemastage).`type_namer`
+
+TypeNamer controls external definition names; target-package types keep their
+names. Package mode preserves package-base prefixes and rejects naming
+collisions. Full mode adds the sanitized full import path and a stable SHA-256
+suffix. The sibling mod2doc stage inherits this setting.
+
+Attributes:
+
+* Type: `string`
+* Required: no
+* Default: `package`
+* Enum: `package`, `full`
 
 ## JSONOutputOptions
 
@@ -1569,6 +1587,13 @@ mod2schema:
   # The sibling mod2doc stage inherits this version and all source/reflection settings.
   # Example: v0.14.0
   jsonschema_version: v0.14.0
+  # TypeNamer controls external definition names; target-package types keep their names.
+  # Package mode preserves package-base prefixes and rejects naming collisions.
+  # Full mode adds the sanitized full import path and a stable SHA-256 suffix.
+  # The sibling mod2doc stage inherits this setting.
+  # Default: package
+  # Allowed values: package, full
+  type_namer: package
 # Mod2Doc renders documentation directly from the sibling mod2schema Go target.
 # Requires mod2schema in the same document and runs immediately after it.
 # Uses raw Go comments by default and does not read the working schema or merge results.

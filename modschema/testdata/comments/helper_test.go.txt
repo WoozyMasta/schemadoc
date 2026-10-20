@@ -2,10 +2,59 @@ package main
 
 import (
 	"go/doc/comment"
+	"reflect"
 	"testing"
 
 	"github.com/invopop/jsonschema"
 )
+
+// namerTestType supplies a named type for direct callback tests.
+type namerTestType struct{}
+
+func TestTypeNamerPointers(t *testing.T) {
+	named := reflect.TypeFor[namerTestType]()
+
+	for _, mode := range []string{"", "package", "full"} {
+		r := new(jsonschema.Reflector)
+		namer, err := applyTypeNamer(r, named.PkgPath(), mode)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, typ := range []reflect.Type{named, reflect.PointerTo(named), reflect.PointerTo(reflect.PointerTo(named))} {
+			if got := r.Namer(typ); got != "namerTestType" {
+				t.Fatalf("mode=%q name=%q, want unchanged target name", mode, got)
+			}
+		}
+
+		if namer.err != nil || len(namer.seen) != 1 {
+			t.Fatalf("repeated pointer type collided: %v", namer.err)
+		}
+
+		if name := r.Namer(reflect.TypeFor[struct{}]()); name != "" {
+			t.Fatalf("unnamed type received a name: %q", name)
+		}
+	}
+}
+
+func TestFullTypeNameSanitizer(t *testing.T) {
+	cases := map[string]string{
+		"GitHub.COM/acme/common": "github_com_acme_common",
+		"example.com/a-b/pkg_v2": "example_com_a_b_pkg_v2",
+		"例/δοκιμή/common":        "common",
+		"///":                    "",
+	}
+
+	for input, want := range cases {
+		if got := sanitizeFullTypeNamePart(input); got != want {
+			t.Fatalf("sanitizeFullTypeNamePart(%q)=%q, want %q", input, got, want)
+		}
+	}
+
+	if got := sanitizeTypeNamePart("Модель"); got != "модель" {
+		t.Fatalf("package-mode sanitizer changed: %q", got)
+	}
+}
 
 func TestNormalizeGoDocComment(t *testing.T) {
 	tests := []struct {

@@ -49,6 +49,10 @@ mod2schema:
   # JSONSchemaVersion overrides the pinned github.com/invopop/jsonschema helper version. The sibling mod2doc stage inherits this version and all source/reflection settings.
   # Example: v0.14.0
   jsonschema_version: v0.14.0
+  # TypeNamer controls external definition names; target-package types keep their names. Package mode preserves package-base prefixes and rejects naming collisions. Full mode adds the sanitized full import path and a stable SHA-256 suffix. The sibling mod2doc stage inherits this setting.
+  # Default: package
+  # Allowed values: package, full
+  type_namer: package
 # Mod2Doc renders documentation directly from the sibling mod2schema Go target.
 # Requires mod2schema in the same document and runs immediately after it. Uses raw Go comments by default and does not read the working schema or merge results.
 mod2doc:

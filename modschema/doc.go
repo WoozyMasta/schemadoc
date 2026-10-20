@@ -23,6 +23,13 @@ Set [Options.Comments] to [CommentModePlain] to normalize extracted comments
 into portable plain text before reflection.
 Descriptions from struct tags and custom schemas are unchanged.
 
+Definition names default to [TypeNamerModePackage]:
+target-package types keep their names and external types use package-base prefixes.
+Naming collisions fail generation before any schema output.
+Set [Options.TypeNamer] to [TypeNamerModeFull]
+for full import-path prefixes with stable SHA-256 hashes.
+Target-package names stay unchanged. Both modes share prepared workspaces.
+
 Generate schema for one type:
 
 	schemaBytes, sourcePath, err := modschema.Generate(modschema.Options{

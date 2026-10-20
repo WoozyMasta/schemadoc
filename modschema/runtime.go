@@ -110,8 +110,21 @@ func NormalizeOptions(options Options) Options {
 	if options.Comments == "" {
 		options.Comments = CommentModeRaw
 	}
+	if options.TypeNamer == "" {
+		options.TypeNamer = TypeNamerModePackage
+	}
 
 	return options
+}
+
+// validateTypeNamerMode rejects unsupported definition naming modes before helper I/O.
+func validateTypeNamerMode(mode TypeNamerMode) error {
+	switch mode {
+	case TypeNamerModePackage, TypeNamerModeFull:
+		return nil
+	default:
+		return fmt.Errorf("%w %q: expected package or full", ErrInvalidTypeNamerMode, mode)
+	}
 }
 
 // validateCommentMode rejects unsupported modes before any helper I/O.

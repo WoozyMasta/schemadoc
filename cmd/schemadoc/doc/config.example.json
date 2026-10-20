@@ -73,7 +73,8 @@
     "module": "../project",
     "package": "github.com/acme/project/pkg/config",
     "root_id": "https://example.com/schema.json",
-    "type": "Config"
+    "type": "Config",
+    "type_namer": "package"
   },
   "schema": "schema.json",
   "schema2doc": {
