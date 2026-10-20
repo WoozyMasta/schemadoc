@@ -82,6 +82,50 @@ Stages run in fixed order:
 `mod2schema -> mod2doc -> merge -> schema2json -> schema2doc -> schema2yaml`.
 Execution stops on the first error.
 
+### Global Defaults
+
+One standalone `defaults:` document may appear anywhere in the YAML stream.
+It applies to every job, including jobs before it,
+and does not count towards `--index`.
+Multiple defaults documents or a document mixing `defaults`
+with job fields are errors detected before execution.
+
+```yaml
+defaults:
+  mod2schema:
+    module: .
+    package: github.com/example/project
+  schema2doc:
+    template: table
+---
+schema: schemas/config.schema.json
+mod2schema:
+  type: Config
+schema2doc:
+  title: Config reference
+  output: docs/config.md
+```
+
+Maps merge recursively; job values override defaults.
+Lists replace the whole inherited list, including when empty.
+Explicit `false`, `0`, and empty strings are preserved
+and must satisfy the field's validation rules.
+`null` removes an inherited field; for example,
+`schema2doc: null` disables the inherited stage.
+Stages declared in defaults are inherited even when omitted in a job.
+
+Unknown fields and invalid values in defaults are rejected even when overridden.
+Required fields and stage dependencies are checked after merging,
+before any job executes.
+`build --check` overrides the merged `check` value.
+Existing streams without defaults keep their behavior.
+
+The published editor schema currently describes complete jobs.
+It does not yet describe defaults documents or partial jobs;
+CLI validation supports both.
+
+### Execution
+
 Behavior:
 
 * config path is optional; default is `./schemadoc.build.yaml`

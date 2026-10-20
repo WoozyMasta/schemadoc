@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
+* One global build `defaults` document with recursive map inheritance,
+  explicit overrides, and null removal.
 * Build `--check` (`-c`) to validate all selected outputs
   using the build config without maintaining a separate check config.
 * Context-aware schema generation with cancellable setup, session waiting,

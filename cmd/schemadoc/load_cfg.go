@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -75,6 +76,13 @@ func decodeBuildConfigDocuments(
 ) ([]buildcfg.Config, error) {
 	decoder := yaml.NewDecoder(bytes.NewReader(content))
 	documents := make([]buildcfg.Config, 0, 4)
+	var jobs []map[string]any
+	var defaults map[string]any
+	defaultsFound := false
+	partialSchema, err := compileBuildDocumentSchema()
+	if err != nil {
+		return nil, err
+	}
 
 	for {
 		var document any
@@ -92,11 +100,43 @@ func decodeBuildConfigDocuments(
 		}
 
 		normalized := normalizeYAMLNode(document)
-		if err := validateBuildConfigDocument(schema, normalized); err != nil {
-			return nil, err
+		job, ok := normalized.(map[string]any)
+		if !ok {
+			return nil, errBuildDocumentNotObject
 		}
 
-		item, err := decodeBuildConfigDocument(normalized)
+		if value, found := job["defaults"]; found {
+			if defaultsFound {
+				return nil, errDuplicateBuildDefaults
+			}
+
+			defaultsFound = true
+			if len(job) != 1 {
+				return nil, errMixedBuildDefaults
+			}
+
+			defaults, ok = value.(map[string]any)
+			if !ok {
+				return nil, errInvalidBuildDefaults
+			}
+
+			normalized = defaults
+		} else {
+			jobs = append(jobs, job)
+		}
+
+		if err := validateBuildConfigDocument(partialSchema, normalized); err != nil {
+			return nil, err
+		}
+	}
+
+	for index, job := range jobs {
+		merged := mergeBuildDefaults(defaults, job)
+		if err := validateBuildConfigDocument(schema, merged); err != nil {
+			return nil, fmt.Errorf("config job %d: %w", index+1, err)
+		}
+
+		item, err := decodeBuildConfigDocument(merged)
 		if err != nil {
 			return nil, err
 		}
@@ -125,6 +165,70 @@ func decodeBuildConfigDocuments(
 	}
 
 	return []buildcfg.Config{documents[configIndex-1]}, nil
+}
+
+// compileBuildDocumentSchema permits missing and removed fields during input validation.
+// The original embedded schema still validates each fully merged job.
+func compileBuildDocumentSchema() (*jsonschema.Schema, error) {
+	var document map[string]any
+	if err := decodeJSONWithNumbers(buildConfigSchemaJSON, &document); err != nil {
+		return nil, err
+	}
+
+	relaxBuildConfigSchema(document)
+	compiler := jsonschema.NewCompiler()
+	if err := compiler.AddResource(buildConfigSchemaID, document); err != nil {
+		return nil, err
+	}
+
+	return compiler.Compile(buildConfigSchemaID)
+}
+
+// relaxBuildConfigSchema preserves field constraints but allows partial maps and null removal.
+// It changes only a fresh in-memory copy, never the generated schema file.
+func relaxBuildConfigSchema(schema map[string]any) {
+	delete(schema, "required")
+
+	for _, keyword := range []string{"$defs", "properties"} {
+		children, _ := schema[keyword].(map[string]any)
+		for name, value := range children {
+			child, ok := value.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			relaxBuildConfigSchema(child)
+			if keyword == "properties" {
+				children[name] = map[string]any{"anyOf": []any{child, map[string]any{"type": "null"}}}
+			}
+		}
+	}
+
+	for _, keyword := range []string{"items", "additionalProperties"} {
+		if child, ok := schema[keyword].(map[string]any); ok {
+			relaxBuildConfigSchema(child)
+		}
+	}
+}
+
+// mergeBuildDefaults makes independent maps; null removes inherited keys and arrays replace.
+func mergeBuildDefaults(defaults, overrides map[string]any) map[string]any {
+	merged := make(map[string]any, len(defaults)+len(overrides))
+	maps.Copy(merged, defaults)
+	maps.Copy(merged, overrides)
+	for key, value := range merged {
+		if value == nil {
+			delete(merged, key)
+			continue
+		}
+
+		if object, ok := value.(map[string]any); ok {
+			base, _ := defaults[key].(map[string]any)
+			merged[key] = mergeBuildDefaults(base, object)
+		}
+	}
+
+	return merged
 }
 
 // compileBuildConfigSchema compiles embedded schema for config validation.
