@@ -7,6 +7,9 @@ package modschema
 import "errors"
 
 var (
+	// ErrInvalidCommentMode reports an unsupported Go comment mode.
+	ErrInvalidCommentMode = errors.New("invalid comment mode")
+
 	// ErrInvalidRootID reports an invalid canonical root schema identifier.
 	ErrInvalidRootID = errors.New("invalid root schema id")
 

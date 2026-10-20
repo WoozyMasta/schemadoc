@@ -196,6 +196,7 @@ Generate docs from Go
 
 Generate documentation directly from a Go type using the same module,
 package, and type selection rules as mod2schema.
+Go comments are preserved by default; use --comments plain to normalize them before rendering.
 
 **Usage:** `schemadoc [OPTIONS] mod2doc [mod2doc-OPTIONS]`
 
@@ -225,6 +226,7 @@ schemadoc mod2doc --type Config --key-namer snake . > model.snake.md
 
 |Option|Description|Default|Required|
 |---|---|---|---|
+|`-C`, `--comments`|Go comment descriptions: preserve raw text or normalize to plain text; choices: `raw, plain`|`raw`|no|
 |`-p`, `--package`|Go package import path where type is declared (optional; default: module path)||no|
 |`-y`, `--type`|Go type name (for example: Config)||yes|
 |`--key-namer`|Field name style for fields without explicit json tags; choices: `none, snake, kebab, lower`|`none`|no|
@@ -292,6 +294,7 @@ schemadoc mod2doc --type Config --key-namer snake . > model.snake.md
 Generate JSON Schema from Go
 
 Generate JSON Schema from a Go type. The target package must be importable; package main is not supported.
+Go comments are preserved by default; use --comments plain for portable plain text descriptions.
 
 **Usage:** `schemadoc [OPTIONS] mod2schema [mod2schema-OPTIONS]`
 
@@ -313,6 +316,7 @@ schemadoc mod2schema --type Config --key-namer snake github.com/acme/project@lat
 
 |Option|Description|Default|Required|
 |---|---|---|---|
+|`-C`, `--comments`|Go comment descriptions: preserve raw text or normalize to plain text; choices: `raw, plain`|`raw`|no|
 |`-p`, `--package`|Go package import path where type is declared (optional; default: module path)||no|
 |`-y`, `--type`|Go type name (for example: Config)||yes|
 |`--key-namer`|Field name style for fields without explicit json tags; choices: `none, snake, kebab, lower`|`none`|no|

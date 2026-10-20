@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* Opt-in plain Go comment descriptions via `modschema.Options.Comments`
+  and `--comments plain` for `mod2schema` and `mod2doc`.
+
 ## [0.10.1][] - 2026-10-20
 
 ### Fixed

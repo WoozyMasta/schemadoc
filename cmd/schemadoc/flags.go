@@ -19,6 +19,7 @@ type cliOptions struct {
 
 // moduleReflectFlags groups common module reflection flags.
 type moduleReflectFlags struct {
+	Comments          string `long:"comments"           description:"Go comment descriptions: preserve raw text or normalize to plain text" short:"C" default:"raw" choices:"raw;plain"`
 	PackagePath       string `long:"package"            description:"Go package import path where type is declared (optional; default: module path)" short:"p"`
 	TypeName          string `long:"type"               description:"Go type name (for example: Config)" short:"y" required:"yes"`
 	KeyNamer          string `long:"key-namer"          description:"Field name style for fields without explicit json tags" default:"none" choices:"none;snake;kebab;lower"`

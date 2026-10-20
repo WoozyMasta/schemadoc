@@ -4,15 +4,135 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go/doc/comment"
 	"os"
 	"path"
 	"reflect"
+	"regexp"
 	"strings"
 	"unicode"
 
 	"github.com/invopop/jsonschema"
 	target {{ printf "%q" .PackagePath }}
 )
+
+// commentReferencePattern matches unresolved Go symbol references, not prose.
+var commentReferencePattern = regexp.MustCompile(`\[((?:[\pL\pN_][\pL\pN_./-]*/)?[\pL_][\pL\pN_]*(?:\.[\pL_][\pL\pN_]*)*)\]`)
+
+// applyCommentMode transforms only extracted Go comments before reflection.
+func applyCommentMode(r *jsonschema.Reflector, mode string) error {
+	switch mode {
+	case "", "raw":
+		return nil
+
+	case "plain":
+		for key, text := range r.CommentMap {
+			r.CommentMap[key] = normalizeGoDocComment(text)
+		}
+
+		return nil
+
+	default:
+		return fmt.Errorf("unsupported comment mode %q", mode)
+	}
+}
+
+// normalizeGoDocComment renders semantic blocks with one LF between them.
+func normalizeGoDocComment(text string) string {
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+	var parser comment.Parser
+	doc := parser.Parse(text)
+	blocks := make([]string, 0, len(doc.Content))
+
+	for _, block := range doc.Content {
+		blocks = append(blocks, renderCommentBlock(block))
+	}
+
+	return strings.Join(blocks, "\n")
+}
+
+// renderCommentBlock preserves list and code structure without Markdown headings.
+func renderCommentBlock(block comment.Block) string {
+	switch block := block.(type) {
+	case *comment.Paragraph:
+		return renderCommentText(block.Text)
+
+	case *comment.Heading:
+		text := renderCommentText(block.Text)
+		if text != "" && !strings.ContainsAny(text[len(text)-1:], ":.?!;") {
+			text += ":"
+		}
+		return text
+
+	case *comment.Code:
+		return indentCommentLines(strings.TrimSuffix(block.Text, "\n"), "    ")
+
+	case *comment.List:
+		items := make([]string, 0, len(block.Items))
+		for _, item := range block.Items {
+			marker := "- "
+			if item.Number != "" {
+				marker = item.Number + ". "
+			}
+
+			var text strings.Builder
+			for index, content := range item.Content {
+				rendered := renderCommentBlock(content)
+
+				if _, paragraph := content.(*comment.Paragraph); index == 0 && paragraph {
+					text.WriteString(marker + rendered)
+					continue
+				}
+
+				if index == 0 {
+					text.WriteString(strings.TrimSpace(marker))
+				}
+
+				text.WriteString("\n" + indentCommentLines(rendered, "  "))
+			}
+			items = append(items, text.String())
+		}
+
+		return strings.Join(items, "\n")
+
+	default:
+		return ""
+	}
+}
+
+// renderCommentText expands URL references and strips Go doc link syntax.
+func renderCommentText(parts []comment.Text) string {
+	var out strings.Builder
+
+	for _, part := range parts {
+		switch part := part.(type) {
+		case comment.Plain:
+			out.WriteString(commentReferencePattern.ReplaceAllString(string(part), "$1"))
+
+		case comment.Italic:
+			out.WriteString(string(part))
+
+		case *comment.DocLink:
+			out.WriteString(renderCommentText(part.Text))
+
+		case *comment.Link:
+			label := renderCommentText(part.Text)
+			out.WriteString(label)
+
+			if label != part.URL {
+				out.WriteString(" (" + part.URL + ")")
+			}
+		}
+	}
+
+	return strings.Join(strings.Fields(out.String()), " ")
+}
+
+// indentCommentLines retains every code or continuation line, including blanks.
+func indentCommentLines(text, indent string) string {
+	return indent + strings.ReplaceAll(text, "\n", "\n" + indent)
+}
 
 func normalizeCommentKeys(r *jsonschema.Reflector, base, root string) {
 	if r == nil || r.CommentMap == nil {
@@ -70,14 +190,17 @@ func applyKeyNamer(r *jsonschema.Reflector, mode string) error {
 		r.KeyNamer = func(name string) string {
 			return toSeparatedLower(name, '_')
 		}
+
 	case "kebab":
 		r.KeyNamer = func(name string) string {
 			return toSeparatedLower(name, '-')
 		}
+
 	case "lower":
 		r.KeyNamer = func(name string) string {
 			return strings.ToLower(strings.TrimSpace(name))
 		}
+
 	default:
 		return fmt.Errorf("unsupported key namer %q", mode)
 	}
@@ -145,6 +268,9 @@ func run() error {
 		return fmt.Errorf("add go comments: %w", err)
 	}
 	normalizeCommentKeys(reflector, {{ printf "%q" .ModulePath }}, {{ printf "%q" .ModuleDir }})
+	if err := applyCommentMode(reflector, {{ printf "%q" .Comments }}); err != nil {
+		return fmt.Errorf("apply comment mode: %w", err)
+	}
 
 	schema := reflector.Reflect(&target.{{ .TypeName }}{})
 	if schema == nil {

@@ -35,6 +35,10 @@ const (
 // Generate reflects JSON Schema for selected module/package/type.
 func Generate(options Options) ([]byte, string, error) {
 	normalizedOptions := NormalizeOptions(options)
+	if err := validateCommentMode(normalizedOptions.Comments); err != nil {
+		return nil, "", err
+	}
+
 	if err := validateRootID(normalizedOptions.RootID); err != nil {
 		return nil, "", err
 	}
@@ -103,6 +107,7 @@ func Generate(options Options) ([]byte, string, error) {
 		ModuleDir:   resolvedTarget.ModuleDir,
 		KeyNamer:    normalizedOptions.KeyNamer,
 		RootID:      normalizedOptions.RootID,
+		Comments:    normalizedOptions.Comments,
 	})
 	if err != nil {
 		return nil, "", err
@@ -186,8 +191,21 @@ func NormalizeOptions(options Options) Options {
 	}
 	options.JSONSchemaVersion = strings.TrimSpace(options.JSONSchemaVersion)
 	options.RootID = strings.TrimSpace(options.RootID)
+	if options.Comments == "" {
+		options.Comments = CommentModeRaw
+	}
 
 	return options
+}
+
+// validateCommentMode rejects unsupported modes before any helper I/O.
+func validateCommentMode(mode CommentMode) error {
+	switch mode {
+	case CommentModeRaw, CommentModePlain:
+		return nil
+	default:
+		return fmt.Errorf("%w %q: expected raw or plain", ErrInvalidCommentMode, mode)
+	}
 }
 
 // validateRootID validates an optional canonical root schema identifier.

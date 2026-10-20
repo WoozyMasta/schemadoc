@@ -521,6 +521,55 @@ func TestCLI_ModCommands(t *testing.T) {
 	checkContainsAll(t, string(mdContent), []string{"# Schema Model"})
 }
 
+func TestCLI_ModCommentModes(t *testing.T) {
+	t.Parallel()
+
+	moduleDir := filepath.Join(findModuleRoot(t), "modschema", "testdata", "comments")
+	var defaultDoc string
+
+	for _, mode := range []string{"", "raw", "plain"} {
+		args := []string{"mod2doc", "--type", "Config", "--wrap", "200"}
+
+		if mode != "" {
+			args = append(args, "--comments", mode)
+		}
+
+		args = append(args, moduleDir)
+		var stdout, stderr bytes.Buffer
+
+		if code := run(args, &stdout, &stderr); code != 0 {
+			t.Fatalf("mod2doc comments %q: exit %d: %s", mode, code, stderr.String())
+		}
+
+		switch mode {
+		case "":
+			defaultDoc = stdout.String()
+		case "raw":
+			if stdout.String() != defaultDoc {
+				t.Fatal("default mod2doc differs from explicit raw")
+			}
+		case "plain":
+			if stdout.String() == defaultDoc {
+				t.Fatal("plain mod2doc did not change comment rendering")
+			}
+
+			checkContainsAll(t, stdout.String(), []string{
+				"SomeType and SomeType.Method.", "the guide (https://example.com/guide)",
+			})
+		}
+	}
+
+	for _, command := range []string{"mod2schema", "mod2doc"} {
+		var stdout, stderr bytes.Buffer
+
+		if code := run([]string{command, "--type", "Config", "--comments", "invalid", moduleDir}, &stdout, &stderr); code == 0 {
+			t.Fatalf("%s accepted invalid comment mode", command)
+		}
+
+		checkContainsAll(t, stderr.String(), []string{"comments", "raw", "plain"})
+	}
+}
+
 func TestCLI_BuildAndMergeAndErrors(t *testing.T) {
 	t.Parallel()
 

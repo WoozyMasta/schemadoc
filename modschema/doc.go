@@ -11,6 +11,11 @@ the source workspace, executes reflection, and returns generated schema bytes.
 Target package must be importable.
 Types declared in package main are not supported.
 
+Go comments are preserved by default [CommentModeRaw].
+Set [Options.Comments] to [CommentModePlain] to normalize extracted comments
+into portable plain text before reflection.
+Descriptions from struct tags and custom schemas are unchanged.
+
 Generate schema for one type:
 
 	schemaBytes, sourcePath, err := modschema.Generate(modschema.Options{

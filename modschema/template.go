@@ -14,6 +14,13 @@ import (
 
 const helperTemplateName = "helper"
 
+const (
+	// CommentModeRaw preserves comments extracted by the reflector.
+	CommentModeRaw CommentMode = "raw"
+	// CommentModePlain renders Go doc comments as canonical plain text.
+	CommentModePlain CommentMode = "plain"
+)
+
 //go:embed helper.go.tmpl
 var mod2schemaHelperTemplate string
 
@@ -22,6 +29,9 @@ var (
 	schemaGeneratorHelper     *template.Template
 	schemaGeneratorHelperErr  error
 )
+
+// CommentMode selects how Go comments become schema descriptions.
+type CommentMode string
 
 // Options configures module-to-schema generation.
 type Options struct {
@@ -33,6 +43,8 @@ type Options struct {
 	Type string
 	// KeyNamer controls names for fields without explicit JSON tags.
 	KeyNamer string
+	// Comments controls normalization of Go comment descriptions.
+	Comments CommentMode
 	// RootID overrides the generated root JSON Schema $id when non-empty.
 	RootID string
 	// JSONSchemaVersion overrides the jsonschema helper dependency version.
@@ -47,10 +59,19 @@ type templateData struct {
 	ModuleDir   string
 	KeyNamer    string
 	RootID      string
+	Comments    CommentMode
 }
 
 // BuildProgramSource renders temporary Go source for target type reflection.
 func BuildProgramSource(options Options) (string, error) {
+	if options.Comments == "" {
+		options.Comments = CommentModeRaw
+	}
+
+	if err := validateCommentMode(options.Comments); err != nil {
+		return "", err
+	}
+
 	return renderProgramSource(templateData{
 		PackagePath: options.Package,
 		TypeName:    options.Type,
@@ -58,6 +79,7 @@ func BuildProgramSource(options Options) (string, error) {
 		ModuleDir:   options.Module,
 		KeyNamer:    options.KeyNamer,
 		RootID:      options.RootID,
+		Comments:    options.Comments,
 	})
 }
 

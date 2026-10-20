@@ -1,0 +1,80 @@
+package main
+
+import (
+	"go/doc/comment"
+	"testing"
+
+	"github.com/invopop/jsonschema"
+)
+
+func TestNormalizeGoDocComment(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"empty", "", ""},
+		{"line endings", "First\r\nwrapped.\r\n\r\nSecond.\rThird.", "First wrapped.\nSecond. Third."},
+		{"spaces", "One  two\tthree.\nNext line.", "One two three. Next line."},
+		{"named link", "Read [the guide].\n\n[the guide]: https://example.com/guide", "Read the guide (https://example.com/guide)."},
+		{"automatic URL", "Visit https://example.com/guide now.", "Visit https://example.com/guide now."},
+		{"symbol references", "Use [SomeType], [SomeType.Method], [pkg.Func], [path/pkg.Type].", "Use SomeType, SomeType.Method, pkg.Func, path/pkg.Type."},
+		{"literal prose", "Keep [read this section], [123], `code`, and **bold**.", "Keep [read this section], [123], `code`, and **bold**."},
+		{"heading", "Intro.\n\n# Allowed usage patterns\n\nText.", "Intro.\nAllowed usage patterns:\nText."},
+		{"punctuated heading", "# Already done!", "Already done!"},
+		{"unordered list", "Values:\n\n  - First item\n    wrapped.\n  - Second item.\n", "Values:\n- First item wrapped.\n- Second item."},
+		{"ordered list", "Steps:\n\n  3. First.\n  4. Second.", "Steps:\n3. First.\n4. Second."},
+		{"code", "Example:\n\n\tfirst()\n\n\t  second()\n", "Example:\n    first()\n    \n      second()"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := normalizeGoDocComment(test.input); got != test.want {
+				t.Fatalf("normalizeGoDocComment() = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestRenderCommentBlocks(t *testing.T) {
+	block := &comment.List{Items: []*comment.ListItem{{Number: "7", Content: []comment.Block{
+		&comment.Paragraph{Text: []comment.Text{comment.Plain("First paragraph.")}},
+		&comment.Paragraph{Text: []comment.Text{comment.Plain("Second paragraph.")}},
+		&comment.Code{Text: "first()\nsecond()\n"},
+	}}}}
+	want := "7. First paragraph.\n  Second paragraph.\n      first()\n      second()"
+
+	if got := renderCommentBlock(block); got != want {
+		t.Fatalf("renderCommentBlock() = %q, want %q", got, want)
+	}
+
+	parts := []comment.Text{&comment.DocLink{Text: []comment.Text{comment.Plain("SomeType.Method")}}}
+
+	if got := renderCommentText(parts); got != "SomeType.Method" {
+		t.Fatalf("renderCommentText() = %q", got)
+	}
+}
+
+func TestApplyCommentMode(t *testing.T) {
+	r := &jsonschema.Reflector{CommentMap: map[string]string{"T.F": "First\nwrapped.\n\nSecond."}}
+
+	if err := applyCommentMode(r, "raw"); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := r.CommentMap["T.F"]; got != "First\nwrapped.\n\nSecond." {
+		t.Fatalf("raw changed comment: %q", got)
+	}
+
+	if err := applyCommentMode(r, "plain"); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := r.CommentMap["T.F"]; got != "First wrapped.\nSecond." {
+		t.Fatalf("plain comment = %q", got)
+	}
+
+	if err := applyCommentMode(r, "invalid"); err == nil {
+		t.Fatal("invalid mode accepted")
+	}
+}
