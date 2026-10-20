@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 )
 
@@ -32,106 +33,21 @@ const (
 	schemaGeneratorMinGoVersion = "1.24"
 )
 
+// localGoVersion caches only successful local toolchain probes for this process.
+var localGoVersion toolchainVersionCache
+
+// toolchainVersionCache serializes probes and allows retries after failures.
+type toolchainVersionCache struct {
+	version string     // Empty until a probe succeeds.
+	mu      sync.Mutex // Protects version and serializes the first successful probe.
+}
+
 // Generate reflects JSON Schema for selected module/package/type.
 func Generate(options Options) ([]byte, string, error) {
-	normalizedOptions := NormalizeOptions(options)
-	if err := validateCommentMode(normalizedOptions.Comments); err != nil {
-		return nil, "", err
-	}
+	generator := NewGenerator()
+	data, source, err := generator.Generate(options)
 
-	if err := validateRootID(normalizedOptions.RootID); err != nil {
-		return nil, "", err
-	}
-
-	jsonSchemaVersion, hasCustomJSONSchemaVersion := resolveJSONSchemaVersion(
-		normalizedOptions.JSONSchemaVersion,
-	)
-
-	resolvedTarget, err := resolveTarget(normalizedOptions)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if err := ensureGoToolchain(); err != nil {
-		return nil, "", err
-	}
-
-	if !hasCustomJSONSchemaVersion {
-		if err := ensureGoVersionAtLeast(schemaGeneratorMinGoVersion); err != nil {
-			return nil, "", err
-		}
-	}
-
-	helperDir, err := createSchemaGeneratorDir()
-	if err != nil {
-		return nil, "", err
-	}
-	defer func() {
-		_ = os.RemoveAll(helperDir)
-	}()
-
-	if err := initSchemaGeneratorWorkspace(
-		helperDir,
-		resolvedTarget,
-		jsonSchemaVersion,
-	); err != nil {
-		return nil, "", err
-	}
-
-	if err := downloadSchemaGeneratorDependencies(helperDir); err != nil {
-		return nil, "", err
-	}
-
-	if err := ensureImportableTargetPackage(helperDir, resolvedTarget); err != nil {
-		return nil, "", err
-	}
-
-	if resolvedTarget.Source == moduleSourceRemote {
-		if err := preloadRemoteModule(helperDir, resolvedTarget); err != nil {
-			return nil, "", err
-		}
-
-		resolvedTarget.ModuleDir, err = moduleDirFromHelperWorkspace(
-			helperDir,
-			resolvedTarget.ModulePath,
-		)
-		if err != nil {
-			return nil, "", err
-		}
-	}
-
-	helperSource, err := renderProgramSource(templateData{
-		PackagePath: resolvedTarget.PackagePath,
-		TypeName:    normalizedOptions.Type,
-		ModulePath:  resolvedTarget.ModulePath,
-		ModuleDir:   resolvedTarget.ModuleDir,
-		KeyNamer:    normalizedOptions.KeyNamer,
-		RootID:      normalizedOptions.RootID,
-		Comments:    normalizedOptions.Comments,
-	})
-	if err != nil {
-		return nil, "", err
-	}
-
-	if err := writeSchemaGeneratorProgram(helperDir, helperSource); err != nil {
-		return nil, "", err
-	}
-
-	if err := prepareSchemaGeneratorDependencies(helperDir); err != nil {
-		return nil, "", err
-	}
-
-	schemaBytes, err := runSchemaGeneratorProgram(helperDir)
-	if err != nil {
-		return nil, "", err
-	}
-
-	sourcePath := fmt.Sprintf(
-		"module:%s.%s",
-		resolvedTarget.PackagePath,
-		normalizedOptions.Type,
-	)
-	return schemaBytes, sourcePath, nil
+	return data, source, errors.Join(err, generator.Close())
 }
 
 // ensureImportableTargetPackage validates package importability before helper run.
@@ -1006,19 +922,34 @@ func ensureGoVersionAtLeast(minVersion string) error {
 
 // currentGoToolchainVersion returns active local Go toolchain version string.
 func currentGoToolchainVersion() (string, error) {
-	tmpDir, err := os.MkdirTemp("", "schemadoc-go-version-")
-	if err != nil {
-		return "", fmt.Errorf("create temporary dir for go version probe: %w", err)
-	}
-	defer func() {
-		_ = os.RemoveAll(tmpDir)
-	}()
+	return localGoVersion.load(probeGoToolchainVersion)
+}
 
+// load caches successful probes without making transient errors permanent.
+func (cache *toolchainVersionCache) load(probe func() (string, error)) (string, error) {
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+
+	if cache.version != "" {
+		return cache.version, nil
+	}
+
+	version, err := probe()
+	if err != nil {
+		return "", err
+	}
+
+	cache.version = version
+	return version, nil
+}
+
+// probeGoToolchainVersion runs outside module/workspace selection without temp allocation.
+func probeGoToolchainVersion() (string, error) {
 	command := exec.Command("go", "env", "GOVERSION")
-	command.Dir = tmpDir
+	command.Dir = os.TempDir()
 
 	// Force local toolchain to avoid auto-switch by unrelated go.mod/go.work.
-	command.Env = append(os.Environ(), "GOTOOLCHAIN=local")
+	command.Env = append(os.Environ(), "GOTOOLCHAIN=local", "GOWORK=off", "GO111MODULE=off")
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer

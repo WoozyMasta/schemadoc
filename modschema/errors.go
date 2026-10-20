@@ -7,6 +7,9 @@ package modschema
 import "errors"
 
 var (
+	// ErrGeneratorClosed reports generation attempted after session cleanup.
+	ErrGeneratorClosed = errors.New("schema generator is closed")
+
 	// ErrInvalidCommentMode reports an unsupported Go comment mode.
 	ErrInvalidCommentMode = errors.New("invalid comment mode")
 

@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning][].
 
 * Opt-in plain Go comment descriptions via `modschema.Options.Comments`
   and `--comments plain` for `mod2schema` and `mod2doc`.
+* Reusable `modschema.Generator` sessions
+  with prepared helper workspaces and explicit cleanup.
+
+### Changed
+
+* Cache successful local Go version probes without temporary directories.
 
 ## [0.10.1][] - 2026-10-20
 

@@ -8,6 +8,13 @@ Package modschema reflects Go types from a target module into JSON Schema.
 The package creates a temporary helper module, wires module replacements from
 the source workspace, executes reflection, and returns generated schema bytes.
 
+Use [NewGenerator] to reuse prepared helper modules for multiple requests.
+Call [Generator.Close] when the session ends to remove its temporary directories.
+Generator methods serialize requests;
+source dependencies and replacement directives must remain stable
+for the lifetime of the session.
+[Generate] retains the one-request convenience API and performs its own cleanup.
+
 Target package must be importable.
 Types declared in package main are not supported.
 
@@ -29,6 +36,23 @@ Generate schema for one type:
 	}
 
 	fmt.Printf("source=%s bytes=%d\n", sourcePath, len(schemaBytes))
+
+Reuse a session for multiple types from the same package:
+
+	generator := modschema.NewGenerator()
+	defer generator.Close()
+
+	for _, typeName := range []string{"Config", "Options"} {
+		schemaBytes, _, err := generator.Generate(modschema.Options{
+			Module: ".",
+			Type: typeName,
+		})
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("type=%s bytes=%d\n", typeName, len(schemaBytes))
+	}
 
 Normalize options before custom orchestration:
 
