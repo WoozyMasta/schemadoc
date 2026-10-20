@@ -14,6 +14,65 @@ import (
 
 var updateGolden = flag.Bool("update", false, "update golden files")
 
+func TestBuildDefinitionPathsStopsAtRecursiveDefinitions(t *testing.T) {
+	t.Parallel()
+
+	definitions := map[string]schemaValue{
+		"Root":       {},
+		"Item":       {},
+		"Attachment": {},
+	}
+	edges := map[string][]definitionEdge{
+		"Root": {{
+			Target: "Item",
+			Path:   schemaPath{}.appendProperty("type").appendArrayItem(),
+		}},
+		"Item": {{
+			Target: "Attachment",
+			Path:   schemaPath{}.appendProperty("attachments").appendArrayItem(),
+		}},
+		"Attachment": {{
+			Target: "Item",
+			Path:   schemaPath{}.appendProperty("item").appendArrayItem(),
+		}},
+	}
+
+	paths := buildDefinitionPaths(definitions, "Root", edges)
+	if len(paths["Item"]) != 1 {
+		t.Fatalf("Item paths = %d, want one non-recursive path", len(paths["Item"]))
+	}
+	if got, want := paths["Item"][0].display(), "type.[]"; got != want {
+		t.Fatalf("Item path = %q, want %q", got, want)
+	}
+	if len(paths["Attachment"]) != 1 {
+		t.Fatalf("Attachment paths = %d, want one path", len(paths["Attachment"]))
+	}
+}
+
+func TestBuildDefinitionPathsKeepsDistinctAcyclicPaths(t *testing.T) {
+	t.Parallel()
+
+	definitions := map[string]schemaValue{
+		"Root":  {},
+		"Left":  {},
+		"Right": {},
+		"Leaf":  {},
+	}
+	edges := map[string][]definitionEdge{
+		"Root": {
+			{Target: "Left", Path: schemaPath{}.appendProperty("left")},
+			{Target: "Right", Path: schemaPath{}.appendProperty("right")},
+		},
+		"Left":  {{Target: "Leaf", Path: schemaPath{}.appendProperty("child")}},
+		"Right": {{Target: "Leaf", Path: schemaPath{}.appendProperty("child")}},
+	}
+
+	paths := buildDefinitionPaths(definitions, "Root", edges)
+	if got := len(paths["Leaf"]); got != 2 {
+		t.Fatalf("Leaf paths = %d, want two distinct paths", got)
+	}
+}
+
 func TestDetectDraftSupported(t *testing.T) {
 	t.Parallel()
 

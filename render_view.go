@@ -21,9 +21,9 @@ type definitionEdge struct {
 
 // definitionPathState is one BFS queue item for definition path traversal.
 type definitionPathState struct {
+	Ancestors  map[string]struct{}
 	Definition string
 	Prefix     schemaPath
-	Depth      int
 }
 
 // buildRenderView prepares data for markdown template rendering.
@@ -486,28 +486,25 @@ func buildDefinitionPaths(
 	paths := map[string][]schemaPath{
 		rootDefinition: {{}},
 	}
-	seen := map[string]struct{}{
+	seenPaths := map[string]struct{}{
 		rootDefinition + "\x00": {},
 	}
-
-	queue := []definitionPathState{{
+	rootState := definitionPathState{
 		Definition: rootDefinition,
-		Depth:      0,
 		Prefix:     schemaPath{},
-	}}
-
-	const maxDepth = 20
+		Ancestors:  map[string]struct{}{rootDefinition: {}},
+	}
+	queue := []definitionPathState{rootState}
+	seenStates := map[string]struct{}{
+		definitionPathStateKey(rootState): {},
+	}
 
 	for len(queue) > 0 {
 		current := queue[0]
 		queue = queue[1:]
 
-		if current.Depth >= maxDepth {
-			continue
-		}
-
 		for _, edge := range edgesByDefinition[current.Definition] {
-			if edge.Target == rootDefinition {
+			if _, visited := current.Ancestors[edge.Target]; visited {
 				continue
 			}
 
@@ -516,18 +513,26 @@ func buildDefinitionPaths(
 				continue
 			}
 
-			seenKey := edge.Target + "\x00" + nextPrefix.key()
-			if _, ok := seen[seenKey]; ok {
+			ancestors := maps.Clone(current.Ancestors)
+			ancestors[edge.Target] = struct{}{}
+			nextState := definitionPathState{
+				Definition: edge.Target,
+				Prefix:     nextPrefix,
+				Ancestors:  ancestors,
+			}
+			stateKey := definitionPathStateKey(nextState)
+			if _, ok := seenStates[stateKey]; ok {
 				continue
 			}
 
-			seen[seenKey] = struct{}{}
-			paths[edge.Target] = append(paths[edge.Target], nextPrefix)
-			queue = append(queue, definitionPathState{
-				Definition: edge.Target,
-				Depth:      current.Depth + 1,
-				Prefix:     nextPrefix,
-			})
+			seenStates[stateKey] = struct{}{}
+			pathKey := edge.Target + "\x00" + nextPrefix.key()
+			if _, ok := seenPaths[pathKey]; !ok {
+				seenPaths[pathKey] = struct{}{}
+				paths[edge.Target] = append(paths[edge.Target], nextPrefix)
+			}
+
+			queue = append(queue, nextState)
 		}
 	}
 
@@ -539,6 +544,17 @@ func buildDefinitionPaths(
 	}
 
 	return paths
+}
+
+// definitionPathStateKey identifies a definition path and its traversal history.
+func definitionPathStateKey(state definitionPathState) string {
+	ancestors := make([]string, 0, len(state.Ancestors))
+	for name := range state.Ancestors {
+		ancestors = append(ancestors, name)
+	}
+	sort.Strings(ancestors)
+
+	return state.Definition + "\x00" + state.Prefix.key() + "\x00" + strings.Join(ancestors, "\x00")
 }
 
 // buildPropertyPaths builds normalized root-relative JSON paths for one property.
