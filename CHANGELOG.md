@@ -14,12 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.10.1][] - 2026-10-20
 
 ### Fixed
 
 * Markdown property paths stop expanding recursive schema references
   while preserving distinct non-recursive paths.
+
+[0.10.1]: https://github.com/WoozyMasta/schemadoc/compare/v0.10.0...v0.10.1
 
 ## [0.10.0][] - 2026-09-18
 
