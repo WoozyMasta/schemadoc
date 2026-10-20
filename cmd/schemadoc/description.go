@@ -161,8 +161,11 @@ Remote @latest references are non-deterministic and are rejected in build check 
 	setCommandDescription(parser, &options.Build,
 		"Run build jobs",
 		`Run jobs from a YAML config. When omitted, the config path defaults to
-./schemadoc.build.yaml; index 0 runs all documents.`,
+./schemadoc.build.yaml; index 0 runs all documents.
+Use --check to compare all selected outputs without writing files.
+Check mode stops on the first mismatch or missing output.`,
 		flags.Example(),
+		flags.Example().Raw("--check"),
 		flags.Example().
 			Arg("schemadoc.build.yaml").
 			Option(&options.Build.ConfigIndex, "1"))

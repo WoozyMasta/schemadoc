@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
+* Build `--check` (`-c`) to validate all selected outputs
+  using the build config without maintaining a separate check config.
 * Context-aware schema generation with cancellable setup, session waiting,
   and subprocess execution, including Windows jobs and Unix process groups.
 * Opt-in plain Go comment descriptions via `modschema.Options.Comments`

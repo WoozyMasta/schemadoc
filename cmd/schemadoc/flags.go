@@ -200,5 +200,6 @@ type buildCommand struct {
 		ConfigPath string `description:"Config path (optional; default: ./schemadoc.build.yaml)" positional-arg-name:"config"`
 	} `positional-args:"yes"`
 
-	ConfigIndex int `description:"Config document index: 0 runs all documents, 1..N runs one document" short:"i" default:"0" long:"index" validate-min:"0"`
+	ConfigIndex int  `description:"Config document index: 0 runs all documents, 1..N runs one document" short:"i" default:"0" long:"index" validate-min:"0"`
+	Check       bool `long:"check" short:"c" description:"Check all selected build outputs without writing files"`
 }

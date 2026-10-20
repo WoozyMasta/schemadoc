@@ -91,6 +91,8 @@ Run build jobs
 
 Run jobs from a YAML config. When omitted, the config path defaults to
 ./schemadoc.build.yaml; index 0 runs all documents.
+Use --check to compare all selected outputs without writing files.
+Check mode stops on the first mismatch or missing output.
 
 **Usage:** `schemadoc [OPTIONS] build [build-OPTIONS]`
 
@@ -98,6 +100,10 @@ Run jobs from a YAML config. When omitted, the config path defaults to
 
 ```shell
 schemadoc build
+```
+
+```shell
+schemadoc build --check
 ```
 
 ```shell
@@ -109,6 +115,7 @@ schemadoc build schemadoc.build.yaml --index 1
 |Option|Description|Default|Required|
 |---|---|---|---|
 |`-i`, `--index`|Config document index: 0 runs all documents, 1..N runs one document|`0`|no|
+|`-c`, `--check`|Check all selected build outputs without writing files||no|
 
 #### Arguments
 

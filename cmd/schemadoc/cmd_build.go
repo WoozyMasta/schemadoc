@@ -23,14 +23,16 @@ const defaultBuildConfigPath = "schemadoc.build.yaml"
 func (command *buildCommand) Execute(_ []string) error {
 	configPath := resolveBuildConfigPath(command.Args.ConfigPath)
 	command.runner.logf(
-		"build: config=%s index=%d",
+		"build: config=%s index=%d check=%t",
 		configPath,
 		command.ConfigIndex,
+		command.Check,
 	)
 
 	if err := command.runner.runConfig(
 		configPath,
 		command.ConfigIndex,
+		command.Check,
 	); err != nil {
 		return err
 	}
@@ -50,7 +52,7 @@ func resolveBuildConfigPath(path string) string {
 }
 
 // runConfig executes selected config documents from config file.
-func (runner *cliRunner) runConfig(configPath string, configIndex int) (err error) {
+func (runner *cliRunner) runConfig(configPath string, configIndex int, check bool) (err error) {
 	loadedConfigs, err := loadBuildConfig(configPath, configIndex)
 	if err != nil {
 		return err
@@ -62,6 +64,7 @@ func (runner *cliRunner) runConfig(configPath string, configIndex int) (err erro
 	}()
 
 	for index, loadedConfig := range loadedConfigs {
+		loadedConfig.Check = check || loadedConfig.Check
 		docNumber := index + 1
 		if configIndex > 0 {
 			docNumber = configIndex

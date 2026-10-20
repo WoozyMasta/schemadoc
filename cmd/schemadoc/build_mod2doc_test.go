@@ -115,13 +115,10 @@ func TestCLI_BuildModuleDocs(t *testing.T) {
 		t.Fatalf("unexpected files, including possible transient schema: %v", entries)
 	}
 
-	config.Check = true
-	plainConfig.Check = true
-	writeBuildTestConfig(t, configPath, config, plainConfig)
 	stdout.Reset()
 	stderr.Reset()
 
-	if code := run([]string{"build", configPath}, &stdout, &stderr); code != 0 {
+	if code := run([]string{"build", "--check", configPath}, &stdout, &stderr); code != 0 {
 		t.Fatalf("matching check exit=%d: %s", code, stderr.String())
 	}
 
@@ -132,7 +129,7 @@ func TestCLI_BuildModuleDocs(t *testing.T) {
 	stdout.Reset()
 	stderr.Reset()
 
-	if code := run([]string{"build", configPath}, &stdout, &stderr); code != 1 {
+	if code := run([]string{"build", "--check", configPath}, &stdout, &stderr); code != 1 {
 		t.Fatalf("stale check exit=%d: %s", code, stderr.String())
 	}
 
@@ -311,7 +308,7 @@ func TestBuildModuleDocsReuseAndCleanup(t *testing.T) {
 	configPath := filepath.Join(dir, "failure.yaml")
 	writeBuildTestConfig(t, configPath, config)
 
-	if err := runner.runConfig(configPath, 0); err == nil {
+	if err := runner.runConfig(configPath, 0, false); err == nil {
 		t.Fatal("missing template accepted")
 	}
 
@@ -340,7 +337,7 @@ func BenchmarkBuildModuleDocs(b *testing.B) {
 	runner := &cliRunner{stdin: strings.NewReader(""), stdout: io.Discard, stderr: io.Discard}
 
 	for b.Loop() {
-		if err := runner.runConfig(configPath, 0); err != nil {
+		if err := runner.runConfig(configPath, 0, false); err != nil {
 			b.Fatal(err)
 		}
 	}

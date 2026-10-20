@@ -87,6 +87,8 @@ Behavior:
 * config path is optional; default is `./schemadoc.build.yaml`
 * `--index 0` runs all YAML documents in file order
 * `--index 1..N` runs one selected YAML document
+* `--check` (`-c`) checks every stage in the selected documents without writes,
+  including schemas, docs, and examples; it overrides `check: false`
 * `check: true` in config enables validation mode (no rewrites)
 * module reflection stages share one prepared generator for the build run
 * `mod2doc` requires `mod2schema` in the same document and inherits its source,
@@ -116,6 +118,7 @@ Examples:
 ```bash
 schemadoc build
 schemadoc build schemadoc.build.yaml
+schemadoc build --check schemadoc.build.yaml
 schemadoc build schemadoc.build.yaml --index 2
 ```
 
