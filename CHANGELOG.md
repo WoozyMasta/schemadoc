@@ -14,38 +14,41 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.11.0][] - 2026-10-21
 
 ### Added
 
-* One global build `defaults` document with recursive map inheritance,
-  explicit overrides, and null removal.
-* Build `--check` (`-c`) to validate all selected outputs
-  using the build config without maintaining a separate check config.
-* Context-aware schema generation with cancellable setup, session waiting,
-  and subprocess execution, including Windows jobs and Unix process groups.
-* Opt-in plain Go comment descriptions via `modschema.Options.Comments`
-  and `--comments plain` for `mod2schema` and `mod2doc`.
-* Reusable `modschema.Generator` sessions
-  with prepared helper workspaces and explicit cleanup.
-* Build `mod2doc` stage inheriting its Go target from `mod2schema`,
-  with independent raw/plain comments and write/check output modes.
-* Build `mod2schema.comments` and `mod2schema.jsonschema_version` settings.
-* Opt-in full-path external definition names via `modschema.Options.TypeNamer`,
-  `--type-namer full`, and build `mod2schema.type_namer`.
+* A global build `defaults` document anywhere in a YAML stream,
+  with recursive map inheritance, list replacement, and null removal.
+  The editor schema does not yet describe defaults or partial jobs.
+* Build `--check` (`-c`) to check all selected artifacts without rewriting them,
+  using the same config for generation and CI.
+* Build `mod2doc` stage to render Go documentation independently of the
+  persisted schema and merge results, inheriting its target from `mod2schema`.
+* Opt-in plain Go comment descriptions through `--comments plain` (`-C`),
+  `modschema.Options.Comments`, and build `comments` settings.
+  Raw comments remain the default; `mod2doc` selects its mode independently.
+* Opt-in full-path external definition names through `--type-namer full`,
+  `modschema.Options.TypeNamer`, and build `mod2schema.type_namer`.
+* Build `mod2schema.jsonschema_version` to override the reflection dependency.
+* Reusable `modschema.Generator` sessions with explicit cleanup;
+  build jobs share prepared helper modules to avoid repeated module setup.
+* `modschema.GenerateContext` and `Generator.GenerateContext` for cancellable
+  module setup, subprocess execution, and waiting for a busy generator.
 
 ### Changed
 
-* Parse local `go.mod` files with the official module parser, accepting tabs,
-  comments, and quoted module directives.
-* Document that local and remote reflection executes trusted target code
-  without a security sandbox.
-* Cache successful local Go version probes without temporary directories.
-* Share one module schema generator across all selected build documents.
-* Generate the build config schema with plain descriptions
-  and its documentation directly from raw Go comments.
-* Reject conflicting definition names with both Go types
-  and remediation instead of emitting an ambiguous schema.
+* Reorganized CLI and library guides
+  around workflows and executable API examples,
+  with explicit guidance on the trust boundary of Go reflection.
+
+### Fixed
+
+* Accept valid local `go.mod` directives containing tabs or inline comments.
+* Reject schema definition-name collisions and identify both conflicting
+  Go types instead of emitting ambiguous schemas.
+
+[0.11.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.10.1...v0.11.0
 
 ## [0.10.1][] - 2026-10-20
 
