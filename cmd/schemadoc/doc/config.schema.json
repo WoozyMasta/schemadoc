@@ -2,25 +2,30 @@
   "$defs": {
     "Config": {
       "additionalProperties": false,
-      "description": "Config describes one build pipeline document.",
+      "description": "Config describes one build document with stage order mod2schema -> mod2doc -> merge -> schema2json -> schema2doc -> schema2yaml.",
       "properties": {
         "check": {
-          "description": "Check enables validation mode for all stages in the document.\n\nWhen true, build compares generated outputs with existing files\nand fails on first mismatch instead of rewriting files.\nThis is intended for CI to ensure generated files are up to date.",
+          "description": "Check enables validation mode for all stages in the document.\nWhen true, build compares generated outputs with existing files and fails on first mismatch instead of rewriting files. This is intended for CI to ensure generated files are up to date.",
           "type": "boolean",
           "x-order": "2"
         },
         "merge": {
           "$ref": "#/$defs/MergeStage",
-          "description": "Merge applies import/patch actions over current `schema` file.\n\nWhen both mod2schema and merge are declared, merge always runs after mod2schema.\nUse it to import shared definitions or patch fragments from other schema files.",
+          "description": "Merge applies import/patch actions over current `schema` file.\nWhen both mod2schema and merge are declared, merge always runs after mod2schema. Use it to import shared definitions or patch fragments from other schema files.",
           "x-order": "20"
+        },
+        "mod2doc": {
+          "$ref": "#/$defs/Mod2DocStage",
+          "description": "Mod2Doc renders documentation directly from the sibling mod2schema Go target.\nRequires mod2schema in the same document and runs immediately after it. Uses raw Go comments by default and does not read the working schema or merge results.",
+          "x-order": "15"
         },
         "mod2schema": {
           "$ref": "#/$defs/Mod2SchemaStage",
-          "description": "Mod2Schema reflects one Go type into JSON Schema and writes result to `schema`.\n\nWhen declared, this stage always runs first.\nUse it when schema must be generated from source code before merge/export stages.",
+          "description": "Mod2Schema reflects one Go type into JSON Schema and writes result to `schema`.\nWhen declared, this stage always runs first. Use it when schema must be generated from source code before merge/export stages.",
           "x-order": "10"
         },
         "schema": {
-          "description": "Schema is working schema path for the whole document pipeline.\n\n`build` writes mod2schema output to this file, `merge` mutates this file in place,\nand schema2* stages read from this file as input.\nUse relative path for repository-local workflows, or absolute path for CI/temp directories.",
+          "description": "Schema is working schema path for the whole document pipeline.\n`build` writes mod2schema output to this file, `merge` mutates this file in place, and schema2* stages read from this file as input. Use relative path for repository-local workflows, or absolute path for CI/temp directories.",
           "examples": [
             "schema.json",
             "build/schema/config.schema.json"
@@ -31,17 +36,17 @@
         },
         "schema2doc": {
           "$ref": "#/$defs/Schema2DocStage",
-          "description": "Schema2Doc renders documentation (list/table/html) from current `schema`.\n\nUse this stage for user-facing reference docs committed to repository.",
+          "description": "Schema2Doc renders documentation (list/table/html) from current `schema`.\nUse this stage for user-facing reference docs committed to repository.",
           "x-order": "40"
         },
         "schema2json": {
           "$ref": "#/$defs/Schema2JSONStage",
-          "description": "Schema2JSON generates JSON example payload from current `schema`.\n\nThis stage is useful for machine-readable fixtures and JSON examples in repositories, tests, and CI artifacts.",
+          "description": "Schema2JSON generates JSON example payload from current `schema`.\nThis stage is useful for machine-readable fixtures and JSON examples in repositories, tests, and CI artifacts.",
           "x-order": "30"
         },
         "schema2yaml": {
           "$ref": "#/$defs/Schema2YAMLStage",
-          "description": "Schema2YAML generates YAML example payload from current `schema`.\n\nThis stage is useful for human-readable config examples and snippets.",
+          "description": "Schema2YAML generates YAML example payload from current `schema`.\nThis stage is useful for human-readable config examples and snippets.",
           "x-order": "50"
         }
       },
@@ -56,14 +61,14 @@
       "properties": {
         "indent": {
           "default": 2,
-          "description": "Indent sets indentation width for one nesting level.\n\nFor `space`, this is number of spaces. For `tab`, this is number of tabs.",
+          "description": "Indent sets indentation width for one nesting level.\nFor `space`, this is number of spaces. For `tab`, this is number of tabs.",
           "minimum": 1,
           "type": "integer",
           "x-order": "1"
         },
         "indent_type": {
           "default": "space",
-          "description": "IndentType sets indentation character for pretty JSON.\n\n`space` uses spaces. `tab` uses tabs.",
+          "description": "IndentType sets indentation character for pretty JSON.\n`space` uses spaces. `tab` uses tabs.",
           "enum": [
             "space",
             "tab"
@@ -106,12 +111,12 @@
         },
         "rename": {
           "$ref": "#/$defs/MergeImportRename",
-          "description": "Rename configures how imported definition names are transformed.\n\nUseful when source and target schemas use different naming conventions or when name collisions must be avoided.",
+          "description": "Rename configures how imported definition names are transformed.\nUseful when source and target schemas use different naming conventions or when name collisions must be avoided.",
           "x-order": "4"
         },
         "source_defs": {
           "default": "/$defs",
-          "description": "SourceDefs selects source object used as definition map.\n\nImport reads all direct child keys from this pointer and treats each key as one definition name to import.",
+          "description": "SourceDefs selects source object used as definition map.\nImport reads all direct child keys from this pointer and treats each key as one definition name to import.",
           "examples": [
             "/components/schemas"
           ],
@@ -120,7 +125,7 @@
         },
         "target_defs": {
           "default": "/$defs",
-          "description": "TargetDefs selects destination object for imported definitions.\n\nUse this when project keeps reusable definitions outside default `/$defs`\nor when imported definitions must be isolated under dedicated subtree.",
+          "description": "TargetDefs selects destination object for imported definitions.\nUse this when project keeps reusable definitions outside default `/$defs` or when imported definitions must be isolated under dedicated subtree.",
           "examples": [
             "/components/schemas",
             "/$defs/imported"
@@ -140,7 +145,7 @@
       "properties": {
         "mode": {
           "default": "none",
-          "description": "Mode selects rename strategy.\n\n  - `none` keeps original names.\n  - `prefix` prepends `value`.\n  - `suffix` appends `value`.",
+          "description": "Mode selects rename strategy.\n- `none` keeps original names.\n- `prefix` prepends `value`.\n- `suffix` appends `value`.",
           "enum": [
             "none",
             "prefix",
@@ -167,7 +172,7 @@
       "properties": {
         "array": {
           "default": "replace",
-          "description": "Array selects array behavior for deep-merge operations.\nIt controls whether arrays are replaced, appended, or appended uniquely.",
+          "description": "Array selects array behavior for deep-merge operations. It controls whether arrays are replaced, appended, or appended uniquely.",
           "enum": [
             "replace",
             "append",
@@ -178,7 +183,7 @@
         },
         "node": {
           "default": "replace",
-          "description": "Node selects primary operation for target node.\n\n  - `replace` replaces target node with source node.\n  - `merge` deep-merges source into target.\n  - `merge-defs` merges fields of source object into target object.",
+          "description": "Node selects primary operation for target node.\n- `replace` replaces target node with source node.\n- `merge` deep-merges source into target.\n- `merge-defs` merges fields of source object into target object.",
           "enum": [
             "replace",
             "merge",
@@ -189,7 +194,7 @@
         },
         "object": {
           "default": "merge",
-          "description": "Object selects object behavior for deep-merge operations.\nIt controls whether source object members are merged or replace the target.",
+          "description": "Object selects object behavior for deep-merge operations. It controls whether source object members are merged or replace the target.",
           "enum": [
             "merge",
             "replace"
@@ -219,7 +224,7 @@
           "x-order": "4"
         },
         "source": {
-          "description": "Source points to source node in source schema.\n\nEmpty value means source schema root.",
+          "description": "Source points to source node in source schema.\nEmpty value means source schema root.",
           "examples": [
             "/$defs/CommonConfig"
           ],
@@ -227,7 +232,7 @@
           "x-order": "2"
         },
         "target": {
-          "description": "Target points to destination node in working schema.\n\nEmpty value means working schema root.",
+          "description": "Target points to destination node in working schema.\nEmpty value means working schema root.",
           "examples": [
             "/$defs/CommonConfig",
             "/properties/spec"
@@ -247,7 +252,7 @@
       "description": "MergeStage describes merge execution over working schema.",
       "properties": {
         "imports": {
-          "description": "Imports lists high-level definition imports applied in order.\n\nEach item imports entries from source defs object (for example `/$defs`)\ninto target defs object in current `schema` (also usually `/$defs`).\nThis is the convenient way to \"pull shared type definitions\" from other schema files without writing many manual patches.",
+          "description": "Imports lists high-level definition imports applied in order.\nEach item imports entries from source defs object (for example `/$defs`) into target defs object in current `schema` (also usually `/$defs`). This is the convenient way to \"pull shared type definitions\" from other schema files without writing many manual patches.",
           "items": {
             "$ref": "#/$defs/MergeImport"
           },
@@ -255,7 +260,7 @@
           "x-order": "2"
         },
         "patches": {
-          "description": "Patches lists low-level merge actions applied in order.\n\nEach patch copies or merges one source node from another schema file into current `schema`.\nItems are applied top-to-bottom; later patches can overwrite results of earlier patches.",
+          "description": "Patches lists low-level merge actions applied in order.\nEach patch copies or merges one source node from another schema file into current `schema`. Items are applied top-to-bottom; later patches can overwrite results of earlier patches.",
           "items": {
             "$ref": "#/$defs/MergePatch"
           },
@@ -270,14 +275,169 @@
       },
       "type": "object"
     },
+    "Mod2DocStage": {
+      "additionalProperties": false,
+      "description": "Mod2DocStage describes documentation generation directly from Go source.",
+      "properties": {
+        "comments": {
+          "default": "raw",
+          "description": "Comments selects Go comment normalization independently of mod2schema.comments. Empty means raw; source and other reflection settings come from mod2schema.",
+          "enum": [
+            "raw",
+            "plain"
+          ],
+          "type": "string",
+          "x-order": "15"
+        },
+        "description": {
+          "description": "Description overrides top-level document description.",
+          "examples": [
+            "Generated by CI pipeline."
+          ],
+          "type": "string",
+          "x-order": "5"
+        },
+        "footer": {
+          "default": false,
+          "description": "Footer includes schemadoc version metadata in rendered documentation.",
+          "type": "boolean",
+          "x-order": "12"
+        },
+        "format": {
+          "description": "Format selects embedded example format for doc template.\nEmpty value disables embedded example block.",
+          "enum": [
+            "json",
+            "yaml"
+          ],
+          "type": "string",
+          "x-order": "8"
+        },
+        "hide_extra_keywords": {
+          "description": "HideExtraKeywords disables \"Other keywords\" attribute row in rendered docs.\nInternal keywords such as `x-order` are hidden regardless of this option.",
+          "type": "boolean",
+          "x-order": "10"
+        },
+        "json": {
+          "$ref": "#/$defs/JSONOutputOptions",
+          "description": "JSON configures embedded JSON example formatting.\nUsed when `format: json`.",
+          "x-order": "11"
+        },
+        "list_marker": {
+          "default": "*",
+          "description": "ListMarker controls unordered list marker normalization in rendered documents.",
+          "enum": [
+            "-",
+            "*"
+          ],
+          "type": "string",
+          "x-order": "6"
+        },
+        "mode": {
+          "default": "all",
+          "description": "Mode selects embedded example generation mode for doc template.",
+          "enum": [
+            "all",
+            "required"
+          ],
+          "type": "string",
+          "x-order": "7"
+        },
+        "output": {
+          "description": "Output is document output path.\nWhen empty, build derives output from `schema` path and template metadata. Builtin list and table templates keep `.list` and `.table` suffixes; custom templates use their declared `output.extension` directly.",
+          "type": "string",
+          "x-order": "1"
+        },
+        "show_internal_keywords": {
+          "description": "ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.",
+          "type": "boolean",
+          "x-order": "11"
+        },
+        "source_path": {
+          "description": "SourcePath overrides the source path shown in document metadata.\nIt does not affect the working schema file or schema processing.",
+          "examples": [
+            "docs/config.schema.json"
+          ],
+          "type": "string",
+          "x-order": "13"
+        },
+        "source_raw_path": {
+          "description": "SourceRawPath overrides the raw schema URL shown in document metadata.\nWhen empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.",
+          "examples": [
+            "https://raw.githubusercontent.com/acme/project/HEAD/schema.json"
+          ],
+          "format": "uri",
+          "type": "string",
+          "x-order": "14"
+        },
+        "template": {
+          "default": "list",
+          "description": "Template selects built-in document template.",
+          "enum": [
+            "list",
+            "table",
+            "html"
+          ],
+          "type": "string",
+          "x-order": "2"
+        },
+        "template_file": {
+          "description": "TemplateFile points to custom template file and overrides `template`.\nUse this for project-specific layout and branding.",
+          "examples": [
+            "templates/custom.md.gotmpl"
+          ],
+          "type": "string",
+          "x-order": "3"
+        },
+        "title": {
+          "description": "Title overrides top-level document heading.",
+          "examples": [
+            "schema reference",
+            "Project Config Reference"
+          ],
+          "type": "string",
+          "x-order": "4"
+        },
+        "wrap": {
+          "default": 80,
+          "description": "Wrap sets wrap width for plain-text description blocks.",
+          "minimum": 1,
+          "type": "integer",
+          "x-order": "9"
+        },
+        "yaml": {
+          "$ref": "#/$defs/YAMLOutputOptions",
+          "description": "YAML configures embedded YAML example formatting.\nUsed when `format: yaml`.",
+          "x-order": "12"
+        }
+      },
+      "type": "object"
+    },
     "Mod2SchemaStage": {
       "additionalProperties": false,
       "description": "Mod2SchemaStage describes schema generation from one Go type.",
       "properties": {
+        "comments": {
+          "default": "raw",
+          "description": "Comments selects raw Go comments or canonical plain text for schema descriptions.",
+          "enum": [
+            "raw",
+            "plain"
+          ],
+          "type": "string",
+          "x-order": "7"
+        },
         "json": {
           "$ref": "#/$defs/JSONOutputOptions",
           "description": "JSON configures formatting of generated schema file.",
           "x-order": "6"
+        },
+        "jsonschema_version": {
+          "description": "JSONSchemaVersion overrides the pinned github.com/invopop/jsonschema helper version. The sibling mod2doc stage inherits this version and all source/reflection settings.",
+          "examples": [
+            "v0.14.0"
+          ],
+          "type": "string",
+          "x-order": "8"
         },
         "key_namer": {
           "default": "none",
@@ -293,7 +453,7 @@
         },
         "module": {
           "default": ".",
-          "description": "Module selects reflection source.\n\nLocal mode: existing directory on disk with go.mod.\nRemote mode: module path with explicit version suffix (`@vX.Y.Z` or `@latest`).",
+          "description": "Module selects reflection source.\nLocal mode: existing directory on disk with go.mod. Remote mode: module path with explicit version suffix (`@vX.Y.Z` or `@latest`).",
           "examples": [
             "../project",
             "github.com/acme/project@v1.2.3"
@@ -302,7 +462,7 @@
           "x-order": "1"
         },
         "package": {
-          "description": "Package is import path where target type is declared.\n\nKeep empty when type is declared in module root package.",
+          "description": "Package is import path where target type is declared.\nKeep empty when type is declared in module root package.",
           "examples": [
             "github.com/acme/project/pkg/config"
           ],
@@ -310,7 +470,7 @@
           "x-order": "2"
         },
         "root_id": {
-          "description": "RootID overrides the automatically generated root `$id` in the output JSON Schema.\nIt must be an absolute URI without a fragment. Leave it empty to use the generator's default.",
+          "description": "RootID overrides the automatically generated root `$id` in the output JSON Schema. It must be an absolute URI without a fragment. Leave it empty to use the generator's default.",
           "examples": [
             "https://example.com/schema.json"
           ],
@@ -353,7 +513,7 @@
           "x-order": "12"
         },
         "format": {
-          "description": "Format selects embedded example format for doc template.\n\nEmpty value disables embedded example block.",
+          "description": "Format selects embedded example format for doc template.\nEmpty value disables embedded example block.",
           "enum": [
             "json",
             "yaml"
@@ -362,13 +522,13 @@
           "x-order": "8"
         },
         "hide_extra_keywords": {
-          "description": "HideExtraKeywords disables \"Other keywords\" attribute row in rendered docs.\n\nInternal keywords such as `x-order` are hidden regardless of this option.",
+          "description": "HideExtraKeywords disables \"Other keywords\" attribute row in rendered docs.\nInternal keywords such as `x-order` are hidden regardless of this option.",
           "type": "boolean",
           "x-order": "10"
         },
         "json": {
           "$ref": "#/$defs/JSONOutputOptions",
-          "description": "JSON configures embedded JSON example formatting.\n\nUsed when `format: json`.",
+          "description": "JSON configures embedded JSON example formatting.\nUsed when `format: json`.",
           "x-order": "11"
         },
         "list_marker": {
@@ -392,7 +552,7 @@
           "x-order": "7"
         },
         "output": {
-          "description": "Output is document output path.\n\nWhen empty, build derives output from `schema` path and template metadata.\nBuiltin list and table templates keep `.list` and `.table` suffixes;\ncustom templates use their declared `output.extension` directly.",
+          "description": "Output is document output path.\nWhen empty, build derives output from `schema` path and template metadata. Builtin list and table templates keep `.list` and `.table` suffixes; custom templates use their declared `output.extension` directly.",
           "type": "string",
           "x-order": "1"
         },
@@ -402,7 +562,7 @@
           "x-order": "11"
         },
         "source_path": {
-          "description": "SourcePath overrides the source path shown in document metadata.\n\nIt does not affect the working schema file or schema processing.",
+          "description": "SourcePath overrides the source path shown in document metadata.\nIt does not affect the working schema file or schema processing.",
           "examples": [
             "docs/config.schema.json"
           ],
@@ -410,7 +570,7 @@
           "x-order": "13"
         },
         "source_raw_path": {
-          "description": "SourceRawPath overrides the raw schema URL shown in document metadata.\n\nWhen empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.",
+          "description": "SourceRawPath overrides the raw schema URL shown in document metadata.\nWhen empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.",
           "examples": [
             "https://raw.githubusercontent.com/acme/project/HEAD/schema.json"
           ],
@@ -430,7 +590,7 @@
           "x-order": "2"
         },
         "template_file": {
-          "description": "TemplateFile points to custom template file and overrides `template`.\n\nUse this for project-specific layout and branding.",
+          "description": "TemplateFile points to custom template file and overrides `template`.\nUse this for project-specific layout and branding.",
           "examples": [
             "templates/custom.md.gotmpl"
           ],
@@ -455,7 +615,7 @@
         },
         "yaml": {
           "$ref": "#/$defs/YAMLOutputOptions",
-          "description": "YAML configures embedded YAML example formatting.\n\nUsed when `format: yaml`.",
+          "description": "YAML configures embedded YAML example formatting.\nUsed when `format: yaml`.",
           "x-order": "12"
         }
       },
@@ -481,7 +641,7 @@
           "x-order": "2"
         },
         "output": {
-          "description": "Output is output file path.\n\nWhen empty, build derives output from `schema` path:\n  - schema2json -> `<schema-base>.json`",
+          "description": "Output is output file path.\nWhen empty, build derives output from `schema` path:\n- schema2json -> `<schema-base>.json`",
           "type": "string",
           "x-order": "1"
         }
@@ -503,7 +663,7 @@
           "x-order": "2"
         },
         "output": {
-          "description": "Output is output file path.\n\nWhen empty, build derives output from `schema` path:\n  - schema2yaml -> `<schema-base>.yaml`",
+          "description": "Output is output file path.\nWhen empty, build derives output from `schema` path:\n- schema2yaml -> `<schema-base>.yaml`",
           "type": "string",
           "x-order": "1"
         },

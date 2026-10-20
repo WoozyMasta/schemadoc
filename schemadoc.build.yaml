@@ -3,13 +3,16 @@ mod2schema:
   module: .
   package: github.com/woozymasta/schemadoc/cmd/schemadoc/buildcfg
   type: Config
+  comments: plain
 schema2json:
   mode: all
   output: cmd/schemadoc/doc/config.example.json
 schema2yaml:
   mode: all
   output: cmd/schemadoc/doc/config.example.yaml
-schema2doc:
+mod2doc:
+  source_path: cmd/schemadoc/buildcfg/model.go
+  source_raw_path: https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/cmd/schemadoc/doc/config.schema.json
   title: schemadoc build - config reference
   template: list
   mode: all
@@ -17,7 +20,14 @@ schema2doc:
   output: cmd/schemadoc/doc/config.list.md
 ---
 schema: cmd/schemadoc/doc/config.schema.json
-schema2doc:
+mod2schema:
+  module: .
+  package: github.com/woozymasta/schemadoc/cmd/schemadoc/buildcfg
+  type: Config
+  comments: plain
+mod2doc:
+  source_path: cmd/schemadoc/buildcfg/model.go
+  source_raw_path: https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/cmd/schemadoc/doc/config.schema.json
   title: schemadoc build - config reference
   template: table
   mode: all
@@ -25,9 +35,23 @@ schema2doc:
   output: cmd/schemadoc/doc/config.table.md
 ---
 schema: cmd/schemadoc/doc/config.schema.json
-schema2doc:
+mod2schema:
+  module: .
+  package: github.com/woozymasta/schemadoc/cmd/schemadoc/buildcfg
+  type: Config
+  comments: plain
+mod2doc:
+  source_path: cmd/schemadoc/buildcfg/model.go
+  source_raw_path: https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/cmd/schemadoc/doc/config.schema.json
   title: schemadoc build - config reference
   template: html
   mode: all
   format: yaml
   output: cmd/schemadoc/doc/config.html
+---
+schema: cmd/schemadoc/doc/config.schema.yaml
+mod2schema:
+  module: .
+  package: github.com/woozymasta/schemadoc/cmd/schemadoc/buildcfg
+  type: Config
+  comments: plain

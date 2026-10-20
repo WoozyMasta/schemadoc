@@ -85,3 +85,17 @@ schema2doc:
   format: yaml
   wrap: 90
   output: testdata/generated/app.doc.html
+
+---
+# yaml-language-server: $schema=../cmd/schemadoc/doc/config.schema.json
+# Stage: generate a plain schema and documentation directly from raw Go comments.
+
+schema: testdata/generated/comments.schema.json
+mod2schema:
+  module: modschema/testdata/comments
+  type: Config
+  comments: plain
+mod2doc:
+  title: Go Comment Reference
+  template: html
+  output: testdata/generated/comments.doc.html

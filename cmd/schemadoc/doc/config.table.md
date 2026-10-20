@@ -3,7 +3,7 @@
 
 # schemadoc build - config reference
 
-* Source file: [`cmd/schemadoc/doc/config.schema.json`](https://github.com/woozymasta/schemadoc/blob/HEAD/cmd/schemadoc/doc/config.schema.json)
+* Source file: [`cmd/schemadoc/buildcfg/model.go`](https://github.com/woozymasta/schemadoc/blob/HEAD/cmd/schemadoc/buildcfg/model.go)
 * Source URL: [Raw schema URL](https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/cmd/schemadoc/doc/config.schema.json)
 * Schema identifier: `https://github.com/woozymasta/schemadoc/cmd/schemadoc/buildcfg/config`
 * JSON Schema version: `https://json-schema.org/draft/2020-12/schema`
@@ -15,6 +15,9 @@
 * [Config](#config)
   * [Mod2SchemaStage](#mod2schemastage)
     * [JSONOutputOptions](#jsonoutputoptions)
+  * [Mod2DocStage](#mod2docstage)
+    * [YAMLOutputOptions](#yamloutputoptions)
+      * [YAMLCommentOptions](#yamlcommentoptions)
   * [MergeStage](#mergestage)
     * [MergePatch](#mergepatch)
       * [MergeOp](#mergeop)
@@ -22,19 +25,18 @@
       * [MergeImportRename](#mergeimportrename)
   * [Schema2JSONStage](#schema2jsonstage)
   * [Schema2DocStage](#schema2docstage)
-    * [YAMLOutputOptions](#yamloutputoptions)
-      * [YAMLCommentOptions](#yamlcommentoptions)
   * [Schema2YAMLStage](#schema2yamlstage)
 * [Example yaml document](#example-yaml-document)
 
 ## Config
 
-Config describes one build pipeline document.
+Config describes one build document with stage order mod2schema -> mod2doc ->
+merge -> schema2json -> schema2doc -> schema2yaml.
 
 | Attribute | Value |
 | --- | --- |
 | Type | `object` |
-| Properties | 7 |
+| Properties | 8 |
 | Additional properties | boolean schema=false |
 
 ### Config.schema
@@ -82,6 +84,20 @@ generated from source code before merge/export stages.
 | --- | --- |
 | Required | no |
 | Reference | [`Mod2SchemaStage`](#mod2schemastage) (`#/$defs/Mod2SchemaStage`) |
+
+### Config.Mod2DocStage
+
+Key: `mod2doc`
+
+Mod2Doc renders documentation directly from the sibling mod2schema Go target.
+
+Requires mod2schema in the same document and runs immediately after it. Uses raw
+Go comments by default and does not read the working schema or merge results.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`Mod2DocStage`](#mod2docstage) (`#/$defs/Mod2DocStage`) |
 
 ### Config.MergeStage
 
@@ -144,7 +160,7 @@ Mod2SchemaStage describes schema generation from one Go type.
 | Attribute | Value |
 | --- | --- |
 | Type | `object` |
-| Properties | 6 |
+| Properties | 8 |
 | Additional properties | boolean schema=false |
 
 ### Mod2SchemaStage.module
@@ -242,6 +258,38 @@ JSON configures formatting of generated schema file.
 | Required | no |
 | Reference | [`JSONOutputOptions`](#jsonoutputoptions) (`#/$defs/JSONOutputOptions`) |
 
+### Mod2SchemaStage.comments
+
+Key: `comments`
+
+Path: [`mod2schema`](#configmod2schemastage).`comments`
+
+Comments selects raw Go comments or canonical plain text for schema
+descriptions.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `raw` |
+| Enum | `raw`, `plain` |
+
+### Mod2SchemaStage.jsonschema_version
+
+Key: `jsonschema_version`
+
+Path: [`mod2schema`](#configmod2schemastage).`jsonschema_version`
+
+JSONSchemaVersion overrides the pinned github.com/invopop/jsonschema helper
+version. The sibling mod2doc stage inherits this version and all
+source/reflection settings.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `v0.14.0` |
+
 ## JSONOutputOptions
 
 JSONOutputOptions configures JSON output formatting.
@@ -258,6 +306,7 @@ Key: `indent`
 
 Paths:
 
+* [`mod2doc`](#configmod2docstage).[`json`](#mod2docstagejsonoutputoptions).`indent`
 * [`mod2schema`](#configmod2schemastage).[`json`](#mod2schemastagejsonoutputoptions).`indent`
 * [`schema2doc`](#configschema2docstage).[`json`](#schema2docstagejsonoutputoptions).`indent`
 * [`schema2json`](#configschema2jsonstage).[`json`](#schema2jsonstagejsonoutputoptions).`indent`
@@ -279,6 +328,7 @@ Key: `indent_type`
 
 Paths:
 
+* [`mod2doc`](#configmod2docstage).[`json`](#mod2docstagejsonoutputoptions).`indent_type`
 * [`mod2schema`](#configmod2schemastage).[`json`](#mod2schemastagejsonoutputoptions).`indent_type`
 * [`schema2doc`](#configschema2docstage).[`json`](#schema2docstagejsonoutputoptions).`indent_type`
 * [`schema2json`](#configschema2jsonstage).[`json`](#schema2jsonstagejsonoutputoptions).`indent_type`
@@ -300,6 +350,7 @@ Key: `minify`
 
 Paths:
 
+* [`mod2doc`](#configmod2docstage).[`json`](#mod2docstagejsonoutputoptions).`minify`
 * [`mod2schema`](#configmod2schemastage).[`json`](#mod2schemastagejsonoutputoptions).`minify`
 * [`schema2doc`](#configschema2docstage).[`json`](#schema2docstagejsonoutputoptions).`minify`
 * [`schema2json`](#configschema2jsonstage).[`json`](#schema2jsonstagejsonoutputoptions).`minify`
@@ -310,6 +361,461 @@ Minify enables compact one-line JSON output without indentation.
 | --- | --- |
 | Type | `boolean` |
 | Required | no |
+
+## Mod2DocStage
+
+Mod2DocStage describes documentation generation directly from Go source.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `object` |
+| Properties | 17 |
+| Additional properties | boolean schema=false |
+
+### Mod2DocStage.output
+
+Key: `output`
+
+Path: [`mod2doc`](#configmod2docstage).`output`
+
+Output is document output path.
+
+When empty, build derives output from `schema` path and template metadata.
+Builtin list and table templates keep `.list` and `.table` suffixes; custom
+templates use their declared `output.extension` directly.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+
+### Mod2DocStage.template
+
+Key: `template`
+
+Path: [`mod2doc`](#configmod2docstage).`template`
+
+Template selects built-in document template.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `list` |
+| Enum | `list`, `table`, `html` |
+
+### Mod2DocStage.template_file
+
+Key: `template_file`
+
+Path: [`mod2doc`](#configmod2docstage).`template_file`
+
+TemplateFile points to custom template file and overrides `template`.
+
+Use this for project-specific layout and branding.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `templates/custom.md.gotmpl` |
+
+### Mod2DocStage.title
+
+Key: `title`
+
+Path: [`mod2doc`](#configmod2docstage).`title`
+
+Title overrides top-level document heading.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `schema reference`, `Project Config Reference` |
+
+### Mod2DocStage.description
+
+Key: `description`
+
+Path: [`mod2doc`](#configmod2docstage).`description`
+
+Description overrides top-level document description.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `Generated by CI pipeline.` |
+
+### Mod2DocStage.list_marker
+
+Key: `list_marker`
+
+Path: [`mod2doc`](#configmod2docstage).`list_marker`
+
+ListMarker controls unordered list marker normalization in rendered documents.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `*` |
+| Enum | `-`, `*` |
+
+### Mod2DocStage.mode
+
+Key: `mode`
+
+Path: [`mod2doc`](#configmod2docstage).`mode`
+
+Mode selects embedded example generation mode for doc template.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `all` |
+| Enum | `all`, `required` |
+
+### Mod2DocStage.format
+
+Key: `format`
+
+Path: [`mod2doc`](#configmod2docstage).`format`
+
+Format selects embedded example format for doc template.
+
+Empty value disables embedded example block.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Enum | `json`, `yaml` |
+
+### Mod2DocStage.wrap
+
+Key: `wrap`
+
+Path: [`mod2doc`](#configmod2docstage).`wrap`
+
+Wrap sets wrap width for plain-text description blocks.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `integer` |
+| Required | no |
+| Default | `80` |
+| Constraints | `minimum=1` |
+
+### Mod2DocStage.hide_extra_keywords
+
+Key: `hide_extra_keywords`
+
+Path: [`mod2doc`](#configmod2docstage).`hide_extra_keywords`
+
+HideExtraKeywords disables "Other keywords" attribute row in rendered docs.
+
+Internal keywords such as `x-order` are hidden regardless of this option.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+
+### Mod2DocStage.JSONOutputOptions
+
+Key: `json`
+
+Path: [`mod2doc`](#configmod2docstage).`json`
+
+JSON configures embedded JSON example formatting.
+
+Used when `format: json`.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`JSONOutputOptions`](#jsonoutputoptions) (`#/$defs/JSONOutputOptions`) |
+
+### Mod2DocStage.show_internal_keywords
+
+Key: `show_internal_keywords`
+
+Path: [`mod2doc`](#configmod2docstage).`show_internal_keywords`
+
+ShowInternalKeywords includes renderer-specific schema keywords in rendered
+docs.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+
+### Mod2DocStage.footer
+
+Key: `footer`
+
+Path: [`mod2doc`](#configmod2docstage).`footer`
+
+Footer includes schemadoc version metadata in rendered documentation.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+| Default | `false` |
+
+### Mod2DocStage.YAMLOutputOptions
+
+Key: `yaml`
+
+Path: [`mod2doc`](#configmod2docstage).`yaml`
+
+YAML configures embedded YAML example formatting.
+
+Used when `format: yaml`.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`YAMLOutputOptions`](#yamloutputoptions) (`#/$defs/YAMLOutputOptions`) |
+
+### Mod2DocStage.source_path
+
+Key: `source_path`
+
+Path: [`mod2doc`](#configmod2docstage).`source_path`
+
+SourcePath overrides the source path shown in document metadata.
+
+It does not affect the working schema file or schema processing.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `docs/config.schema.json` |
+
+### Mod2DocStage.source_raw_path
+
+Key: `source_raw_path`
+
+Path: [`mod2doc`](#configmod2docstage).`source_raw_path`
+
+SourceRawPath overrides the raw schema URL shown in document metadata.
+
+When empty, schemadoc derives the URL from SourcePath and the schema `$id` when
+possible.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Examples | `https://raw.githubusercontent.com/acme/project/HEAD/schema.json` |
+| Format | `uri` |
+
+### Mod2DocStage.comments
+
+Key: `comments`
+
+Path: [`mod2doc`](#configmod2docstage).`comments`
+
+Comments selects Go comment normalization independently of mod2schema.comments.
+Empty means raw; source and other reflection settings come from mod2schema.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `raw` |
+| Enum | `raw`, `plain` |
+
+## YAMLOutputOptions
+
+YAMLOutputOptions configures YAML output formatting and comments.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `object` |
+| Properties | 2 |
+| Additional properties | boolean schema=false |
+
+### YAMLOutputOptions.indent
+
+Key: `indent`
+
+Paths:
+
+* [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).`indent`
+* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).`indent`
+* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).`indent`
+
+Indent sets YAML indentation width for one nesting level.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `integer` |
+| Required | no |
+| Default | `2` |
+| Constraints | `minimum=1` |
+
+### YAMLOutputOptions.YAMLCommentOptions
+
+Key: `comments`
+
+Paths:
+
+* [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).`comments`
+* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).`comments`
+* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).`comments`
+
+Comments configures schema-driven comments above YAML keys.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`YAMLCommentOptions`](#yamlcommentoptions) (`#/$defs/YAMLCommentOptions`) |
+
+## YAMLCommentOptions
+
+YAMLCommentOptions configures independent schema annotation comments.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `object` |
+| Properties | 7 |
+| Additional properties | boolean schema=false |
+
+### YAMLCommentOptions.titles
+
+Key: `titles`
+
+Paths:
+
+* [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`titles`
+* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`titles`
+* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`titles`
+
+Titles enables comments sourced from schema titles.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+| Default | `true` |
+
+### YAMLCommentOptions.descriptions
+
+Key: `descriptions`
+
+Paths:
+
+* [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`descriptions`
+* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`descriptions`
+* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`descriptions`
+
+Descriptions enables comments sourced from schema descriptions.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+| Default | `true` |
+
+### YAMLCommentOptions.defaults
+
+Key: `defaults`
+
+Paths:
+
+* [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`defaults`
+* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`defaults`
+* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`defaults`
+
+Defaults enables comments sourced from schema defaults.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+| Default | `true` |
+
+### YAMLCommentOptions.enums
+
+Key: `enums`
+
+Paths:
+
+* [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`enums`
+* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`enums`
+* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`enums`
+
+Enums enables comments listing schema enum values.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `boolean` |
+| Required | no |
+| Default | `true` |
+
+### YAMLCommentOptions.examples
+
+Key: `examples`
+
+Paths:
+
+* [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`examples`
+* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`examples`
+* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`examples`
+
+Examples selects scalar, all, or no schema examples.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `scalar` |
+| Enum | `none`, `scalar`, `all` |
+
+### YAMLCommentOptions.example_format
+
+Key: `example_format`
+
+Paths:
+
+* [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`example_format`
+* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`example_format`
+* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`example_format`
+
+ExampleFormat selects inline or block annotation value formatting.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `block` |
+| Enum | `inline`, `block` |
+
+### YAMLCommentOptions.spacing
+
+Key: `spacing`
+
+Paths:
+
+* [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`spacing`
+* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`spacing`
+* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`spacing`
+
+Spacing selects compact or paragraph-preserving annotation comments.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `compact` |
+| Enum | `compact`, `full` |
 
 ## MergeStage
 
@@ -946,182 +1452,6 @@ possible.
 | Examples | `https://raw.githubusercontent.com/acme/project/HEAD/schema.json` |
 | Format | `uri` |
 
-## YAMLOutputOptions
-
-YAMLOutputOptions configures YAML output formatting and comments.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `object` |
-| Properties | 2 |
-| Additional properties | boolean schema=false |
-
-### YAMLOutputOptions.indent
-
-Key: `indent`
-
-Paths:
-
-* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).`indent`
-* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).`indent`
-
-Indent sets YAML indentation width for one nesting level.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `integer` |
-| Required | no |
-| Default | `2` |
-| Constraints | `minimum=1` |
-
-### YAMLOutputOptions.YAMLCommentOptions
-
-Key: `comments`
-
-Paths:
-
-* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).`comments`
-* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).`comments`
-
-Comments configures schema-driven comments above YAML keys.
-
-| Attribute | Value |
-| --- | --- |
-| Required | no |
-| Reference | [`YAMLCommentOptions`](#yamlcommentoptions) (`#/$defs/YAMLCommentOptions`) |
-
-## YAMLCommentOptions
-
-YAMLCommentOptions configures independent schema annotation comments.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `object` |
-| Properties | 7 |
-| Additional properties | boolean schema=false |
-
-### YAMLCommentOptions.titles
-
-Key: `titles`
-
-Paths:
-
-* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`titles`
-* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`titles`
-
-Titles enables comments sourced from schema titles.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `boolean` |
-| Required | no |
-| Default | `true` |
-
-### YAMLCommentOptions.descriptions
-
-Key: `descriptions`
-
-Paths:
-
-* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`descriptions`
-* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`descriptions`
-
-Descriptions enables comments sourced from schema descriptions.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `boolean` |
-| Required | no |
-| Default | `true` |
-
-### YAMLCommentOptions.defaults
-
-Key: `defaults`
-
-Paths:
-
-* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`defaults`
-* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`defaults`
-
-Defaults enables comments sourced from schema defaults.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `boolean` |
-| Required | no |
-| Default | `true` |
-
-### YAMLCommentOptions.enums
-
-Key: `enums`
-
-Paths:
-
-* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`enums`
-* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`enums`
-
-Enums enables comments listing schema enum values.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `boolean` |
-| Required | no |
-| Default | `true` |
-
-### YAMLCommentOptions.examples
-
-Key: `examples`
-
-Paths:
-
-* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`examples`
-* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`examples`
-
-Examples selects scalar, all, or no schema examples.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Default | `scalar` |
-| Enum | `none`, `scalar`, `all` |
-
-### YAMLCommentOptions.example_format
-
-Key: `example_format`
-
-Paths:
-
-* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`example_format`
-* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`example_format`
-
-ExampleFormat selects inline or block annotation value formatting.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Default | `block` |
-| Enum | `inline`, `block` |
-
-### YAMLCommentOptions.spacing
-
-Key: `spacing`
-
-Paths:
-
-* [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`spacing`
-* [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`spacing`
-
-Spacing selects compact or paragraph-preserving annotation comments.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Default | `compact` |
-| Enum | `compact`, `full` |
-
 ## Schema2YAMLStage
 
 Schema2YAMLStage describes schema2yaml stage.
@@ -1231,6 +1561,119 @@ mod2schema:
     indent_type: space
     # Minify enables compact one-line JSON output without indentation.
     minify: false
+  # Comments selects raw Go comments or canonical plain text for schema descriptions.
+  # Default: raw
+  # Allowed values: raw, plain
+  comments: raw
+  # JSONSchemaVersion overrides the pinned github.com/invopop/jsonschema helper version.
+  # The sibling mod2doc stage inherits this version and all source/reflection settings.
+  # Example: v0.14.0
+  jsonschema_version: v0.14.0
+# Mod2Doc renders documentation directly from the sibling mod2schema Go target.
+# Requires mod2schema in the same document and runs immediately after it.
+# Uses raw Go comments by default and does not read the working schema or merge results.
+mod2doc:
+  # Output is document output path.
+  # When empty, build derives output from `schema` path and template metadata.
+  # Builtin list and table templates keep `.list` and `.table` suffixes;
+  # custom templates use their declared `output.extension` directly.
+  output: <string>
+  # Template selects built-in document template.
+  # Default: list
+  # Allowed values: list, table, html
+  template: list
+  # TemplateFile points to custom template file and overrides `template`.
+  # Use this for project-specific layout and branding.
+  # Example: templates/custom.md.gotmpl
+  template_file: templates/custom.md.gotmpl
+  # Title overrides top-level document heading.
+  # Example: schema reference
+  title: schema reference
+  # Description overrides top-level document description.
+  # Example: Generated by CI pipeline.
+  description: Generated by CI pipeline.
+  # ListMarker controls unordered list marker normalization in rendered documents.
+  # Default: *
+  # Allowed values: -, *
+  list_marker: '*'
+  # Mode selects embedded example generation mode for doc template.
+  # Default: all
+  # Allowed values: all, required
+  mode: all
+  # Format selects embedded example format for doc template.
+  # Empty value disables embedded example block.
+  # Allowed values: json, yaml
+  format: json
+  # Wrap sets wrap width for plain-text description blocks.
+  # Default: 80
+  wrap: 80
+  # HideExtraKeywords disables "Other keywords" attribute row in rendered docs.
+  # Internal keywords such as `x-order` are hidden regardless of this option.
+  hide_extra_keywords: false
+  # JSON configures embedded JSON example formatting.
+  # Used when `format: json`.
+  json:
+    # Indent sets indentation width for one nesting level.
+    # For `space`, this is number of spaces. For `tab`, this is number of tabs.
+    # Default: 2
+    indent: 2
+    # IndentType sets indentation character for pretty JSON.
+    # `space` uses spaces. `tab` uses tabs.
+    # Default: space
+    # Allowed values: space, tab
+    indent_type: space
+    # Minify enables compact one-line JSON output without indentation.
+    minify: false
+  # ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.
+  show_internal_keywords: false
+  # Footer includes schemadoc version metadata in rendered documentation.
+  # Default: false
+  footer: false
+  # YAML configures embedded YAML example formatting.
+  # Used when `format: yaml`.
+  yaml:
+    # Indent sets YAML indentation width for one nesting level.
+    # Default: 2
+    indent: 2
+    # Comments configures schema-driven comments above YAML keys.
+    comments:
+      # Titles enables comments sourced from schema titles.
+      # Default: true
+      titles: true
+      # Descriptions enables comments sourced from schema descriptions.
+      # Default: true
+      descriptions: true
+      # Defaults enables comments sourced from schema defaults.
+      # Default: true
+      defaults: true
+      # Enums enables comments listing schema enum values.
+      # Default: true
+      enums: true
+      # Examples selects scalar, all, or no schema examples.
+      # Default: scalar
+      # Allowed values: none, scalar, all
+      examples: scalar
+      # ExampleFormat selects inline or block annotation value formatting.
+      # Default: block
+      # Allowed values: inline, block
+      example_format: block
+      # Spacing selects compact or paragraph-preserving annotation comments.
+      # Default: compact
+      # Allowed values: compact, full
+      spacing: compact
+  # SourcePath overrides the source path shown in document metadata.
+  # It does not affect the working schema file or schema processing.
+  # Example: docs/config.schema.json
+  source_path: docs/config.schema.json
+  # SourceRawPath overrides the raw schema URL shown in document metadata.
+  # When empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.
+  # Example: https://raw.githubusercontent.com/acme/project/HEAD/schema.json
+  source_raw_path: https://raw.githubusercontent.com/acme/project/HEAD/schema.json
+  # Comments selects Go comment normalization independently of mod2schema.comments.
+  # Empty means raw; source and other reflection settings come from mod2schema.
+  # Default: raw
+  # Allowed values: raw, plain
+  comments: raw
 # Merge applies import/patch actions over current `schema` file.
 # When both mod2schema and merge are declared, merge always runs after mod2schema.
 # Use it to import shared definitions or patch fragments from other schema files.

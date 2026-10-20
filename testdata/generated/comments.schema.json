@@ -1,0 +1,26 @@
+{
+  "$defs": {
+    "Config": {
+      "additionalProperties": false,
+      "description": "Config describes a comment normalization fixture.",
+      "properties": {
+        "tagged": {
+          "description": "Keep [SomeType] and  double spaces.",
+          "type": "string"
+        },
+        "text": {
+          "description": "Text spans physically wrapped source lines with SomeType and SomeType.Method.\nSee the guide (https://example.com/guide) and https://example.com/auto.\nAllowed usage patterns:\nSupported values:\n- First item wrapped onto a second line.\n- Second item.\nSteps:\n3. First step.\n4. Second step.\nExample:\n    first()\n    second()",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "tagged"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://example.com/comments/config",
+  "$ref": "#/$defs/Config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

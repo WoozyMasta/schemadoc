@@ -1,40 +1,36 @@
 $defs:
   Config:
     additionalProperties: false
-    description: Config describes one build pipeline document.
+    description: Config describes one build document with stage order mod2schema -> mod2doc -> merge -> schema2json -> schema2doc -> schema2yaml.
     properties:
       check:
         description: |-
           Check enables validation mode for all stages in the document.
-
-          When true, build compares generated outputs with existing files
-          and fails on first mismatch instead of rewriting files.
-          This is intended for CI to ensure generated files are up to date.
+          When true, build compares generated outputs with existing files and fails on first mismatch instead of rewriting files. This is intended for CI to ensure generated files are up to date.
         type: boolean
         x-order: "2"
       merge:
         $ref: '#/$defs/MergeStage'
         description: |-
           Merge applies import/patch actions over current `schema` file.
-
-          When both mod2schema and merge are declared, merge always runs after mod2schema.
-          Use it to import shared definitions or patch fragments from other schema files.
+          When both mod2schema and merge are declared, merge always runs after mod2schema. Use it to import shared definitions or patch fragments from other schema files.
         x-order: "20"
+      mod2doc:
+        $ref: '#/$defs/Mod2DocStage'
+        description: |-
+          Mod2Doc renders documentation directly from the sibling mod2schema Go target.
+          Requires mod2schema in the same document and runs immediately after it. Uses raw Go comments by default and does not read the working schema or merge results.
+        x-order: "15"
       mod2schema:
         $ref: '#/$defs/Mod2SchemaStage'
         description: |-
           Mod2Schema reflects one Go type into JSON Schema and writes result to `schema`.
-
-          When declared, this stage always runs first.
-          Use it when schema must be generated from source code before merge/export stages.
+          When declared, this stage always runs first. Use it when schema must be generated from source code before merge/export stages.
         x-order: "10"
       schema:
         description: |-
           Schema is working schema path for the whole document pipeline.
-
-          `build` writes mod2schema output to this file, `merge` mutates this file in place,
-          and schema2* stages read from this file as input.
-          Use relative path for repository-local workflows, or absolute path for CI/temp directories.
+          `build` writes mod2schema output to this file, `merge` mutates this file in place, and schema2* stages read from this file as input. Use relative path for repository-local workflows, or absolute path for CI/temp directories.
         examples:
           - schema.json
           - build/schema/config.schema.json
@@ -45,21 +41,18 @@ $defs:
         $ref: '#/$defs/Schema2DocStage'
         description: |-
           Schema2Doc renders documentation (list/table/html) from current `schema`.
-
           Use this stage for user-facing reference docs committed to repository.
         x-order: "40"
       schema2json:
         $ref: '#/$defs/Schema2JSONStage'
         description: |-
           Schema2JSON generates JSON example payload from current `schema`.
-
           This stage is useful for machine-readable fixtures and JSON examples in repositories, tests, and CI artifacts.
         x-order: "30"
       schema2yaml:
         $ref: '#/$defs/Schema2YAMLStage'
         description: |-
           Schema2YAML generates YAML example payload from current `schema`.
-
           This stage is useful for human-readable config examples and snippets.
         x-order: "50"
     required:
@@ -73,7 +66,6 @@ $defs:
         default: 2
         description: |-
           Indent sets indentation width for one nesting level.
-
           For `space`, this is number of spaces. For `tab`, this is number of tabs.
         minimum: 1
         type: integer
@@ -82,7 +74,6 @@ $defs:
         default: space
         description: |-
           IndentType sets indentation character for pretty JSON.
-
           `space` uses spaces. `tab` uses tabs.
         enum:
           - space
@@ -119,14 +110,12 @@ $defs:
         $ref: '#/$defs/MergeImportRename'
         description: |-
           Rename configures how imported definition names are transformed.
-
           Useful when source and target schemas use different naming conventions or when name collisions must be avoided.
         x-order: "4"
       source_defs:
         default: /$defs
         description: |-
           SourceDefs selects source object used as definition map.
-
           Import reads all direct child keys from this pointer and treats each key as one definition name to import.
         examples:
           - /components/schemas
@@ -136,9 +125,7 @@ $defs:
         default: /$defs
         description: |-
           TargetDefs selects destination object for imported definitions.
-
-          Use this when project keeps reusable definitions outside default `/$defs`
-          or when imported definitions must be isolated under dedicated subtree.
+          Use this when project keeps reusable definitions outside default `/$defs` or when imported definitions must be isolated under dedicated subtree.
         examples:
           - /components/schemas
           - /$defs/imported
@@ -155,10 +142,9 @@ $defs:
         default: none
         description: |-
           Mode selects rename strategy.
-
-            - `none` keeps original names.
-            - `prefix` prepends `value`.
-            - `suffix` appends `value`.
+          - `none` keeps original names.
+          - `prefix` prepends `value`.
+          - `suffix` appends `value`.
         enum:
           - none
           - prefix
@@ -179,9 +165,7 @@ $defs:
     properties:
       array:
         default: replace
-        description: |-
-          Array selects array behavior for deep-merge operations.
-          It controls whether arrays are replaced, appended, or appended uniquely.
+        description: Array selects array behavior for deep-merge operations. It controls whether arrays are replaced, appended, or appended uniquely.
         enum:
           - replace
           - append
@@ -192,10 +176,9 @@ $defs:
         default: replace
         description: |-
           Node selects primary operation for target node.
-
-            - `replace` replaces target node with source node.
-            - `merge` deep-merges source into target.
-            - `merge-defs` merges fields of source object into target object.
+          - `replace` replaces target node with source node.
+          - `merge` deep-merges source into target.
+          - `merge-defs` merges fields of source object into target object.
         enum:
           - replace
           - merge
@@ -204,9 +187,7 @@ $defs:
         x-order: "1"
       object:
         default: merge
-        description: |-
-          Object selects object behavior for deep-merge operations.
-          It controls whether source object members are merged or replace the target.
+        description: Object selects object behavior for deep-merge operations. It controls whether source object members are merged or replace the target.
         enum:
           - merge
           - replace
@@ -231,7 +212,6 @@ $defs:
       source:
         description: |-
           Source points to source node in source schema.
-
           Empty value means source schema root.
         examples:
           - /$defs/CommonConfig
@@ -240,7 +220,6 @@ $defs:
       target:
         description: |-
           Target points to destination node in working schema.
-
           Empty value means working schema root.
         examples:
           - /$defs/CommonConfig
@@ -258,10 +237,7 @@ $defs:
       imports:
         description: |-
           Imports lists high-level definition imports applied in order.
-
-          Each item imports entries from source defs object (for example `/$defs`)
-          into target defs object in current `schema` (also usually `/$defs`).
-          This is the convenient way to "pull shared type definitions" from other schema files without writing many manual patches.
+          Each item imports entries from source defs object (for example `/$defs`) into target defs object in current `schema` (also usually `/$defs`). This is the convenient way to "pull shared type definitions" from other schema files without writing many manual patches.
         items:
           $ref: '#/$defs/MergeImport'
         type: array
@@ -269,9 +245,7 @@ $defs:
       patches:
         description: |-
           Patches lists low-level merge actions applied in order.
-
-          Each patch copies or merges one source node from another schema file into current `schema`.
-          Items are applied top-to-bottom; later patches can overwrite results of earlier patches.
+          Each patch copies or merges one source node from another schema file into current `schema`. Items are applied top-to-bottom; later patches can overwrite results of earlier patches.
         items:
           $ref: '#/$defs/MergePatch'
         type: array
@@ -281,14 +255,152 @@ $defs:
         type: boolean
         x-order: "3"
     type: object
+  Mod2DocStage:
+    additionalProperties: false
+    description: Mod2DocStage describes documentation generation directly from Go source.
+    properties:
+      comments:
+        default: raw
+        description: Comments selects Go comment normalization independently of mod2schema.comments. Empty means raw; source and other reflection settings come from mod2schema.
+        enum:
+          - raw
+          - plain
+        type: string
+        x-order: "15"
+      description:
+        description: Description overrides top-level document description.
+        examples:
+          - Generated by CI pipeline.
+        type: string
+        x-order: "5"
+      footer:
+        default: false
+        description: Footer includes schemadoc version metadata in rendered documentation.
+        type: boolean
+        x-order: "12"
+      format:
+        description: |-
+          Format selects embedded example format for doc template.
+          Empty value disables embedded example block.
+        enum:
+          - json
+          - yaml
+        type: string
+        x-order: "8"
+      hide_extra_keywords:
+        description: |-
+          HideExtraKeywords disables "Other keywords" attribute row in rendered docs.
+          Internal keywords such as `x-order` are hidden regardless of this option.
+        type: boolean
+        x-order: "10"
+      json:
+        $ref: '#/$defs/JSONOutputOptions'
+        description: |-
+          JSON configures embedded JSON example formatting.
+          Used when `format: json`.
+        x-order: "11"
+      list_marker:
+        default: '*'
+        description: ListMarker controls unordered list marker normalization in rendered documents.
+        enum:
+          - '-'
+          - '*'
+        type: string
+        x-order: "6"
+      mode:
+        default: all
+        description: Mode selects embedded example generation mode for doc template.
+        enum:
+          - all
+          - required
+        type: string
+        x-order: "7"
+      output:
+        description: |-
+          Output is document output path.
+          When empty, build derives output from `schema` path and template metadata. Builtin list and table templates keep `.list` and `.table` suffixes; custom templates use their declared `output.extension` directly.
+        type: string
+        x-order: "1"
+      show_internal_keywords:
+        description: ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.
+        type: boolean
+        x-order: "11"
+      source_path:
+        description: |-
+          SourcePath overrides the source path shown in document metadata.
+          It does not affect the working schema file or schema processing.
+        examples:
+          - docs/config.schema.json
+        type: string
+        x-order: "13"
+      source_raw_path:
+        description: |-
+          SourceRawPath overrides the raw schema URL shown in document metadata.
+          When empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.
+        examples:
+          - https://raw.githubusercontent.com/acme/project/HEAD/schema.json
+        format: uri
+        type: string
+        x-order: "14"
+      template:
+        default: list
+        description: Template selects built-in document template.
+        enum:
+          - list
+          - table
+          - html
+        type: string
+        x-order: "2"
+      template_file:
+        description: |-
+          TemplateFile points to custom template file and overrides `template`.
+          Use this for project-specific layout and branding.
+        examples:
+          - templates/custom.md.gotmpl
+        type: string
+        x-order: "3"
+      title:
+        description: Title overrides top-level document heading.
+        examples:
+          - schema reference
+          - Project Config Reference
+        type: string
+        x-order: "4"
+      wrap:
+        default: 80
+        description: Wrap sets wrap width for plain-text description blocks.
+        minimum: 1
+        type: integer
+        x-order: "9"
+      yaml:
+        $ref: '#/$defs/YAMLOutputOptions'
+        description: |-
+          YAML configures embedded YAML example formatting.
+          Used when `format: yaml`.
+        x-order: "12"
+    type: object
   Mod2SchemaStage:
     additionalProperties: false
     description: Mod2SchemaStage describes schema generation from one Go type.
     properties:
+      comments:
+        default: raw
+        description: Comments selects raw Go comments or canonical plain text for schema descriptions.
+        enum:
+          - raw
+          - plain
+        type: string
+        x-order: "7"
       json:
         $ref: '#/$defs/JSONOutputOptions'
         description: JSON configures formatting of generated schema file.
-        x-order: "5"
+        x-order: "6"
+      jsonschema_version:
+        description: JSONSchemaVersion overrides the pinned github.com/invopop/jsonschema helper version. The sibling mod2doc stage inherits this version and all source/reflection settings.
+        examples:
+          - v0.14.0
+        type: string
+        x-order: "8"
       key_namer:
         default: none
         description: KeyNamer controls fallback field-name strategy when struct field has no explicit `json` tag.
@@ -303,9 +415,7 @@ $defs:
         default: .
         description: |-
           Module selects reflection source.
-
-          Local mode: existing directory on disk with go.mod.
-          Remote mode: module path with explicit version suffix (`@vX.Y.Z` or `@latest`).
+          Local mode: existing directory on disk with go.mod. Remote mode: module path with explicit version suffix (`@vX.Y.Z` or `@latest`).
         examples:
           - ../project
           - github.com/acme/project@v1.2.3
@@ -314,12 +424,18 @@ $defs:
       package:
         description: |-
           Package is import path where target type is declared.
-
           Keep empty when type is declared in module root package.
         examples:
           - github.com/acme/project/pkg/config
         type: string
         x-order: "2"
+      root_id:
+        description: RootID overrides the automatically generated root `$id` in the output JSON Schema. It must be an absolute URI without a fragment. Leave it empty to use the generator's default.
+        examples:
+          - https://example.com/schema.json
+        format: uri
+        type: string
+        x-order: "5"
       type:
         description: Type is root Go type name to reflect into schema.
         examples:
@@ -349,7 +465,6 @@ $defs:
       format:
         description: |-
           Format selects embedded example format for doc template.
-
           Empty value disables embedded example block.
         enum:
           - json
@@ -359,7 +474,6 @@ $defs:
       hide_extra_keywords:
         description: |-
           HideExtraKeywords disables "Other keywords" attribute row in rendered docs.
-
           Internal keywords such as `x-order` are hidden regardless of this option.
         type: boolean
         x-order: "10"
@@ -367,7 +481,6 @@ $defs:
         $ref: '#/$defs/JSONOutputOptions'
         description: |-
           JSON configures embedded JSON example formatting.
-
           Used when `format: json`.
         x-order: "11"
       list_marker:
@@ -389,16 +502,30 @@ $defs:
       output:
         description: |-
           Output is document output path.
-
-          When empty, build derives output from `schema` path and template metadata.
-          Builtin list and table templates keep `.list` and `.table` suffixes;
-          custom templates use their declared `output.extension` directly.
+          When empty, build derives output from `schema` path and template metadata. Builtin list and table templates keep `.list` and `.table` suffixes; custom templates use their declared `output.extension` directly.
         type: string
         x-order: "1"
       show_internal_keywords:
         description: ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.
         type: boolean
         x-order: "11"
+      source_path:
+        description: |-
+          SourcePath overrides the source path shown in document metadata.
+          It does not affect the working schema file or schema processing.
+        examples:
+          - docs/config.schema.json
+        type: string
+        x-order: "13"
+      source_raw_path:
+        description: |-
+          SourceRawPath overrides the raw schema URL shown in document metadata.
+          When empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.
+        examples:
+          - https://raw.githubusercontent.com/acme/project/HEAD/schema.json
+        format: uri
+        type: string
+        x-order: "14"
       template:
         default: list
         description: Template selects built-in document template.
@@ -411,7 +538,6 @@ $defs:
       template_file:
         description: |-
           TemplateFile points to custom template file and overrides `template`.
-
           Use this for project-specific layout and branding.
         examples:
           - templates/custom.md.gotmpl
@@ -434,7 +560,6 @@ $defs:
         $ref: '#/$defs/YAMLOutputOptions'
         description: |-
           YAML configures embedded YAML example formatting.
-
           Used when `format: yaml`.
         x-order: "12"
     type: object
@@ -457,9 +582,8 @@ $defs:
       output:
         description: |-
           Output is output file path.
-
           When empty, build derives output from `schema` path:
-            - schema2json -> `<schema-base>.json`
+          - schema2json -> `<schema-base>.json`
         type: string
         x-order: "1"
     type: object
@@ -478,9 +602,8 @@ $defs:
       output:
         description: |-
           Output is output file path.
-
           When empty, build derives output from `schema` path:
-            - schema2yaml -> `<schema-base>.yaml`
+          - schema2yaml -> `<schema-base>.yaml`
         type: string
         x-order: "1"
       yaml:
@@ -524,6 +647,14 @@ $defs:
           - all
         type: string
         x-order: "5"
+      spacing:
+        default: compact
+        description: Spacing selects compact or paragraph-preserving annotation comments.
+        enum:
+          - compact
+          - full
+        type: string
+        x-order: "7"
       titles:
         default: true
         description: Titles enables comments sourced from schema titles.

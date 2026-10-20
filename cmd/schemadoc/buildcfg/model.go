@@ -10,10 +10,10 @@ package buildcfg
  * They are used to generate JSON Schema descriptions (IDE hints/autocomplete) and Markdown docs.
  */
 
-// Config describes one build pipeline document.
+// Config describes one build document with stage order
+// mod2schema -> mod2doc -> merge -> schema2json -> schema2doc -> schema2yaml.
 //
-// Each stage is optional. Build executes declared stages in fixed order:
-// mod2schema -> merge -> schema2json -> schema2doc -> schema2yaml.
+// Each stage is optional. Build executes declared stages in this fixed order.
 // Stage order does not depend on key order in YAML.
 type Config struct {
 	// Mod2Schema reflects one Go type into JSON Schema and writes result to `schema`.
@@ -21,6 +21,12 @@ type Config struct {
 	// When declared, this stage always runs first.
 	// Use it when schema must be generated from source code before merge/export stages.
 	Mod2Schema *Mod2SchemaStage `json:"mod2schema,omitempty" yaml:"mod2schema,omitempty" jsonschema_extras:"x-order=10"`
+
+	// Mod2Doc renders documentation directly from the sibling mod2schema Go target.
+	//
+	// Requires mod2schema in the same document and runs immediately after it.
+	// Uses raw Go comments by default and does not read the working schema or merge results.
+	Mod2Doc *Mod2DocStage `json:"mod2doc,omitempty" yaml:"mod2doc,omitempty" jsonschema_extras:"x-order=15"`
 
 	// Merge applies import/patch actions over current `schema` file.
 	//
@@ -132,6 +138,23 @@ type Mod2SchemaStage struct {
 	// RootID overrides the automatically generated root `$id` in the output JSON Schema.
 	// It must be an absolute URI without a fragment. Leave it empty to use the generator's default.
 	RootID string `json:"root_id,omitempty" yaml:"root_id,omitempty" jsonschema_extras:"x-order=5" jsonschema:"format=uri,example=https://example.com/schema.json"`
+
+	// Comments selects raw Go comments or canonical plain text for schema descriptions.
+	Comments string `json:"comments,omitempty" yaml:"comments,omitempty" jsonschema_extras:"x-order=7" jsonschema:"enum=raw,enum=plain,default=raw"`
+
+	// JSONSchemaVersion overrides the pinned github.com/invopop/jsonschema helper version.
+	// The sibling mod2doc stage inherits this version and all source/reflection settings.
+	JSONSchemaVersion string `json:"jsonschema_version,omitempty" yaml:"jsonschema_version,omitempty" jsonschema_extras:"x-order=8" jsonschema:"example=v0.14.0"`
+}
+
+// Mod2DocStage describes documentation generation directly from Go source.
+type Mod2DocStage struct {
+	// Comments selects Go comment normalization independently of mod2schema.comments.
+	// Empty means raw; source and other reflection settings come from mod2schema.
+	Comments string `json:"comments,omitempty" yaml:"comments,omitempty" jsonschema_extras:"x-order=15" jsonschema:"enum=raw,enum=plain,default=raw"`
+
+	// Schema2DocStage shares document rendering options without changing YAML shape.
+	Schema2DocStage `yaml:",inline"`
 }
 
 // MergeStage describes merge execution over working schema.

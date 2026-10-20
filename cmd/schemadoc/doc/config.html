@@ -201,7 +201,7 @@
 <section class="panel">
       <dl class="meta">
 <dt>Source file</dt>
-<dd><a href="https://github.com/woozymasta/schemadoc/blob/HEAD/cmd/schemadoc/doc/config.schema.json"><code>cmd/schemadoc/doc/config.schema.json</code></a></dd>
+<dd><a href="https://github.com/woozymasta/schemadoc/blob/HEAD/cmd/schemadoc/buildcfg/model.go"><code>cmd/schemadoc/buildcfg/model.go</code></a></dd>
 <dt>Source URL</dt>
         <dd><a href="https://raw.githubusercontent.com/woozymasta/schemadoc/HEAD/cmd/schemadoc/doc/config.schema.json">Raw schema URL</a></dd>
 <dt>Schema identifier</dt>
@@ -223,6 +223,13 @@
 <li><a href="#jsonoutputoptions">JSONOutputOptions</a></li>
 </ul>
 </li>
+<li><a href="#mod2docstage">Mod2DocStage</a><ul>
+<li><a href="#yamloutputoptions">YAMLOutputOptions</a><ul>
+<li><a href="#yamlcommentoptions">YAMLCommentOptions</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a href="#mergestage">MergeStage</a><ul>
 <li><a href="#mergepatch">MergePatch</a><ul>
 <li><a href="#mergeop">MergeOp</a></li>
@@ -235,13 +242,7 @@
 </ul>
 </li>
 <li><a href="#schema2jsonstage">Schema2JSONStage</a></li>
-<li><a href="#schema2docstage">Schema2DocStage</a><ul>
-<li><a href="#yamloutputoptions">YAMLOutputOptions</a><ul>
-<li><a href="#yamlcommentoptions">YAMLCommentOptions</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li><a href="#schema2docstage">Schema2DocStage</a></li>
 <li><a href="#schema2yamlstage">Schema2YAMLStage</a></li>
 </ul>
 </li>
@@ -253,11 +254,11 @@
       <details class="definition" open>
         <summary>Config</summary>
         <div class="def-body" id="config">
-<p>Config describes one build pipeline document.</p>
+<p>Config describes one build document with stage order mod2schema -&gt; mod2doc -&gt; merge -&gt; schema2json -&gt; schema2doc -&gt; schema2yaml.</p>
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 7</li>
+<li><strong>Properties:</strong> 8</li>
 <li><strong>Additional properties:</strong> boolean schema=false</li>
 </ul>
       </div>
@@ -291,6 +292,16 @@
 <ul class="attr-list">
 <li><strong>Required:</strong> no</li>
 <li><strong>Reference:</strong> <a href="#mod2schemastage"><code>Mod2SchemaStage</code></a> (<code>#/$defs/Mod2SchemaStage</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="configmod2docstage">Config.Mod2DocStage</h3>
+        <p><strong>Key:</strong> <code>mod2doc</code></p>
+<p>Mod2Doc renders documentation directly from the sibling mod2schema Go target.</p>
+<p>Requires mod2schema in the same document and runs immediately after it. Uses raw Go comments by default and does not read the working schema or merge results.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#mod2docstage"><code>Mod2DocStage</code></a> (<code>#/$defs/Mod2DocStage</code>)</li>
 </ul>
 </article>
 <article class="card">
@@ -344,7 +355,7 @@
 <div class="card">
         <ul class="attr-list">
 <li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 6</li>
+<li><strong>Properties:</strong> 8</li>
 <li><strong>Additional properties:</strong> boolean schema=false</li>
 </ul>
       </div>
@@ -419,6 +430,29 @@
 <li><strong>Reference:</strong> <a href="#jsonoutputoptions"><code>JSONOutputOptions</code></a> (<code>#/$defs/JSONOutputOptions</code>)</li>
 </ul>
 </article>
+<article class="card">
+        <h3 id="mod2schemastagecomments">Mod2SchemaStage.comments</h3>
+        <p><strong>Key:</strong> <code>comments</code></p>
+<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>comments</code></p>
+<p>Comments selects raw Go comments or canonical plain text for schema descriptions.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>raw</code></li>
+<li><strong>Enum:</strong> <code>raw</code>, <code>plain</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2schemastagejsonschema_version">Mod2SchemaStage.jsonschema_version</h3>
+        <p><strong>Key:</strong> <code>jsonschema_version</code></p>
+<p><strong>Path:</strong> <a href="#configmod2schemastage"><code>mod2schema</code></a>.<code>jsonschema_version</code></p>
+<p>JSONSchemaVersion overrides the pinned github.com/invopop/jsonschema helper version. The sibling mod2doc stage inherits this version and all source/reflection settings.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>v0.14.0</code></li>
+</ul>
+</article>
 </div>
       </details>
     </section>
@@ -439,6 +473,7 @@
         <p><strong>Key:</strong> <code>indent</code></p>
 <p><strong>Paths:</strong></p>
         <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstagejsonoutputoptions"><code>json</code></a>.<code>indent</code></li>
 <li><a href="#configmod2schemastage"><code>mod2schema</code></a>.<a href="#mod2schemastagejsonoutputoptions"><code>json</code></a>.<code>indent</code></li>
 <li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstagejsonoutputoptions"><code>json</code></a>.<code>indent</code></li>
 <li><a href="#configschema2jsonstage"><code>schema2json</code></a>.<a href="#schema2jsonstagejsonoutputoptions"><code>json</code></a>.<code>indent</code></li>
@@ -457,6 +492,7 @@
         <p><strong>Key:</strong> <code>indent_type</code></p>
 <p><strong>Paths:</strong></p>
         <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstagejsonoutputoptions"><code>json</code></a>.<code>indent_type</code></li>
 <li><a href="#configmod2schemastage"><code>mod2schema</code></a>.<a href="#mod2schemastagejsonoutputoptions"><code>json</code></a>.<code>indent_type</code></li>
 <li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstagejsonoutputoptions"><code>json</code></a>.<code>indent_type</code></li>
 <li><a href="#configschema2jsonstage"><code>schema2json</code></a>.<a href="#schema2jsonstagejsonoutputoptions"><code>json</code></a>.<code>indent_type</code></li>
@@ -475,6 +511,7 @@
         <p><strong>Key:</strong> <code>minify</code></p>
 <p><strong>Paths:</strong></p>
         <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstagejsonoutputoptions"><code>json</code></a>.<code>minify</code></li>
 <li><a href="#configmod2schemastage"><code>mod2schema</code></a>.<a href="#mod2schemastagejsonoutputoptions"><code>json</code></a>.<code>minify</code></li>
 <li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstagejsonoutputoptions"><code>json</code></a>.<code>minify</code></li>
 <li><a href="#configschema2jsonstage"><code>schema2json</code></a>.<a href="#schema2jsonstagejsonoutputoptions"><code>json</code></a>.<code>minify</code></li>
@@ -483,6 +520,394 @@
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>boolean</code></li>
 <li><strong>Required:</strong> no</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>Mod2DocStage</summary>
+        <div class="def-body" id="mod2docstage">
+<p>Mod2DocStage describes documentation generation directly from Go source.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 17</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="mod2docstageoutput">Mod2DocStage.output</h3>
+        <p><strong>Key:</strong> <code>output</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>output</code></p>
+<p>Output is document output path.</p>
+<p>When empty, build derives output from <code>schema</code> path and template metadata. Builtin list and table templates keep <code>.list</code> and <code>.table</code> suffixes; custom templates use their declared <code>output.extension</code> directly.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagetemplate">Mod2DocStage.template</h3>
+        <p><strong>Key:</strong> <code>template</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>template</code></p>
+<p>Template selects built-in document template.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>list</code></li>
+<li><strong>Enum:</strong> <code>list</code>, <code>table</code>, <code>html</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagetemplate_file">Mod2DocStage.template_file</h3>
+        <p><strong>Key:</strong> <code>template_file</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>template_file</code></p>
+<p>TemplateFile points to custom template file and overrides <code>template</code>.</p>
+<p>Use this for project-specific layout and branding.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>templates/custom.md.gotmpl</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagetitle">Mod2DocStage.title</h3>
+        <p><strong>Key:</strong> <code>title</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>title</code></p>
+<p>Title overrides top-level document heading.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>schema reference</code>, <code>Project Config Reference</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagedescription">Mod2DocStage.description</h3>
+        <p><strong>Key:</strong> <code>description</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>description</code></p>
+<p>Description overrides top-level document description.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>Generated by CI pipeline.</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagelist_marker">Mod2DocStage.list_marker</h3>
+        <p><strong>Key:</strong> <code>list_marker</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>list_marker</code></p>
+<p>ListMarker controls unordered list marker normalization in rendered documents.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>*</code></li>
+<li><strong>Enum:</strong> <code>-</code>, <code>*</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagemode">Mod2DocStage.mode</h3>
+        <p><strong>Key:</strong> <code>mode</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>mode</code></p>
+<p>Mode selects embedded example generation mode for doc template.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>all</code></li>
+<li><strong>Enum:</strong> <code>all</code>, <code>required</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstageformat">Mod2DocStage.format</h3>
+        <p><strong>Key:</strong> <code>format</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>format</code></p>
+<p>Format selects embedded example format for doc template.</p>
+<p>Empty value disables embedded example block.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Enum:</strong> <code>json</code>, <code>yaml</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagewrap">Mod2DocStage.wrap</h3>
+        <p><strong>Key:</strong> <code>wrap</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>wrap</code></p>
+<p>Wrap sets wrap width for plain-text description blocks.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>80</code></li>
+<li><strong>Constraints:</strong> <code>minimum=1</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagehide_extra_keywords">Mod2DocStage.hide_extra_keywords</h3>
+        <p><strong>Key:</strong> <code>hide_extra_keywords</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>hide_extra_keywords</code></p>
+<p>HideExtraKeywords disables &#34;Other keywords&#34; attribute row in rendered docs.</p>
+<p>Internal keywords such as <code>x-order</code> are hidden regardless of this option.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagejsonoutputoptions">Mod2DocStage.JSONOutputOptions</h3>
+        <p><strong>Key:</strong> <code>json</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>json</code></p>
+<p>JSON configures embedded JSON example formatting.</p>
+<p>Used when <code>format: json</code>.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#jsonoutputoptions"><code>JSONOutputOptions</code></a> (<code>#/$defs/JSONOutputOptions</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstageshow_internal_keywords">Mod2DocStage.show_internal_keywords</h3>
+        <p><strong>Key:</strong> <code>show_internal_keywords</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>show_internal_keywords</code></p>
+<p>ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagefooter">Mod2DocStage.footer</h3>
+        <p><strong>Key:</strong> <code>footer</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>footer</code></p>
+<p>Footer includes schemadoc version metadata in rendered documentation.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>false</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstageyamloutputoptions">Mod2DocStage.YAMLOutputOptions</h3>
+        <p><strong>Key:</strong> <code>yaml</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>yaml</code></p>
+<p>YAML configures embedded YAML example formatting.</p>
+<p>Used when <code>format: yaml</code>.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#yamloutputoptions"><code>YAMLOutputOptions</code></a> (<code>#/$defs/YAMLOutputOptions</code>)</li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagesource_path">Mod2DocStage.source_path</h3>
+        <p><strong>Key:</strong> <code>source_path</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>source_path</code></p>
+<p>SourcePath overrides the source path shown in document metadata.</p>
+<p>It does not affect the working schema file or schema processing.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>docs/config.schema.json</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagesource_raw_path">Mod2DocStage.source_raw_path</h3>
+        <p><strong>Key:</strong> <code>source_raw_path</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>source_raw_path</code></p>
+<p>SourceRawPath overrides the raw schema URL shown in document metadata.</p>
+<p>When empty, schemadoc derives the URL from SourcePath and the schema <code>$id</code> when possible.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Examples:</strong> <code>https://raw.githubusercontent.com/acme/project/HEAD/schema.json</code></li>
+<li><strong>Format:</strong> <code>uri</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="mod2docstagecomments">Mod2DocStage.comments</h3>
+        <p><strong>Key:</strong> <code>comments</code></p>
+<p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>comments</code></p>
+<p>Comments selects Go comment normalization independently of mod2schema.comments. Empty means raw; source and other reflection settings come from mod2schema.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>raw</code></li>
+<li><strong>Enum:</strong> <code>raw</code>, <code>plain</code></li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>YAMLOutputOptions</summary>
+        <div class="def-body" id="yamloutputoptions">
+<p>YAMLOutputOptions configures YAML output formatting and comments.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 2</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="yamloutputoptionsindent">YAMLOutputOptions.indent</h3>
+        <p><strong>Key:</strong> <code>indent</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstageyamloutputoptions"><code>yaml</code></a>.<code>indent</code></li>
+<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<code>indent</code></li>
+<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<code>indent</code></li>
+</ul>
+<p>Indent sets YAML indentation width for one nesting level.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>integer</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>2</code></li>
+<li><strong>Constraints:</strong> <code>minimum=1</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="yamloutputoptionsyamlcommentoptions">YAMLOutputOptions.YAMLCommentOptions</h3>
+        <p><strong>Key:</strong> <code>comments</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstageyamloutputoptions"><code>yaml</code></a>.<code>comments</code></li>
+<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<code>comments</code></li>
+<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<code>comments</code></li>
+</ul>
+<p>Comments configures schema-driven comments above YAML keys.</p>
+<ul class="attr-list">
+<li><strong>Required:</strong> no</li>
+<li><strong>Reference:</strong> <a href="#yamlcommentoptions"><code>YAMLCommentOptions</code></a> (<code>#/$defs/YAMLCommentOptions</code>)</li>
+</ul>
+</article>
+</div>
+      </details>
+    </section>
+<section>
+      <details class="definition">
+        <summary>YAMLCommentOptions</summary>
+        <div class="def-body" id="yamlcommentoptions">
+<p>YAMLCommentOptions configures independent schema annotation comments.</p>
+<div class="card">
+        <ul class="attr-list">
+<li><strong>Type:</strong> <code>object</code></li>
+<li><strong>Properties:</strong> 7</li>
+<li><strong>Additional properties:</strong> boolean schema=false</li>
+</ul>
+      </div>
+<article class="card">
+        <h3 id="yamlcommentoptionstitles">YAMLCommentOptions.titles</h3>
+        <p><strong>Key:</strong> <code>titles</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>titles</code></li>
+<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>titles</code></li>
+<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>titles</code></li>
+</ul>
+<p>Titles enables comments sourced from schema titles.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>true</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="yamlcommentoptionsdescriptions">YAMLCommentOptions.descriptions</h3>
+        <p><strong>Key:</strong> <code>descriptions</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>descriptions</code></li>
+<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>descriptions</code></li>
+<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>descriptions</code></li>
+</ul>
+<p>Descriptions enables comments sourced from schema descriptions.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>true</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="yamlcommentoptionsdefaults">YAMLCommentOptions.defaults</h3>
+        <p><strong>Key:</strong> <code>defaults</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>defaults</code></li>
+<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>defaults</code></li>
+<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>defaults</code></li>
+</ul>
+<p>Defaults enables comments sourced from schema defaults.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>true</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="yamlcommentoptionsenums">YAMLCommentOptions.enums</h3>
+        <p><strong>Key:</strong> <code>enums</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>enums</code></li>
+<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>enums</code></li>
+<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>enums</code></li>
+</ul>
+<p>Enums enables comments listing schema enum values.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>boolean</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>true</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="yamlcommentoptionsexamples">YAMLCommentOptions.examples</h3>
+        <p><strong>Key:</strong> <code>examples</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>examples</code></li>
+<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>examples</code></li>
+<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>examples</code></li>
+</ul>
+<p>Examples selects scalar, all, or no schema examples.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>scalar</code></li>
+<li><strong>Enum:</strong> <code>none</code>, <code>scalar</code>, <code>all</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="yamlcommentoptionsexample_format">YAMLCommentOptions.example_format</h3>
+        <p><strong>Key:</strong> <code>example_format</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>example_format</code></li>
+<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>example_format</code></li>
+<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>example_format</code></li>
+</ul>
+<p>ExampleFormat selects inline or block annotation value formatting.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>block</code></li>
+<li><strong>Enum:</strong> <code>inline</code>, <code>block</code></li>
+</ul>
+</article>
+<article class="card">
+        <h3 id="yamlcommentoptionsspacing">YAMLCommentOptions.spacing</h3>
+        <p><strong>Key:</strong> <code>spacing</code></p>
+<p><strong>Paths:</strong></p>
+        <ul class="paths">
+<li><a href="#configmod2docstage"><code>mod2doc</code></a>.<a href="#mod2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>spacing</code></li>
+<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>spacing</code></li>
+<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>spacing</code></li>
+</ul>
+<p>Spacing selects compact or paragraph-preserving annotation comments.</p>
+<ul class="attr-list">
+<li><strong>Type:</strong> <code>string</code></li>
+<li><strong>Required:</strong> no</li>
+<li><strong>Default:</strong> <code>compact</code></li>
+<li><strong>Enum:</strong> <code>compact</code>, <code>full</code></li>
 </ul>
 </article>
 </div>
@@ -1015,174 +1440,6 @@
     </section>
 <section>
       <details class="definition">
-        <summary>YAMLOutputOptions</summary>
-        <div class="def-body" id="yamloutputoptions">
-<p>YAMLOutputOptions configures YAML output formatting and comments.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 2</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="yamloutputoptionsindent">YAMLOutputOptions.indent</h3>
-        <p><strong>Key:</strong> <code>indent</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<code>indent</code></li>
-<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<code>indent</code></li>
-</ul>
-<p>Indent sets YAML indentation width for one nesting level.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>integer</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>2</code></li>
-<li><strong>Constraints:</strong> <code>minimum=1</code></li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="yamloutputoptionsyamlcommentoptions">YAMLOutputOptions.YAMLCommentOptions</h3>
-        <p><strong>Key:</strong> <code>comments</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<code>comments</code></li>
-<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<code>comments</code></li>
-</ul>
-<p>Comments configures schema-driven comments above YAML keys.</p>
-<ul class="attr-list">
-<li><strong>Required:</strong> no</li>
-<li><strong>Reference:</strong> <a href="#yamlcommentoptions"><code>YAMLCommentOptions</code></a> (<code>#/$defs/YAMLCommentOptions</code>)</li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
-        <summary>YAMLCommentOptions</summary>
-        <div class="def-body" id="yamlcommentoptions">
-<p>YAMLCommentOptions configures independent schema annotation comments.</p>
-<div class="card">
-        <ul class="attr-list">
-<li><strong>Type:</strong> <code>object</code></li>
-<li><strong>Properties:</strong> 7</li>
-<li><strong>Additional properties:</strong> boolean schema=false</li>
-</ul>
-      </div>
-<article class="card">
-        <h3 id="yamlcommentoptionstitles">YAMLCommentOptions.titles</h3>
-        <p><strong>Key:</strong> <code>titles</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>titles</code></li>
-<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>titles</code></li>
-</ul>
-<p>Titles enables comments sourced from schema titles.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>true</code></li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="yamlcommentoptionsdescriptions">YAMLCommentOptions.descriptions</h3>
-        <p><strong>Key:</strong> <code>descriptions</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>descriptions</code></li>
-<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>descriptions</code></li>
-</ul>
-<p>Descriptions enables comments sourced from schema descriptions.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>true</code></li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="yamlcommentoptionsdefaults">YAMLCommentOptions.defaults</h3>
-        <p><strong>Key:</strong> <code>defaults</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>defaults</code></li>
-<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>defaults</code></li>
-</ul>
-<p>Defaults enables comments sourced from schema defaults.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>true</code></li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="yamlcommentoptionsenums">YAMLCommentOptions.enums</h3>
-        <p><strong>Key:</strong> <code>enums</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>enums</code></li>
-<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>enums</code></li>
-</ul>
-<p>Enums enables comments listing schema enum values.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>boolean</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>true</code></li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="yamlcommentoptionsexamples">YAMLCommentOptions.examples</h3>
-        <p><strong>Key:</strong> <code>examples</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>examples</code></li>
-<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>examples</code></li>
-</ul>
-<p>Examples selects scalar, all, or no schema examples.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>scalar</code></li>
-<li><strong>Enum:</strong> <code>none</code>, <code>scalar</code>, <code>all</code></li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="yamlcommentoptionsexample_format">YAMLCommentOptions.example_format</h3>
-        <p><strong>Key:</strong> <code>example_format</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>example_format</code></li>
-<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>example_format</code></li>
-</ul>
-<p>ExampleFormat selects inline or block annotation value formatting.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>block</code></li>
-<li><strong>Enum:</strong> <code>inline</code>, <code>block</code></li>
-</ul>
-</article>
-<article class="card">
-        <h3 id="yamlcommentoptionsspacing">YAMLCommentOptions.spacing</h3>
-        <p><strong>Key:</strong> <code>spacing</code></p>
-<p><strong>Paths:</strong></p>
-        <ul class="paths">
-<li><a href="#configschema2docstage"><code>schema2doc</code></a>.<a href="#schema2docstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>spacing</code></li>
-<li><a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<a href="#schema2yamlstageyamloutputoptions"><code>yaml</code></a>.<a href="#yamloutputoptionsyamlcommentoptions"><code>comments</code></a>.<code>spacing</code></li>
-</ul>
-<p>Spacing selects compact or paragraph-preserving annotation comments.</p>
-<ul class="attr-list">
-<li><strong>Type:</strong> <code>string</code></li>
-<li><strong>Required:</strong> no</li>
-<li><strong>Default:</strong> <code>compact</code></li>
-<li><strong>Enum:</strong> <code>compact</code>, <code>full</code></li>
-</ul>
-</article>
-</div>
-      </details>
-    </section>
-<section>
-      <details class="definition">
         <summary>Schema2YAMLStage</summary>
         <div class="def-body" id="schema2yamlstage">
 <p>Schema2YAMLStage describes schema2yaml stage.</p>
@@ -1281,6 +1538,119 @@ mod2schema:
     indent_type: space
     # Minify enables compact one-line JSON output without indentation.
     minify: false
+  # Comments selects raw Go comments or canonical plain text for schema descriptions.
+  # Default: raw
+  # Allowed values: raw, plain
+  comments: raw
+  # JSONSchemaVersion overrides the pinned github.com/invopop/jsonschema helper version.
+  # The sibling mod2doc stage inherits this version and all source/reflection settings.
+  # Example: v0.14.0
+  jsonschema_version: v0.14.0
+# Mod2Doc renders documentation directly from the sibling mod2schema Go target.
+# Requires mod2schema in the same document and runs immediately after it.
+# Uses raw Go comments by default and does not read the working schema or merge results.
+mod2doc:
+  # Output is document output path.
+  # When empty, build derives output from `schema` path and template metadata.
+  # Builtin list and table templates keep `.list` and `.table` suffixes;
+  # custom templates use their declared `output.extension` directly.
+  output: &lt;string&gt;
+  # Template selects built-in document template.
+  # Default: list
+  # Allowed values: list, table, html
+  template: list
+  # TemplateFile points to custom template file and overrides `template`.
+  # Use this for project-specific layout and branding.
+  # Example: templates/custom.md.gotmpl
+  template_file: templates/custom.md.gotmpl
+  # Title overrides top-level document heading.
+  # Example: schema reference
+  title: schema reference
+  # Description overrides top-level document description.
+  # Example: Generated by CI pipeline.
+  description: Generated by CI pipeline.
+  # ListMarker controls unordered list marker normalization in rendered documents.
+  # Default: *
+  # Allowed values: -, *
+  list_marker: &#39;*&#39;
+  # Mode selects embedded example generation mode for doc template.
+  # Default: all
+  # Allowed values: all, required
+  mode: all
+  # Format selects embedded example format for doc template.
+  # Empty value disables embedded example block.
+  # Allowed values: json, yaml
+  format: json
+  # Wrap sets wrap width for plain-text description blocks.
+  # Default: 80
+  wrap: 80
+  # HideExtraKeywords disables &#34;Other keywords&#34; attribute row in rendered docs.
+  # Internal keywords such as `x-order` are hidden regardless of this option.
+  hide_extra_keywords: false
+  # JSON configures embedded JSON example formatting.
+  # Used when `format: json`.
+  json:
+    # Indent sets indentation width for one nesting level.
+    # For `space`, this is number of spaces. For `tab`, this is number of tabs.
+    # Default: 2
+    indent: 2
+    # IndentType sets indentation character for pretty JSON.
+    # `space` uses spaces. `tab` uses tabs.
+    # Default: space
+    # Allowed values: space, tab
+    indent_type: space
+    # Minify enables compact one-line JSON output without indentation.
+    minify: false
+  # ShowInternalKeywords includes renderer-specific schema keywords in rendered docs.
+  show_internal_keywords: false
+  # Footer includes schemadoc version metadata in rendered documentation.
+  # Default: false
+  footer: false
+  # YAML configures embedded YAML example formatting.
+  # Used when `format: yaml`.
+  yaml:
+    # Indent sets YAML indentation width for one nesting level.
+    # Default: 2
+    indent: 2
+    # Comments configures schema-driven comments above YAML keys.
+    comments:
+      # Titles enables comments sourced from schema titles.
+      # Default: true
+      titles: true
+      # Descriptions enables comments sourced from schema descriptions.
+      # Default: true
+      descriptions: true
+      # Defaults enables comments sourced from schema defaults.
+      # Default: true
+      defaults: true
+      # Enums enables comments listing schema enum values.
+      # Default: true
+      enums: true
+      # Examples selects scalar, all, or no schema examples.
+      # Default: scalar
+      # Allowed values: none, scalar, all
+      examples: scalar
+      # ExampleFormat selects inline or block annotation value formatting.
+      # Default: block
+      # Allowed values: inline, block
+      example_format: block
+      # Spacing selects compact or paragraph-preserving annotation comments.
+      # Default: compact
+      # Allowed values: compact, full
+      spacing: compact
+  # SourcePath overrides the source path shown in document metadata.
+  # It does not affect the working schema file or schema processing.
+  # Example: docs/config.schema.json
+  source_path: docs/config.schema.json
+  # SourceRawPath overrides the raw schema URL shown in document metadata.
+  # When empty, schemadoc derives the URL from SourcePath and the schema `$id` when possible.
+  # Example: https://raw.githubusercontent.com/acme/project/HEAD/schema.json
+  source_raw_path: https://raw.githubusercontent.com/acme/project/HEAD/schema.json
+  # Comments selects Go comment normalization independently of mod2schema.comments.
+  # Empty means raw; source and other reflection settings come from mod2schema.
+  # Default: raw
+  # Allowed values: raw, plain
+  comments: raw
 # Merge applies import/patch actions over current `schema` file.
 # When both mod2schema and merge are declared, merge always runs after mod2schema.
 # Use it to import shared definitions or patch fragments from other schema files.

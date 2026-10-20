@@ -78,8 +78,8 @@ Each YAML document describes one run with ordered stages and outputs.
 Config format is documented in [config.table.md][],
 and example config is in [config.example.yaml][].
 
-Stages run in fixed order:  
-`mod2schema -> merge -> schema2json -> schema2doc -> schema2yaml`.  
+Stages run in fixed order:
+`mod2schema -> mod2doc -> merge -> schema2json -> schema2doc -> schema2yaml`.
 Execution stops on the first error.
 
 Behavior:
@@ -88,6 +88,25 @@ Behavior:
 * `--index 0` runs all YAML documents in file order
 * `--index 1..N` runs one selected YAML document
 * `check: true` in config enables validation mode (no rewrites)
+* module reflection stages share one prepared generator for the build run
+* `mod2doc` requires `mod2schema` in the same document and inherits its source,
+  type, key namer, root ID, and helper dependency version
+* `mod2doc.comments` defaults to `raw`, independently of `mod2schema.comments`
+* `mod2doc` renders Go source through an in-memory schema;
+  `schema2doc` renders the working schema, including merge results
+
+Generate a plain-description schema and documentation from raw Go comments:
+
+```yaml
+schema: schemas/config.schema.json
+mod2schema:
+  module: .
+  type: Config
+  comments: plain
+mod2doc:
+  template: table
+  output: docs/config.md
+```
 
 Examples:
 

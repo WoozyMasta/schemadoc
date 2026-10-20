@@ -22,10 +22,16 @@ and this project adheres to [Semantic Versioning][].
   and `--comments plain` for `mod2schema` and `mod2doc`.
 * Reusable `modschema.Generator` sessions
   with prepared helper workspaces and explicit cleanup.
+* Build `mod2doc` stage inheriting its Go target from `mod2schema`,
+  with independent raw/plain comments and write/check output modes.
+* Build `mod2schema.comments` and `mod2schema.jsonschema_version` settings.
 
 ### Changed
 
 * Cache successful local Go version probes without temporary directories.
+* Share one module schema generator across all selected build documents.
+* Generate the build config schema with plain descriptions
+  and its documentation directly from raw Go comments.
 
 ## [0.10.1][] - 2026-10-20
 

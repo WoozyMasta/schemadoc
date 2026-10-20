@@ -186,7 +186,20 @@ func decodeBuildConfigDocument(document any) (buildcfg.Config, error) {
 		return buildcfg.Config{}, fmt.Errorf("decode config document: %w", err)
 	}
 
+	if err := validateBuildConfigStages(config); err != nil {
+		return buildcfg.Config{}, err
+	}
+
 	return config, nil
+}
+
+// validateBuildConfigStages checks dependencies between declared stages.
+func validateBuildConfigStages(config buildcfg.Config) error {
+	if config.Mod2Doc != nil && config.Mod2Schema == nil {
+		return errMod2DocRequiresMod2Schema
+	}
+
+	return nil
 }
 
 // normalizeYAMLNode recursively converts YAML map keys to strings.

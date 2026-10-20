@@ -50,11 +50,16 @@ func resolveBuildConfigPath(path string) string {
 }
 
 // runConfig executes selected config documents from config file.
-func (runner *cliRunner) runConfig(configPath string, configIndex int) error {
+func (runner *cliRunner) runConfig(configPath string, configIndex int) (err error) {
 	loadedConfigs, err := loadBuildConfig(configPath, configIndex)
 	if err != nil {
 		return err
 	}
+
+	generator := modschema.NewGenerator()
+	defer func() {
+		err = errors.Join(err, generator.Close())
+	}()
 
 	for index, loadedConfig := range loadedConfigs {
 		docNumber := index + 1
@@ -62,7 +67,7 @@ func (runner *cliRunner) runConfig(configPath string, configIndex int) error {
 			docNumber = configIndex
 		}
 
-		if err := runner.runLoadedConfig(docNumber, loadedConfig); err != nil {
+		if err := runner.runLoadedConfig(docNumber, loadedConfig, generator); err != nil {
 			return err
 		}
 	}
@@ -71,7 +76,11 @@ func (runner *cliRunner) runConfig(configPath string, configIndex int) error {
 }
 
 // runLoadedConfig executes one pipeline document in deterministic stage order.
-func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Config) error {
+func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Config, generator *modschema.Generator) error {
+	if err := validateBuildConfigStages(loadedConfig); err != nil {
+		return fmt.Errorf("config doc %d: %w", docNumber, err)
+	}
+
 	schemaPath := strings.TrimSpace(loadedConfig.Schema)
 	if schemaPath == "" {
 		return fmt.Errorf("config doc %d: schema is required", docNumber)
@@ -79,13 +88,7 @@ func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Co
 
 	if loadedConfig.Mod2Schema != nil {
 		stage := loadedConfig.Mod2Schema
-		moduleOptions := modschema.Options{
-			Module:   strings.TrimSpace(stage.Module),
-			Type:     strings.TrimSpace(stage.Type),
-			Package:  strings.TrimSpace(stage.Package),
-			KeyNamer: strings.TrimSpace(stage.KeyNamer),
-			RootID:   strings.TrimSpace(stage.RootID),
-		}
+		moduleOptions := moduleOptionsFromBuild(stage)
 		if loadedConfig.Check {
 			if err := validateModuleReferenceForCheck(moduleOptions.Module); err != nil {
 				return fmt.Errorf("config doc %d stage mod2schema: %w", docNumber, err)
@@ -93,6 +96,7 @@ func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Co
 		}
 
 		err := runner.runModuleToSchemaForBuild(
+			generator,
 			moduleOptions,
 			schemaPath,
 			loadedConfig.Check,
@@ -106,6 +110,23 @@ func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Co
 			docNumber,
 			schemaPath,
 		)
+	}
+
+	if loadedConfig.Mod2Doc != nil {
+		stage := loadedConfig.Mod2Doc
+		request, err := docRenderRequestFromBuild(schemaPath, stage.Schema2DocStage)
+		if err != nil {
+			return fmt.Errorf("config doc %d stage mod2doc output path: %w", docNumber, err)
+		}
+
+		moduleOptions := moduleOptionsFromBuild(loadedConfig.Mod2Schema)
+		moduleOptions.Comments = modschema.CommentMode(stage.Comments)
+
+		if err := runner.runModuleToDocForBuild(generator, moduleOptions, request, loadedConfig.Check); err != nil {
+			return fmt.Errorf("config doc %d stage mod2doc: %w", docNumber, err)
+		}
+
+		runner.logf("build: doc=%d stage=mod2doc output=%s status=ok", docNumber, request.OutputPath)
 	}
 
 	if loadedConfig.Merge != nil {
@@ -146,42 +167,17 @@ func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Co
 	}
 
 	if loadedConfig.Schema2Doc != nil {
-		stage := loadedConfig.Schema2Doc
-		outputPath, err := resolveBuildDocOutputPath(
-			schemaPath,
-			strings.TrimSpace(stage.Output),
-			strings.TrimSpace(stage.Template),
-			strings.TrimSpace(stage.TemplateFile),
-		)
+		request, err := docRenderRequestFromBuild(schemaPath, *loadedConfig.Schema2Doc)
 		if err != nil {
 			return fmt.Errorf("config doc %d stage schema2doc output path: %w", docNumber, err)
 		}
-		if err := runner.runSchemaToDocForBuild(schemaPath, markdownRenderRequest{
-			TemplateName:         strings.TrimSpace(stage.Template),
-			TemplatePath:         strings.TrimSpace(stage.TemplateFile),
-			Title:                strings.TrimSpace(stage.Title),
-			Description:          strings.TrimSpace(stage.Description),
-			SourcePath:           strings.TrimSpace(stage.SourcePath),
-			SourceRawPath:        strings.TrimSpace(stage.SourceRawPath),
-			ListMarker:           strings.TrimSpace(stage.ListMarker),
-			WrapWidth:            stage.Wrap,
-			HideExtraKeywords:    stage.HideExtraKeywords,
-			ShowInternalKeywords: stage.ShowInternalKeywords,
-			Footer:               stage.Footer,
-			ExampleMode:          strings.TrimSpace(stage.Mode),
-			ExampleFmt:           strings.TrimSpace(stage.Format),
-			OutputPath:           outputPath,
-			ExampleOut: exampleOutputOptions{
-				JSON: jsonOutputFromBuild(stage.JSON),
-				YAML: yamlOutputFromBuild(stage.YAML),
-			},
-		}, loadedConfig.Check); err != nil {
+		if err := runner.runSchemaToDocForBuild(schemaPath, request, loadedConfig.Check); err != nil {
 			return fmt.Errorf("config doc %d stage schema2doc: %w", docNumber, err)
 		}
 		runner.logf(
 			"build: doc=%d stage=schema2doc output=%s status=ok",
 			docNumber,
-			outputPath,
+			request.OutputPath,
 		)
 	}
 
@@ -391,12 +387,13 @@ func buildImportActions(
 
 // runModuleToSchemaForBuild runs mod2schema stage in write/check mode.
 func (runner *cliRunner) runModuleToSchemaForBuild(
+	generator *modschema.Generator,
 	options modschema.Options,
 	outputPath string,
 	check bool,
 	jsonOptions jsonOutputOptions,
 ) error {
-	content, _, err := modschema.Generate(options)
+	content, _, err := generator.Generate(options)
 	if err != nil {
 		return fmt.Errorf("generate schema: %w", err)
 	}
@@ -469,6 +466,31 @@ func (runner *cliRunner) runSchemaToDocForBuild(
 		return fmt.Errorf("read schema input: %w", err)
 	}
 
+	return runner.runSchemaToDocBytesForBuild(schemaBytes, sourcePath, request, check)
+}
+
+// runModuleToDocForBuild reflects a transient schema and renders it in write/check mode.
+func (runner *cliRunner) runModuleToDocForBuild(
+	generator *modschema.Generator,
+	options modschema.Options,
+	request markdownRenderRequest,
+	check bool,
+) error {
+	schemaBytes, sourcePath, err := generator.Generate(options)
+	if err != nil {
+		return fmt.Errorf("generate schema: %w", err)
+	}
+
+	return runner.runSchemaToDocBytesForBuild(schemaBytes, sourcePath, request, check)
+}
+
+// runSchemaToDocBytesForBuild shares rendering and output checks for both doc stages.
+func (runner *cliRunner) runSchemaToDocBytesForBuild(
+	schemaBytes []byte,
+	sourcePath string,
+	request markdownRenderRequest,
+	check bool,
+) error {
 	rendered, err := runner.renderSchemaToDoc(
 		schemaBytes,
 		sourcePath,
@@ -488,6 +510,53 @@ func (runner *cliRunner) runSchemaToDocForBuild(
 	}
 
 	return checkFileContent(request.OutputPath, []byte(rendered), "markdown")
+}
+
+// moduleOptionsFromBuild converts inherited source and reflection settings.
+func moduleOptionsFromBuild(stage *buildcfg.Mod2SchemaStage) modschema.Options {
+	return modschema.NormalizeOptions(modschema.Options{
+		Module:            stage.Module,
+		Package:           stage.Package,
+		Type:              stage.Type,
+		KeyNamer:          stage.KeyNamer,
+		RootID:            stage.RootID,
+		Comments:          modschema.CommentMode(stage.Comments),
+		JSONSchemaVersion: stage.JSONSchemaVersion,
+	})
+}
+
+// docRenderRequestFromBuild shares render settings and path derivation for both doc stages.
+func docRenderRequestFromBuild(schemaPath string, stage buildcfg.Schema2DocStage) (markdownRenderRequest, error) {
+	outputPath, err := resolveBuildDocOutputPath(
+		schemaPath,
+		strings.TrimSpace(stage.Output),
+		strings.TrimSpace(stage.Template),
+		strings.TrimSpace(stage.TemplateFile),
+	)
+	if err != nil {
+		return markdownRenderRequest{}, err
+	}
+
+	return markdownRenderRequest{
+		TemplateName:         strings.TrimSpace(stage.Template),
+		TemplatePath:         strings.TrimSpace(stage.TemplateFile),
+		Title:                strings.TrimSpace(stage.Title),
+		Description:          strings.TrimSpace(stage.Description),
+		SourcePath:           strings.TrimSpace(stage.SourcePath),
+		SourceRawPath:        strings.TrimSpace(stage.SourceRawPath),
+		ListMarker:           strings.TrimSpace(stage.ListMarker),
+		WrapWidth:            stage.Wrap,
+		HideExtraKeywords:    stage.HideExtraKeywords,
+		ShowInternalKeywords: stage.ShowInternalKeywords,
+		Footer:               stage.Footer,
+		ExampleMode:          strings.TrimSpace(stage.Mode),
+		ExampleFmt:           strings.TrimSpace(stage.Format),
+		OutputPath:           outputPath,
+		ExampleOut: exampleOutputOptions{
+			JSON: jsonOutputFromBuild(stage.JSON),
+			YAML: yamlOutputFromBuild(stage.YAML),
+		},
+	}, nil
 }
 
 // jsonOutputFromBuild converts optional build JSON options to runtime options.
