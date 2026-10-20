@@ -121,10 +121,27 @@ schemadoc build schemadoc.build.yaml --index 2
 
 ## mod2schema/mod2doc Requirements
 
+Reflect only trusted local or remote modules. Reflection executes package
+initialization, including `init()` in the target and its transitive runtime
+imports, with the permissions of schemadoc. Target code is not sandboxed.
+The Go proxy and checksum system verify integrity, not whether code is trusted.
+Remote `@latest` references are non-deterministic and rejected in build check mode.
+
 Both commands accept `--type-namer package|full`. Package mode preserves existing
 definition names. Full mode uses sanitized import paths and 64 bits of SHA-256
 for external types; target-package names remain unchanged.
 Both modes reject definition-name collisions before writing schema output.
+
+Library callers can use `modschema.GenerateContext` or
+`Generator.GenerateContext` to cancel setup, execution, or session waiting.
+Cancellation errors support `errors.Is` with `context.Canceled` and
+`context.DeadlineExceeded`. The affected workspace is removed;
+other prepared workspaces remain reusable. Shutdown and cleanup can delay
+return after the deadline. Windows job objects and Unix process groups manage
+cancellable subprocesses; this provides no security sandbox and cannot stop
+Unix processes that deliberately detach. Other platforms cancel the direct
+process only. Existing `Generate` calls use `context.Background()` with no
+mandatory timeout.
 
 `mod2schema` and `mod2doc` require installed Go toolchain
 (`go` must be available in `PATH`).

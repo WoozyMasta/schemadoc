@@ -5,6 +5,7 @@
 package modschema
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -161,6 +162,7 @@ func TestInitSchemaGeneratorWorkspace_LocalMajorVersion(t *testing.T) {
 	}
 
 	err := initSchemaGeneratorWorkspace(
+		context.Background(),
 		helperDir,
 		resolvedTarget{
 			Source:     moduleSourceLocal,

@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
+* Context-aware schema generation with cancellable setup, session waiting,
+  and subprocess execution, including Windows jobs and Unix process groups.
 * Opt-in plain Go comment descriptions via `modschema.Options.Comments`
   and `--comments plain` for `mod2schema` and `mod2doc`.
 * Reusable `modschema.Generator` sessions
@@ -30,6 +32,10 @@ and this project adheres to [Semantic Versioning][].
 
 ### Changed
 
+* Parse local `go.mod` files with the official module parser, accepting tabs,
+  comments, and quoted module directives.
+* Document that local and remote reflection executes trusted target code
+  without a security sandbox.
 * Cache successful local Go version probes without temporary directories.
 * Share one module schema generator across all selected build documents.
 * Generate the build config schema with plain descriptions

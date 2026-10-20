@@ -7,6 +7,9 @@ package modschema
 import "errors"
 
 var (
+	// ErrInvalidModuleFile reports missing or invalid Go module syntax.
+	ErrInvalidModuleFile = errors.New("invalid Go module file")
+
 	// ErrInvalidTypeNamerMode reports an unsupported schema definition naming mode.
 	ErrInvalidTypeNamerMode = errors.New("invalid type namer mode")
 

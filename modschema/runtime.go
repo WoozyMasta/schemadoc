@@ -5,8 +5,8 @@
 package modschema
 
 import (
-	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,8 +17,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"unicode"
+
+	"golang.org/x/mod/modfile"
 )
 
 const (
@@ -38,24 +39,31 @@ var localGoVersion toolchainVersionCache
 
 // toolchainVersionCache serializes probes and allows retries after failures.
 type toolchainVersionCache struct {
-	version string     // Empty until a probe succeeds.
-	mu      sync.Mutex // Protects version and serializes the first successful probe.
+	version string      // Empty until a probe succeeds.
+	mu      contextGate // Protects version and allows cancelled waiters to return.
 }
 
 // Generate reflects JSON Schema for selected module/package/type.
 func Generate(options Options) ([]byte, string, error) {
+	return GenerateContext(context.Background(), options)
+}
+
+// GenerateContext reflects one type and cleans its workspace after completion or cancellation.
+func GenerateContext(ctx context.Context, options Options) ([]byte, string, error) {
 	generator := NewGenerator()
-	data, source, err := generator.Generate(options)
+	data, source, err := generator.GenerateContext(ctx, options)
 
 	return data, source, errors.Join(err, generator.Close())
 }
 
 // ensureImportableTargetPackage validates package importability before helper run.
 func ensureImportableTargetPackage(
+	ctx context.Context,
 	helperDir string,
 	target resolvedTarget,
 ) error {
 	packageName, err := packageNameFromHelperWorkspace(
+		ctx,
 		helperDir,
 		target.PackagePath,
 	)
@@ -75,7 +83,7 @@ func ensureImportableTargetPackage(
 }
 
 // preloadRemoteModule downloads target module to resolve local source dir.
-func preloadRemoteModule(helperDir string, target resolvedTarget) error {
+func preloadRemoteModule(ctx context.Context, helperDir string, target resolvedTarget) error {
 	if target.Source != moduleSourceRemote {
 		return nil
 	}
@@ -85,7 +93,7 @@ func preloadRemoteModule(helperDir string, target resolvedTarget) error {
 	}
 
 	targetRef := target.ModulePath + "@" + target.ModuleVer
-	if err := runGoCommand(helperDir, "mod", "download", targetRef); err != nil {
+	if err := runGoCommand(ctx, helperDir, "mod", "download", targetRef); err != nil {
 		return fmt.Errorf("download remote module %q: %w", targetRef, err)
 	}
 
@@ -305,7 +313,7 @@ func validateRemoteModulePath(modulePath string) error {
 func modulePathFromDir(moduleDir string) (string, error) {
 	goModPath := filepath.Join(moduleDir, "go.mod")
 	if _, err := os.Stat(goModPath); err != nil {
-		return "", fmt.Errorf("local module dir %q must contain go.mod", moduleDir)
+		return "", fmt.Errorf("local module dir %q must contain go.mod: %w", moduleDir, err)
 	}
 
 	content, err := os.ReadFile(goModPath)
@@ -313,47 +321,26 @@ func modulePathFromDir(moduleDir string) (string, error) {
 		return "", fmt.Errorf("read %q: %w", goModPath, err)
 	}
 
-	scanner := bufio.NewScanner(bytes.NewReader(content))
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if after, ok := strings.CutPrefix(line, "module "); ok {
-			modulePath := strings.TrimSpace(after)
-			modulePath = strings.Trim(modulePath, `"`)
-			if modulePath == "" {
-				return "", fmt.Errorf("parse %q: empty module path", goModPath)
-			}
-
-			return modulePath, nil
-		}
+	parsed, err := modfile.Parse(goModPath, content, nil)
+	if err != nil {
+		return "", fmt.Errorf("%w %q: %w", ErrInvalidModuleFile, goModPath, err)
 	}
 
-	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("scan %q: %w", goModPath, err)
+	if parsed.Module == nil || parsed.Module.Mod.Path == "" {
+		return "", fmt.Errorf("%w %q: module directive is required", ErrInvalidModuleFile, goModPath)
 	}
 
-	return "", fmt.Errorf("parse %q: module directive not found", goModPath)
+	return parsed.Module.Mod.Path, nil
 }
 
 // moduleDirFromHelperWorkspace resolves downloaded module dir for remote mode.
-func moduleDirFromHelperWorkspace(helperDir string, modulePath string) (string, error) {
-	command := exec.Command("go", "list", "-m", "-f", "{{.Dir}}", modulePath)
-	command.Dir = helperDir
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	command.Stdout = &stdout
-	command.Stderr = &stderr
-
-	if err := command.Run(); err != nil {
-		detail := strings.TrimSpace(stderr.String())
-		if detail == "" {
-			detail = err.Error()
-		}
-
-		return "", fmt.Errorf("resolve remote module dir %q: %s", modulePath, detail)
+func moduleDirFromHelperWorkspace(ctx context.Context, helperDir string, modulePath string) (string, error) {
+	stdout, err := goCommandOutput(ctx, helperDir, nil, "list", "-m", "-f", "{{.Dir}}", modulePath)
+	if err != nil {
+		return "", fmt.Errorf("resolve remote module dir %q: %w", modulePath, err)
 	}
 
-	moduleDir := strings.TrimSpace(stdout.String())
+	moduleDir := strings.TrimSpace(string(stdout))
 	if moduleDir == "" {
 		return "", fmt.Errorf("resolve remote module dir %q: empty result", modulePath)
 	}
@@ -367,25 +354,13 @@ func moduleDirFromHelperWorkspace(helperDir string, modulePath string) (string, 
 }
 
 // packageNameFromHelperWorkspace resolves package name for import path in helper.
-func packageNameFromHelperWorkspace(helperDir, packagePath string) (string, error) {
-	command := exec.Command("go", "list", "-f", "{{.Name}}", packagePath)
-	command.Dir = helperDir
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	command.Stdout = &stdout
-	command.Stderr = &stderr
-
-	if err := command.Run(); err != nil {
-		detail := strings.TrimSpace(stderr.String())
-		if detail == "" {
-			detail = err.Error()
-		}
-
-		return "", fmt.Errorf("load target package %q: %s", packagePath, detail)
+func packageNameFromHelperWorkspace(ctx context.Context, helperDir, packagePath string) (string, error) {
+	stdout, err := goCommandOutput(ctx, helperDir, nil, "list", "-f", "{{.Name}}", packagePath)
+	if err != nil {
+		return "", fmt.Errorf("load target package %q: %w", packagePath, err)
 	}
 
-	name := strings.TrimSpace(stdout.String())
+	name := strings.TrimSpace(string(stdout))
 	if name == "" {
 		return "", fmt.Errorf("load target package %q: empty package name", packagePath)
 	}
@@ -417,6 +392,7 @@ func writeSchemaGeneratorProgram(helperDir, source string) error {
 // initSchemaGeneratorWorkspace initializes temporary go module for schema
 // generation.
 func initSchemaGeneratorWorkspace(
+	ctx context.Context,
 	helperDir string,
 	target resolvedTarget,
 	jsonSchemaVersion string,
@@ -425,7 +401,7 @@ func initSchemaGeneratorWorkspace(
 		target.ModulePath,
 		target.PackagePath,
 	)
-	if err := runGoCommand(helperDir, "mod", "init", helperModulePath); err != nil {
+	if err := runGoCommand(ctx, helperDir, "mod", "init", helperModulePath); err != nil {
 		return fmt.Errorf("init temporary module: %w", err)
 	}
 
@@ -438,17 +414,18 @@ func initSchemaGeneratorWorkspace(
 	}
 
 	requireArg := "-require=" + target.ModulePath + "@" + requireVersion
-	if err := runGoCommand(helperDir, "mod", "edit", requireArg); err != nil {
+	if err := runGoCommand(ctx, helperDir, "mod", "edit", requireArg); err != nil {
 		return fmt.Errorf("require target module %q: %w", target.ModulePath, err)
 	}
 
 	if target.Source == moduleSourceLocal {
 		replaceArg := "-replace=" + target.ModulePath + "=" + target.ModuleDir
-		if err := runGoCommand(helperDir, "mod", "edit", replaceArg); err != nil {
+		if err := runGoCommand(ctx, helperDir, "mod", "edit", replaceArg); err != nil {
 			return fmt.Errorf("replace target module %q: %w", target.ModulePath, err)
 		}
 
 		if err := applySourceModuleReplaces(
+			ctx,
 			helperDir,
 			target.ModuleDir,
 			target.ModulePath,
@@ -460,6 +437,7 @@ func initSchemaGeneratorWorkspace(
 	requireJSONSchemaArg := "-require=" +
 		schemaGeneratorJSONSchemaModule + "@" + strings.TrimSpace(jsonSchemaVersion)
 	if err := runGoCommand(
+		ctx,
 		helperDir,
 		"mod",
 		"edit",
@@ -500,16 +478,17 @@ func localModulePlaceholderVersion(modulePath string) string {
 
 // applySourceModuleReplaces copies replace directives from source module go.mod.
 func applySourceModuleReplaces(
+	ctx context.Context,
 	helperDir,
 	moduleRootPath,
 	targetModulePath string,
 ) error {
-	replaces, err := listSourceModuleReplaces(moduleRootPath)
+	replaces, err := listSourceModuleReplaces(ctx, moduleRootPath)
 	if err != nil {
 		return err
 	}
 
-	activeReplaces, err := listActiveModuleReplaces(moduleRootPath)
+	activeReplaces, err := listActiveModuleReplaces(ctx, moduleRootPath)
 	if err != nil {
 		return err
 	}
@@ -537,7 +516,7 @@ func applySourceModuleReplaces(
 		}
 
 		seen[replaceArg] = struct{}{}
-		if err := runGoCommand(helperDir, "mod", "edit", replaceArg); err != nil {
+		if err := runGoCommand(ctx, helperDir, "mod", "edit", replaceArg); err != nil {
 			return fmt.Errorf("apply source module replace %q: %w", replaceArg, err)
 		}
 	}
@@ -546,26 +525,14 @@ func applySourceModuleReplaces(
 }
 
 // listSourceModuleReplaces reads replace directives from source module go.mod.
-func listSourceModuleReplaces(moduleRootPath string) ([]goModEditReplace, error) {
-	command := exec.Command("go", "mod", "edit", "-json")
-	command.Dir = moduleRootPath
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	command.Stdout = &stdout
-	command.Stderr = &stderr
-
-	if err := command.Run(); err != nil {
-		detail := strings.TrimSpace(stderr.String())
-		if detail == "" {
-			detail = err.Error()
-		}
-
-		return nil, fmt.Errorf("read source module go.mod replaces: %s", detail)
+func listSourceModuleReplaces(ctx context.Context, moduleRootPath string) ([]goModEditReplace, error) {
+	stdout, err := goCommandOutput(ctx, moduleRootPath, nil, "mod", "edit", "-json")
+	if err != nil {
+		return nil, fmt.Errorf("read source module go.mod replaces: %w", err)
 	}
 
 	var payload goModEditJSON
-	if err := json.Unmarshal(stdout.Bytes(), &payload); err != nil {
+	if err := json.Unmarshal(stdout, &payload); err != nil {
 		return nil, fmt.Errorf("decode source module go.mod replaces: %w", err)
 	}
 
@@ -573,8 +540,8 @@ func listSourceModuleReplaces(moduleRootPath string) ([]goModEditReplace, error)
 }
 
 // listActiveModuleReplaces reads active replacements from module graph.
-func listActiveModuleReplaces(moduleRootPath string) ([]goModEditReplace, error) {
-	modCachePath, err := goEnvValue(moduleRootPath, "GOMODCACHE")
+func listActiveModuleReplaces(ctx context.Context, moduleRootPath string) ([]goModEditReplace, error) {
+	modCachePath, err := goEnvValue(ctx, moduleRootPath, "GOMODCACHE")
 	if err != nil {
 		return nil, err
 	}
@@ -588,24 +555,12 @@ func listActiveModuleReplaces(moduleRootPath string) ([]goModEditReplace, error)
 	moduleParent := filepath.Dir(moduleRootAbs)
 	modCachePath = filepath.Clean(strings.TrimSpace(modCachePath))
 
-	command := exec.Command("go", "list", "-m", "-json", "all")
-	command.Dir = moduleRootPath
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	command.Stdout = &stdout
-	command.Stderr = &stderr
-
-	if err := command.Run(); err != nil {
-		detail := strings.TrimSpace(stderr.String())
-		if detail == "" {
-			detail = err.Error()
-		}
-
-		return nil, fmt.Errorf("read active module replaces: %s", detail)
+	stdout, err := goCommandOutput(ctx, moduleRootPath, nil, "list", "-m", "-json", "all")
+	if err != nil {
+		return nil, fmt.Errorf("read active module replaces: %w", err)
 	}
 
-	decoder := json.NewDecoder(&stdout)
+	decoder := json.NewDecoder(bytes.NewReader(stdout))
 	replaces := make([]goModEditReplace, 0, 16)
 	for {
 		var item goListModule
@@ -691,25 +646,13 @@ func resolveActiveReplaceTarget(
 }
 
 // goEnvValue returns `go env <name>` output for selected module root.
-func goEnvValue(moduleRootPath, name string) (string, error) {
-	command := exec.Command("go", "env", name)
-	command.Dir = moduleRootPath
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	command.Stdout = &stdout
-	command.Stderr = &stderr
-
-	if err := command.Run(); err != nil {
-		detail := strings.TrimSpace(stderr.String())
-		if detail == "" {
-			detail = err.Error()
-		}
-
-		return "", fmt.Errorf("read go env %s: %s", name, detail)
+func goEnvValue(ctx context.Context, moduleRootPath, name string) (string, error) {
+	stdout, err := goCommandOutput(ctx, moduleRootPath, nil, "env", name)
+	if err != nil {
+		return "", fmt.Errorf("read go env %s: %w", name, err)
 	}
 
-	return strings.TrimSpace(stdout.String()), nil
+	return strings.TrimSpace(string(stdout)), nil
 }
 
 // isLikelyLocalModuleDir reports whether dir should be copied as local replace.
@@ -833,30 +776,20 @@ func isRelativeOrAbsolutePath(value string) bool {
 }
 
 // runSchemaGeneratorProgram executes temporary schema generator.
-func runSchemaGeneratorProgram(helperDir string) ([]byte, error) {
-	command := exec.Command("go", "run", ".")
-	command.Dir = helperDir
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	command.Stdout = &stdout
-	command.Stderr = &stderr
-
-	if err := command.Run(); err != nil {
-		detail := strings.TrimSpace(stderr.String())
-		if detail == "" {
-			detail = err.Error()
-		}
-
-		return nil, fmt.Errorf("run module schema generator: %s", detail)
+func runSchemaGeneratorProgram(ctx context.Context, helperDir string) ([]byte, error) {
+	// Keep Go's own build temporaries inside the owned workspace for cancellation cleanup.
+	env := append(os.Environ(), "GOTMPDIR="+helperDir)
+	stdout, err := goCommandOutput(ctx, helperDir, env, "run", ".")
+	if err != nil {
+		return nil, fmt.Errorf("run module schema generator: %w", err)
 	}
 
-	return stdout.Bytes(), nil
+	return stdout, nil
 }
 
 // prepareSchemaGeneratorDependencies resolves helper module dependencies.
-func prepareSchemaGeneratorDependencies(helperDir string) error {
-	if err := runGoCommand(helperDir, "mod", "tidy"); err != nil {
+func prepareSchemaGeneratorDependencies(ctx context.Context, helperDir string) error {
+	if err := runGoCommand(ctx, helperDir, "mod", "tidy"); err != nil {
 		return fmt.Errorf("tidy helper module: %w", err)
 	}
 
@@ -865,8 +798,8 @@ func prepareSchemaGeneratorDependencies(helperDir string) error {
 
 // downloadSchemaGeneratorDependencies populates helper module sums before the
 // target package is inspected, without pruning its declared requirements.
-func downloadSchemaGeneratorDependencies(helperDir string) error {
-	if err := runGoCommand(helperDir, "mod", "download"); err != nil {
+func downloadSchemaGeneratorDependencies(ctx context.Context, helperDir string) error {
+	if err := runGoCommand(ctx, helperDir, "mod", "download"); err != nil {
 		return fmt.Errorf("download helper module dependencies: %w", err)
 	}
 
@@ -904,8 +837,8 @@ func ensureGoToolchain() error {
 }
 
 // ensureGoVersionAtLeast validates active Go version for helper dependency.
-func ensureGoVersionAtLeast(minVersion string) error {
-	currentVersion, err := currentGoToolchainVersion()
+func ensureGoVersionAtLeast(ctx context.Context, minVersion string) error {
+	currentVersion, err := currentGoToolchainVersion(ctx)
 	if err != nil {
 		return err
 	}
@@ -934,20 +867,22 @@ func ensureGoVersionAtLeast(minVersion string) error {
 }
 
 // currentGoToolchainVersion returns active local Go toolchain version string.
-func currentGoToolchainVersion() (string, error) {
-	return localGoVersion.load(probeGoToolchainVersion)
+func currentGoToolchainVersion(ctx context.Context) (string, error) {
+	return localGoVersion.load(ctx, probeGoToolchainVersion)
 }
 
 // load caches successful probes without making transient errors permanent.
-func (cache *toolchainVersionCache) load(probe func() (string, error)) (string, error) {
-	cache.mu.Lock()
-	defer cache.mu.Unlock()
+func (cache *toolchainVersionCache) load(ctx context.Context, probe func(context.Context) (string, error)) (string, error) {
+	if err := cache.mu.lock(ctx); err != nil {
+		return "", err
+	}
+	defer cache.mu.unlock()
 
 	if cache.version != "" {
 		return cache.version, nil
 	}
 
-	version, err := probe()
+	version, err := probe(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -957,28 +892,15 @@ func (cache *toolchainVersionCache) load(probe func() (string, error)) (string, 
 }
 
 // probeGoToolchainVersion runs outside module/workspace selection without temp allocation.
-func probeGoToolchainVersion() (string, error) {
-	command := exec.Command("go", "env", "GOVERSION")
-	command.Dir = os.TempDir()
-
+func probeGoToolchainVersion(ctx context.Context) (string, error) {
 	// Force local toolchain to avoid auto-switch by unrelated go.mod/go.work.
-	command.Env = append(os.Environ(), "GOTOOLCHAIN=local", "GOWORK=off", "GO111MODULE=off")
-
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	command.Stdout = &stdout
-	command.Stderr = &stderr
-
-	if err := command.Run(); err != nil {
-		detail := strings.TrimSpace(stderr.String())
-		if detail == "" {
-			detail = err.Error()
-		}
-
-		return "", fmt.Errorf("read go env GOVERSION: %s", detail)
+	env := append(os.Environ(), "GOTOOLCHAIN=local", "GOWORK=off", "GO111MODULE=off")
+	stdout, err := goCommandOutput(ctx, os.TempDir(), env, "env", "GOVERSION")
+	if err != nil {
+		return "", fmt.Errorf("read go env GOVERSION: %w", err)
 	}
 
-	version := strings.TrimSpace(stdout.String())
+	version := strings.TrimSpace(string(stdout))
 	if version == "" {
 		return "", errors.New("read go env GOVERSION: empty output")
 	}
@@ -1041,22 +963,7 @@ func parseLeadingInt(value string) (int, error) {
 }
 
 // runGoCommand executes one Go command in selected directory.
-func runGoCommand(dir string, args ...string) error {
-	command := exec.Command("go", args...)
-	command.Dir = dir
-
-	var output bytes.Buffer
-	command.Stdout = &output
-	command.Stderr = &output
-
-	if err := command.Run(); err != nil {
-		detail := strings.TrimSpace(output.String())
-		if detail == "" {
-			detail = err.Error()
-		}
-
-		return fmt.Errorf("go %s: %s", strings.Join(args, " "), detail)
-	}
-
-	return nil
+func runGoCommand(ctx context.Context, dir string, args ...string) error {
+	_, err := goCommandOutput(ctx, dir, nil, args...)
+	return err
 }

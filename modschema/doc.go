@@ -18,6 +18,25 @@ for the lifetime of the session.
 Target package must be importable.
 Types declared in package main are not supported.
 
+Reflect only trusted local or remote modules.
+Reflection imports and executes the target package and its transitive runtime imports,
+including their init functions, with the caller's permissions.
+Target code is not sandboxed.
+Go module checksums verify integrity, not whether the target code is trustworthy.
+Remote @latest references are non-deterministic and are rejected in build check mode.
+
+Use [GenerateContext] or [Generator.GenerateContext] to cancel module setup,
+helper execution, or waiting for a busy session.
+Errors preserve [context.Canceled] or [context.DeadlineExceeded] for errors.Is checks.
+Cancellation removes the affected workspace;
+the generator and unrelated prepared workspaces remain usable.
+Failed cleanup is reported; cached workspaces stay owned for retries by Close.
+Subprocess shutdown and workspace cleanup may delay return after a deadline.
+Cancellable commands use Windows job objects or Unix process groups;
+deliberately detached Unix processes are outside this lifecycle control.
+Other platforms use standard direct-process cancellation.
+The existing Generate methods use context.Background and have no mandatory timeout.
+
 Go comments are preserved by default [CommentModeRaw].
 Set [Options.Comments] to [CommentModePlain] to normalize extracted comments
 into portable plain text before reflection.

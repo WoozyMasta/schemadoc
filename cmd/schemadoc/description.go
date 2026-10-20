@@ -86,7 +86,9 @@ Reads schema from a file or stdin and writes YAML to a file or stdout.`,
 	setCommandDescription(parser, &options.ModuleToSchema,
 		"Generate JSON Schema from Go",
 		`Generate JSON Schema from a Go type. The target package must be importable; package main is not supported.
-Go comments are preserved by default; use --comments plain for portable plain text descriptions.`,
+Go comments are preserved by default; use --comments plain for portable plain text descriptions.
+Reflect only trusted local or remote modules: target init functions and transitive runtime imports execute with your permissions, without a sandbox.
+Remote @latest references are non-deterministic and are rejected in build check mode.`,
 		flags.Example().
 			Option(&options.ModuleToSchema.ModuleFlags.TypeName, "Config").
 			Arg(".").
@@ -108,7 +110,9 @@ Go comments are preserved by default; use --comments plain for portable plain te
 		"Generate docs from Go",
 		`Generate documentation directly from a Go type using the same module,
 package, and type selection rules as mod2schema.
-Go comments are preserved by default; use --comments plain to normalize them before rendering.`,
+Go comments are preserved by default; use --comments plain to normalize them before rendering.
+Reflect only trusted local or remote modules: target init functions and transitive runtime imports execute with your permissions, without a sandbox.
+Remote @latest references are non-deterministic and are rejected in build check mode.`,
 		flags.Example().
 			Option(&options.ModuleToMarkdown.ModuleFlags.TypeName, "Config").
 			Arg(".").

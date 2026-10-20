@@ -297,9 +297,11 @@ Key: `type_namer`
 Path: [`mod2schema`](#configmod2schemastage).`type_namer`
 
 TypeNamer controls external definition names; target-package types keep their
-names. Package mode preserves package-base prefixes and rejects naming
-collisions. Full mode adds the sanitized full import path and a stable SHA-256
-suffix. The sibling mod2doc stage inherits this setting.
+names.
+
+Package mode preserves package-base prefixes and rejects naming collisions. Full
+mode adds the sanitized full import path and a stable SHA-256 suffix. The
+sibling mod2doc stage inherits this setting.
 
 | Attribute | Value |
 | --- | --- |

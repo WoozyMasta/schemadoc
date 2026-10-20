@@ -6,6 +6,7 @@ package modschema
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -155,7 +156,7 @@ func TestGeneratorWorkspaceIsolation(t *testing.T) {
 
 	for _, workspace := range generator.workspaces {
 		var err error
-		dependencyDir, err = moduleDirFromHelperWorkspace(workspace.dir, schemaGeneratorJSONSchemaModule)
+		dependencyDir, err = moduleDirFromHelperWorkspace(context.Background(), workspace.dir, schemaGeneratorJSONSchemaModule)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -262,7 +263,7 @@ func TestToolchainVersionCache(t *testing.T) {
 
 	var cache toolchainVersionCache
 	calls := 0
-	probe := func() (string, error) {
+	probe := func(context.Context) (string, error) {
 		calls++
 
 		if calls == 1 {
@@ -272,12 +273,12 @@ func TestToolchainVersionCache(t *testing.T) {
 		return "go1.27.2", nil
 	}
 
-	if _, err := cache.load(probe); !errors.Is(err, os.ErrPermission) {
+	if _, err := cache.load(context.Background(), probe); !errors.Is(err, os.ErrPermission) {
 		t.Fatalf("probe error = %v", err)
 	}
 
 	for range 3 {
-		version, err := cache.load(probe)
+		version, err := cache.load(context.Background(), probe)
 		if err != nil || version != "go1.27.2" {
 			t.Fatalf("version=%q, error=%v", version, err)
 		}
@@ -299,7 +300,7 @@ func TestGoVersionProbeWithoutTemporaryDirectory(t *testing.T) {
 	writeGeneratorTestFile(t, filepath.Join(tempRoot, "go.work"), "invalid workspace\n")
 
 	for range 2 {
-		version, err := probeGoToolchainVersion()
+		version, err := probeGoToolchainVersion(context.Background())
 		if err != nil || !strings.HasPrefix(version, "go1.") {
 			t.Fatalf("local version=%q, error=%v", version, err)
 		}

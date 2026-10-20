@@ -6,6 +6,7 @@ package modschema
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -112,7 +113,7 @@ func TestGeneratedCommentRenderer(t *testing.T) {
 	}
 
 	helperDir := t.TempDir()
-	if err := initSchemaGeneratorWorkspace(helperDir, target, schemaGeneratorJSONSchemaVersion); err != nil {
+	if err := initSchemaGeneratorWorkspace(context.Background(), helperDir, target, schemaGeneratorJSONSchemaVersion); err != nil {
 		t.Fatal(err)
 	}
 
@@ -135,11 +136,11 @@ func TestGeneratedCommentRenderer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := prepareSchemaGeneratorDependencies(helperDir); err != nil {
+	if err := prepareSchemaGeneratorDependencies(context.Background(), helperDir); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := runGoCommand(helperDir, "test", "./..."); err != nil {
+	if err := runGoCommand(context.Background(), helperDir, "test", "./..."); err != nil {
 		t.Fatal(err)
 	}
 }

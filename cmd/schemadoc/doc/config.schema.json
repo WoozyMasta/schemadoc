@@ -490,7 +490,7 @@
         },
         "type_namer": {
           "default": "package",
-          "description": "TypeNamer controls external definition names; target-package types keep their names. Package mode preserves package-base prefixes and rejects naming collisions. Full mode adds the sanitized full import path and a stable SHA-256 suffix. The sibling mod2doc stage inherits this setting.",
+          "description": "TypeNamer controls external definition names; target-package types keep their names.\nPackage mode preserves package-base prefixes and rejects naming collisions. Full mode adds the sanitized full import path and a stable SHA-256 suffix. The sibling mod2doc stage inherits this setting.",
           "enum": [
             "package",
             "full"
