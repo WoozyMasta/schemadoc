@@ -46,7 +46,10 @@ func (generator *Generator) Generate(options Options) ([]byte, string, error) {
 }
 
 // GenerateContext reflects one type with cancellable setup, execution, and session waiting.
+//
 // Cancellation removes the affected workspace; other prepared workspaces remain reusable.
+// Failed removals remain owned for cleanup retries by Close.
+// See [GenerateContext] for cancellation errors and subprocess lifecycle limits.
 func (generator *Generator) GenerateContext(ctx context.Context, options Options) (schemaBytes []byte, sourcePath string, err error) {
 	if err := generator.mu.lock(ctx); err != nil {
 		return nil, "", err

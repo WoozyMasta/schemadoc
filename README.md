@@ -1,262 +1,89 @@
 # schemadoc
 
-`schemadoc` is a JSON Schema documentation renderer.
-It takes a schema as input and generates readable documentation
-in Markdown (`list`, `table`) and HTML formats.
-The main goal is practical: keep schema reference clear,
-up to date, and easy to publish in repositories and CI pipelines.
+`schemadoc` generates reference documentation
+and example configurations from JSON Schema or Go types.
+Use it to keep checked-in schemas, configuration samples,
+and published references consistent with their source.
 
-Alongside documentation rendering, `schemadoc` includes
-useful schema automation features.
-It can generate JSON and YAML example configs from schema,
-render YAML examples with schema-based comments,
-merge multiple schema files into one resulting schema,
-and generate schema from Go types through [CLI][].
+* Render Markdown (`list`, `table`) or HTML using built-in or custom templates.
+* Generate JSON/YAML examples with all or only required properties;
+  YAML can include schema-derived comments.
+* Generate schemas from Go types and compose schemas from reusable fragments.
+* Run these steps from one build config, then check the same artifacts in CI.
 
-The module is split by responsibility:
+## Install
 
-* package `schemadoc` builds a dialect-aware effective schema view,
-  resolves local JSON Pointer references without network access,
-  and renders docs/examples
-* structured schema paths keep property identity unambiguous
-  for keys such as `.`, `[]`, `/`, and `~`
-* package `merge` helper for merging schema fragments with deterministic rules
-* package `modschema` reflects Go types into JSON Schema
-* CLI `cmd/schemadoc` orchestrates these workflows in an automation pipeline
-
-Only local JSON Pointer references (`#/...`) are resolved.
-Plain-name anchors and remote references are reported as unsupported;
-remote fetching is not performed.
-
-Real generated examples are available in [Generated Test Data][].
-For example:
-
-* [Schema example][]:
-  merged JSON Schema that acts as source for the generated docs
-* [Markdown example][]:
-  one final Markdown reference document rendered from that schema
-* [HTML preview][]: ([HTML raw][]):
-  rendered HTML documentation from the schema
-* [YAML example][]:
-  YAML config example generated from the same schema
-
-## CLI
-
-The most common day-to-day scenario is simple:
-take an existing schema and render documentation from it.
-The command below produces list-style markdown.
+Install with Go 1.25 or newer:
 
 ```bash
-schemadoc schema2doc --template list schema.json schema.list.md
+go install github.com/woozymasta/schemadoc/cmd/schemadoc@latest
 ```
 
-For full CLI command behavior and flags, see [CLI Guide][CLI].
+From this checkout, use `go install ./cmd/schemadoc`.
+Go reflection also requires `go` in `PATH` at runtime.
 
-## Go Module
+## Quick start
 
-### Render Documentation From Schema
+Render an existing schema:
 
-This snippet reads schema from file
-and renders markdown using the built-in `list` template.
-
-```go
-doc, err := schemadoc.RenderFile("schema.json", schemadoc.Options{
-    Title:        "Config Reference",
-    TemplateName: "list",
-    SourcePath:   "schema.json",
-})
-if err != nil {
-    return err
-}
-
-fmt.Println(doc)
+```bash
+schemadoc schema2doc --template table schema.json reference.md
 ```
 
-### Render Example Config From Schema
+For project automation, describe inputs and outputs in `schemadoc.build.yaml`:
 
-This call renders YAML example payload directly from schema.
-Comments stay enabled,
-so descriptions and defaults are visible in output.
-
-```go
-schemaBytes, err := os.ReadFile("schema.json")
-if err != nil {
-    return err
-}
-
-exampleYAML, err := schemadoc.GenerateExampleWithOptions(
-    schemaBytes,
-    schemadoc.ExampleModeAll,
-    schemadoc.ExampleFormatYAML,
-    schemadoc.ExampleOptions{
-        YAMLIndent:             2,
-        YAMLComments: schemadoc.YAMLCommentPolicy{
-            Examples:      schemadoc.YAMLCommentExamplesScalar,
-            ExampleFormat: schemadoc.YAMLCommentFormatBlock,
-        },
-    },
-)
-if err != nil {
-    return err
-}
-
-fmt.Println(string(exampleYAML))
+```bash
+schemadoc build
+schemadoc build --check
 ```
 
-### Merge Schema Fragments
+`--check` compares generated content with existing files without rewriting them.
+The [CLI guide][] explains the pipeline, global defaults, and source selection.
+See the generated [command reference][]
+and [config reference][] for exact options.
 
-This flow loads a base schema,
-merges `$defs` from another file,
-optionally prunes unreachable definitions,
-and writes the result back.
+## Generated output
 
-```go
-merged, err := merge.File(
-    "app.schema.json",
-    []merge.Action{
-        {
-            Type:          merge.NodeOpMergeDefs,
-            SourcePath:    "shared.schema.json",
-            SourcePointer: "/$defs",
-            TargetPointer: "/$defs",
-        },
-    },
-    merge.ApplyOptions{
-        PruneUnreachableDefs: true,
-    },
-)
-if err != nil {
-    return err
-}
+One example schema is used to generate these artifacts:
 
-encoded, err := merge.Encode(merged, merge.FormatJSON)
-if err != nil {
-    return err
-}
+* [JSON Schema][]
+* [Markdown reference][]
+* [HTML reference][] ([preview][])
+* [YAML configuration][]
 
-if err := os.WriteFile("app.schema.json", encoded, 0o600); err != nil {
-    return err
-}
-```
+Property keyword `x-order` controls ordering in documentation and YAML examples.
+For project-specific layouts, see the [custom template guide][].
 
-### Generate Schema From Go Types
+## Go libraries
 
-If you only need basic reflection in application code,
-`github.com/invopop/jsonschema` is often enough.
+The libraries are usable independently of the CLI.
+Executable examples cover these entry points:
 
-Use `modschema` when you need an end-to-end task-oriented flow:
-resolve local or remote module targets, handle workspace replacements,
-and generate schema through a temporary helper module
-without hand-writing reflection glue code.
+* [schemadoc][]: render documentation and example payloads.
+* [merge][]: compose schema fragments in memory or from files.
+* [modschema][]: generate schemas from Go modules,
+  reuse prepared helpers, and cancel requests.
 
-This call reflects one root type and returns schema bytes plus source label.
-Use it when schema should be derived from code during build pipelines.
+## Constraints
 
-```go
-schemaBytes, sourcePath, err := modschema.Generate(modschema.Options{
-    Module:   ".",
-    Package:  "github.com/acme/project/internal/config",
-    Type:     "Config",
-    KeyNamer: "none",
-})
-if err != nil {
-    return err
-}
-
-fmt.Printf("source=%s bytes=%d\n", sourcePath, len(schemaBytes))
-```
-
-## Additional Notes
-
-### Property Ordering With `x-order`
-
-`x-order` is an optional numeric keyword on schema properties
-that controls field order in generated output.
-It is used in rendered docs and YAML examples.
-Without it, `schemadoc` uses a stable default order.
-
-### YAML Example Comments
-
-YAML example generation supports optional schema-based comments.
-When enabled, comments can include description, `default`, `example`,
-and `enum` values.
-
-Example schema fragment:
-
-```yaml
-properties:
-  mode:
-    type: string
-    description: Execution mode.
-    default: safe
-    example: fast
-    enum: [safe, fast]
-```
-
-Generated YAML example:
-
-```yaml
-# Execution mode.
-# Default: safe
-# Example: fast
-# Allowed values: safe, fast
-mode: safe
-```
-
-### Built-In And Custom Templates
-
-CLI supports both built-in templates and custom templates.
-Use `schemadoc template` to export built-in templates,
-then pass your own template file via CLI flags
-for project-specific rendering style.
-
-Custom templates may start with an optional metadata comment:
-
-```gotemplate
-{{/*
-schemadoc:
-  output:
-    extension: ".man"
-  postprocess: []
-*/ -}}
-MANUAL(1)
-```
-
-The `-}}` trim marker keeps the metadata comment out of the rendered output.
-`output.extension` is a safe file suffix for derived output paths.
-`postprocess` is an ordered list of registered processors:
-
-* `normalize-line-endings`
-* `normalize-markdown-spacing`
-* `trim-trailing-whitespace`
-* `trailing-newline`
-
-Unknown or duplicate processors and invalid extensions are errors.
-Without metadata, custom template output is returned unchanged.
-Templates can opt into an output-specific generated-file note
-with `{{ .AutoGeneratedNote }}`;
-the template itself chooses the comment syntax.
-
-### Template Helper Functions
-
-Custom templates can use helper functions from renderer:
-
-* `headingAnchor` for heading anchors
-* `tableCell` for markdown-safe table cells
-* `inlineHTML` for inline markdown-to-HTML conversion
-* `attrHTML` for attribute-value HTML rendering
-* `blockHTML` for simple markdown block rendering
-* `tocHTML` for table-of-contents HTML rendering
-* `renderAttrList` for attribute list rendering
-* `jsonInline` for compact JSON value rendering
-* `html` for generic HTML-escaping
+* Rendering resolves local JSON Pointer references (`#/...`)
+  without network access.
+  Remote references and plain-name anchors are unsupported.
+* Reflect only trusted Go modules: package initialization
+  executes with the caller's permissions, without a sandbox.
+  Targets must be importable packages; `package main` is unsupported.
 
 <!-- links -->
 
-[CLI]: cmd/schemadoc/doc/README.md
-[Generated Test Data]: testdata/generated
-[Schema example]: testdata/generated/app.schema.json
-[Markdown example]: testdata/generated/app.doc.table.md
-[HTML preview]: https://html-preview.github.io/?url=https://github.com/WoozyMasta/schemadoc/blob/master/testdata/generated/app.doc.html
-[HTML raw]: testdata/generated/app.doc.html
-[YAML example]: testdata/generated/app.config.yaml
+[CLI guide]: cmd/schemadoc/doc/README.md
+[command reference]: cmd/schemadoc/doc/CLI.md
+[config reference]: cmd/schemadoc/doc/config.table.md
+[JSON Schema]: testdata/generated/app.schema.json
+[Markdown reference]: testdata/generated/app.doc.table.md
+[HTML reference]: testdata/generated/app.doc.html
+[preview]: https://html-preview.github.io/?url=https://github.com/WoozyMasta/schemadoc/blob/master/testdata/generated/app.doc.html
+[YAML configuration]: testdata/generated/app.config.yaml
+[custom template guide]: templates/README.md
+[schemadoc]: example_usage_test.go
+[merge]: merge/example_test.go
+[modschema]: modschema/example_test.go

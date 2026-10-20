@@ -52,8 +52,11 @@ type Options struct {
 	// KeyNamer controls names for fields without explicit JSON tags.
 	KeyNamer string
 	// TypeNamer controls external schema definition names.
+	// Defaults to TypeNamerModePackage; target-package names remain unchanged.
+	// Both naming modes reject definition-name collisions.
 	TypeNamer TypeNamerMode
 	// Comments controls normalization of Go comment descriptions.
+	// Defaults to CommentModeRaw. Tag and custom-schema descriptions are unchanged.
 	Comments CommentMode
 	// RootID overrides the generated root JSON Schema $id when non-empty.
 	RootID string

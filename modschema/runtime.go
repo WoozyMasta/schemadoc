@@ -44,11 +44,18 @@ type toolchainVersionCache struct {
 }
 
 // Generate reflects JSON Schema for selected module/package/type.
+// It uses context.Background without a mandatory timeout.
 func Generate(options Options) ([]byte, string, error) {
 	return GenerateContext(context.Background(), options)
 }
 
 // GenerateContext reflects one type and cleans its workspace after completion or cancellation.
+//
+// Cancellation errors match context.Canceled or context.DeadlineExceeded via errors.Is.
+// Subprocess shutdown and cleanup may delay return after the deadline.
+// Cancellable commands use Windows jobs or Unix process groups;
+// deliberately detached Unix processes escape this lifecycle control.
+// Other platforms cancel the direct process.
 func GenerateContext(ctx context.Context, options Options) ([]byte, string, error) {
 	generator := NewGenerator()
 	data, source, err := generator.GenerateContext(ctx, options)

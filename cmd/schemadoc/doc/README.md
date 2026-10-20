@@ -1,150 +1,25 @@
 # schemadoc CLI
 
-`schemadoc` CLI is a command-line interface for JSON Schema workflows.
-It can be used in local work and in CI pipelines.
-The tool runs schema generation, merge, documentation rendering,
-and example rendering in a reproducible way.
+`schemadoc` keeps schema references and example configurations
+in sync with JSON Schema or Go types.
+It produces Markdown/HTML documentation and JSON/YAML examples,
+either as individual commands or as one repeatable build pipeline.
 
-The CLI provides these commands:
+For command syntax and flags, see the generated [CLI reference][].
+For build fields, see the generated [config reference][].
 
-* `schema2doc` renders docs from JSON Schema using selected template.
-  Built-in templates are `list`, `table`, and `html`.
-* `schema2json` renders a JSON example config from schema,
-  filling keys from schema structure and example/default values.
-* `schema2yaml` renders a YAML example config from schema,
-  with optional comments from description/default/example/enum.
-* `mod2schema` reflects a Go type and writes a JSON or YAML schema file.
-* `mod2doc` runs `mod2schema` + `schema2doc` in one command.
-* `merge` applies schema imports and patches to build one combined schema.
-* `build` executes multi-stage pipeline from YAML config documents.
-* `template` prints built-in documentation templates for customization.
-* `config` prints an example build config generated from config schema.
-* `help` prints help for commands and flags.
-* `completion` prints shell completion script (`bash`, `zsh`, `pwsh`).
-* `docs` prints generated CLI docs (`man`, `md`, `html`).
-* `version` and `--version` print CLI build/version metadata.
+## Basic workflow
 
-You can read about all the commands and options in detail in the [CLI docs][]
-
-Use `schemadoc -h` and `schemadoc <command> -h`
-for exact arguments and flags.
-Use `schemadoc --version` for short version output.
-
-## Quick Usage
-
-Render docs from schema:
+For an existing schema, a single command is enough:
 
 ```bash
-schemadoc schema2doc schema.json schema.list.md
-schemadoc schema2doc --template table schema.json schema.table.md
-schemadoc schema2doc --template html schema.json schema.html
+schemadoc schema2doc schema.json reference.md
 ```
 
-Generate config examples from schema:
-
-```bash
-schemadoc schema2json schema.json config.example.json
-schemadoc schema2yaml schema.json config.example.yaml
-schemadoc schema2yaml --yaml-comments-examples=none schema.json clean.yaml
-```
-
-Reflect schema from Go type:
-
-```bash
-schemadoc mod2schema --type Config . schema.json
-schemadoc mod2schema \
-  --package github.com/acme/project/internal/config \
-  --type Config github.com/acme/project@v1.2.3 schema.json
-```
-
-Generate docs from Go type:
-
-```bash
-schemadoc mod2doc --type Config . config.list.md
-schemadoc mod2doc --template table --type Config . config.table.md
-```
-
-Merge schemas:
-
-```bash
-schemadoc merge base.schema.json out.schema.json \
-  --merge-defs '/$defs=shared.schema.json#/$defs'
-```
-
-## Build Pipeline
-
-Command `build` executes an automated pipeline from YAML config.
-Each YAML document describes one run with ordered stages and outputs.
-Config format is documented in [config.table.md][],
-and example config is in [config.example.yaml][].
-
-Stages run in fixed order:
-`mod2schema -> mod2doc -> merge -> schema2json -> schema2doc -> schema2yaml`.
-Execution stops on the first error.
-
-### Global Defaults
-
-One standalone `defaults:` document may appear anywhere in the YAML stream.
-It applies to every job, including jobs before it,
-and does not count towards `--index`.
-Multiple defaults documents or a document mixing `defaults`
-with job fields are errors detected before execution.
-
-```yaml
-defaults:
-  mod2schema:
-    module: .
-    package: github.com/example/project
-  schema2doc:
-    template: table
----
-schema: schemas/config.schema.json
-mod2schema:
-  type: Config
-schema2doc:
-  title: Config reference
-  output: docs/config.md
-```
-
-Maps merge recursively; job values override defaults.
-Lists replace the whole inherited list, including when empty.
-Explicit `false`, `0`, and empty strings are preserved
-and must satisfy the field's validation rules.
-`null` removes an inherited field; for example,
-`schema2doc: null` disables the inherited stage.
-Stages declared in defaults are inherited even when omitted in a job.
-
-Unknown fields and invalid values in defaults are rejected even when overridden.
-Required fields and stage dependencies are checked after merging,
-before any job executes.
-`build --check` overrides the merged `check` value.
-Existing streams without defaults keep their behavior.
-
-The published editor schema currently describes complete jobs.
-It does not yet describe defaults documents or partial jobs;
-CLI validation supports both.
-
-### Execution
-
-Behavior:
-
-* config path is optional; default is `./schemadoc.build.yaml`
-* `--index 0` runs all YAML documents in file order
-* `--index 1..N` runs one selected YAML document
-* `--check` (`-c`) checks every stage in the selected documents without writes,
-  including schemas, docs, and examples; it overrides `check: false`
-* `check: true` in config enables validation mode (no rewrites)
-* module reflection stages share one prepared generator for the build run
-* `mod2doc` requires `mod2schema` in the same document and inherits its source,
-  type, key namer, root ID, and helper dependency version
-* `mod2doc.comments` defaults to `raw`, independently of `mod2schema.comments`
-* `mod2schema.type_namer` defaults to `package` and is inherited by `mod2doc`;
-  use `full` for external definition names based on full import paths and
-  stable hashes when package-base names collide
-* `mod2doc` renders Go source through an in-memory schema;
-  `schema2doc` renders the working schema, including merge results
-
-Generate a plain-description schema and documentation from raw Go comments:
+For a project with several generated artifacts,
+keep their inputs and outputs in `schemadoc.build.yaml`.
+For example, generate a schema from a Go type,
+then render documentation and a YAML example from it:
 
 ```yaml
 schema: schemas/config.schema.json
@@ -152,74 +27,73 @@ mod2schema:
   module: .
   type: Config
   comments: plain
-mod2doc:
+schema2doc:
   template: table
   output: docs/config.md
+schema2yaml:
+  output: config.example.yaml
 ```
 
-Examples:
+Run from the project directory:
 
 ```bash
 schemadoc build
-schemadoc build schemadoc.build.yaml
-schemadoc build --check schemadoc.build.yaml
-schemadoc build schemadoc.build.yaml --index 2
+schemadoc build --check
 ```
 
-## mod2schema/mod2doc Requirements
+The first command generates the files.
+The second compares expected content with existing files
+and fails on the first difference or missing file,
+without rewriting artifacts. Use the same config locally and in CI.
+Relative paths resolve from the current working directory.
 
-Reflect only trusted local or remote modules. Reflection executes package
-initialization, including `init()` in the target and its transitive runtime
-imports, with the permissions of schemadoc. Target code is not sandboxed.
-The Go proxy and checksum system verify integrity, not whether code is trusted.
-Remote `@latest` references are non-deterministic and rejected in build check mode.
+## Pipeline model
 
-Both commands accept `--type-namer package|full`. Package mode preserves existing
-definition names. Full mode uses sanitized import paths and 64 bits of SHA-256
-for external types; target-package names remain unchanged.
-Both modes reject definition-name collisions before writing schema output.
+Each YAML document is one job; separate jobs with `---`. Jobs run in file order.
+Within a job, declared stages run in fixed order, regardless of YAML key order:
 
-Library callers can use `modschema.GenerateContext` or
-`Generator.GenerateContext` to cancel setup, execution, or session waiting.
-Cancellation errors support `errors.Is` with `context.Canceled` and
-`context.DeadlineExceeded`. The affected workspace is removed;
-other prepared workspaces remain reusable. Shutdown and cleanup can delay
-return after the deadline. Windows job objects and Unix process groups manage
-cancellable subprocesses; this provides no security sandbox and cannot stop
-Unix processes that deliberately detach. Other platforms cancel the direct
-process only. Existing `Generate` calls use `context.Background()` with no
-mandatory timeout.
+`mod2schema -> mod2doc -> merge -> schema2json -> schema2doc -> schema2yaml`.
 
-`mod2schema` and `mod2doc` require installed Go toolchain
-(`go` must be available in `PATH`).
+`schema` is the job's working file:
+`mod2schema` writes it, `merge` modifies it, and `schema2*` stages consume it.
+Omit stages you do not need; an existing schema can be the starting point.
 
-`module` argument supports:
+`mod2doc` instead renders a transient schema directly
+from the sibling `mod2schema` Go target, before merge.
+Use it to preserve Go documentation independently of the persisted schema.
+`schema2doc` reflects the working schema,
+including patches and imported definitions.
+Go comments remain raw by default;
+`comments: plain` normalizes them for portable schema descriptions.
 
-* local module directory (must contain `go.mod`)
-* remote module reference with explicit version
-  (`github.com/acme/project@v1.2.3`)
+One standalone `defaults:` document
+can supply shared settings anywhere in the stream.
+Jobs override its values: maps merge recursively, lists replace,
+and `null` removes an inherited field or stage.
+Explicit `false`, `0`, and empty strings
+remain overrides subject to field validation.
+A second defaults document is an error.
+Defaults do not count towards `--index`;
+`--check` applies to every selected job regardless of its `check` value.
 
-Reflection target package must be importable.
-`package main` is not supported as target for reflection.
+## Important constraints
 
-## Config Reference Artifacts
-
-Generated config docs and examples:
-
-* [config.html][] ([preview][])
-* [config.example.json][]
-* [config.schema.json][]
-* [config.list.md][]
-* [config.table.md][]
-* [config.example.yaml][]
+* Go reflection requires `go` in `PATH` and an importable target package;
+  `package main` is unsupported.
+  Use a local module directory containing `go.mod`
+  or a remote module reference with an explicit version.
+* Reflect only trusted modules:
+  target and transitive package initialization executes with your permissions,
+  without a sandbox. Module checksums verify integrity, not trust.
+  `@latest` is non-deterministic and rejected in check mode.
+* `mod2doc` comments default to `raw`, independently of `mod2schema.comments`.
+  If external type names collide, use `mod2schema.type_namer: full`.
+* The editor schema currently describes complete jobs;
+  it does not yet support defaults documents or partial jobs.
+  The CLI validates defaults and checks required fields after merging,
+  before executing jobs.
 
 <!-- links -->
 
-[CLI docs]: CLI.md
-[config.html]: config.html
-[preview]: https://html-preview.github.io/?url=https://github.com/WoozyMasta/schemadoc/blob/master/cmd/schemadoc/doc/config.html
-[config.example.json]: config.example.json
-[config.schema.json]: config.schema.json
-[config.list.md]: config.list.md
-[config.table.md]: config.table.md
-[config.example.yaml]: config.example.yaml
+[CLI reference]: CLI.md
+[config reference]: config.table.md
