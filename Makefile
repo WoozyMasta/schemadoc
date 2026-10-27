@@ -17,8 +17,8 @@ GOWORK           ?= off
 GOFTAGS          ?= forceposix
 MODULE_PATH      ?= $(shell GOWORK=off $(GO) list -m -f '{{.Path}}')
 RELEASE_MATRIX   ?= linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
-NATIVE_GOOS      := $(shell go env GOOS)
-NATIVE_GOARCH    := $(shell go env GOARCH)
+NATIVE_GOOS      := $(shell GOWORK=$(GOWORK) $(GO) env GOOS)
+NATIVE_GOARCH    := $(shell GOWORK=$(GOWORK) $(GO) env GOARCH)
 NATIVE_EXTENSION := $(if $(filter $(NATIVE_GOOS),windows),.exe,)
 VERSION          := $(shell git describe --tags --abbrev=0 2>/dev/null || echo v0.0.0)
 COMMIT           := $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
@@ -64,8 +64,8 @@ release: clean
 
 .PHONY: check ci ci-release
 
-check: verify tidy fmt vet lint-fix align-fix test test-race fuzz docs-schema docs-cli release-notes
-ci: download tools-ci verify tidy-check fmt-check vet lint align test fuzz docs-check
+check: verify tidy fmt vet lint-fix align-fix test docs-generate test-race fuzz release-notes
+ci: download tools-ci verify tidy-check fmt-check docs-check vet lint align test fuzz
 
 .PHONY: test test-race fuzz
 
@@ -158,9 +158,13 @@ tool-benchstat:
 tool-cyclonedx:
 	$(GO) install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
 
-.PHONY: docs-check docs-schema docs-cli release-notes
+.PHONY: docs-generate docs-check docs-schema docs-cli release-notes
 
-docs-check: docs-schema docs-cli
+docs-generate: docs-schema docs-cli
+
+docs-check:
+	GOWORK=$(GOWORK) $(GO) run $(GOFLAGS) -ldflags="$(LDFLAGS)" ./cmd/$(BINARY) \
+		build --check $(SCHEMADOC_CONFIG)
 	@git diff --stat --exit-code -- $(CLI_DOCS) || ( \
 	 echo "$(CLI_DOCS) are out of date; run 'make docs-schema docs-cli' and commit changes"; \
 	 exit 1; \
