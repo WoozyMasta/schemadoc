@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	// ExampleModeAll prefers including optional properties while preserving validity.
+	// ExampleModeAll prefers optional properties and distinct oneOf array items while preserving validity.
 	ExampleModeAll ExampleMode = "all"
 	// ExampleModeRequired prefers fewer optional properties while preserving validity.
 	ExampleModeRequired ExampleMode = "required"

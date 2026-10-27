@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning][].
   `required` may include optional properties to produce a valid example;
   `all` may omit conflicting properties.
   Regenerate JSON/YAML and embedded examples when upgrading.
+* `all` examples prefer distinct `oneOf` alternatives
+  in homogeneous arrays when the complete example remains valid.
 * Failed example search now reports `unsupported_materialization`;
   `unsatisfiable` is reserved for proven contradictions.
 

@@ -352,9 +352,22 @@ func (m *exampleMaterializer) searchArray(
 	accept func(any) bool,
 ) (bool, error) {
 	seed, seedErr := m.synthesizeArray(schema, path)
-	if seedErr == nil && accept(seed) {
-		return true, nil
+	if seedErr == nil {
+		if m.mode == ExampleModeAll {
+			budget := m.budget
+			expanded := m.expandArrayBranches(schema, seed, path)
+			if len(expanded) > len(seed) && accept(expanded) {
+				return true, nil
+			}
+
+			m.budget = budget
+		}
+
+		if accept(seed) {
+			return true, nil
+		}
 	}
+
 	if isMaterializationReferenceError(seedErr) {
 		return false, seedErr
 	}
@@ -483,6 +496,63 @@ func (m *exampleMaterializer) searchArray(
 	}
 
 	return false, seedErr
+}
+
+// expandArrayBranches adds distinct viable oneOf alternatives to a homogeneous array.
+func (m *exampleMaterializer) expandArrayBranches(schema effectiveSchema, seed []any, path schemaPath) []any {
+	_, maximum := arrayBounds(schema)
+	if len(seed) == 0 || len(seed) >= maximum {
+		return seed
+	}
+
+	items, err := schema.arrayItems(m.semantic)
+	if err != nil || arrayPrefixLength(items) != 0 {
+		return seed
+	}
+
+	item, hasItem, err := arrayItemSchemaAt(items, len(seed))
+	if err != nil ||
+		!hasItem ||
+		!slices.ContainsFunc(item.compositionGroups, func(group schemaComposition) bool {
+			return group.kind == schemaCompositionOneOf && len(group.branches) > 1
+		}) {
+		return seed
+	}
+
+	result := slices.Clone(seed)
+	outer := m.valueSearch
+	m.valueSearch = &valueSearch{remaining: m.budget.childValues}
+	defer func() { m.valueSearch = outer }()
+	_, _ = m.generationPlans(item, path.appendArrayItem(), func(plan effectiveSchema) (bool, error) {
+		if len(result) >= maximum {
+			return true, nil
+		}
+
+		for _, value := range result {
+			if validateEffectiveInstance(m.semantic, plan, value, path.appendArrayItem()) == nil {
+				return false, nil
+			}
+		}
+
+		_, _ = m.searchEffective(plan, path.appendArrayItem(), func(value any) bool {
+			if !hasUniqueArrayItem(schema, result, value) ||
+				validateEffectiveInstance(m.semantic, item, value, path.appendArrayItem()) != nil {
+				return false
+			}
+
+			candidate := append(slices.Clone(result), cloneJSONValue(value))
+			if validateEffectiveInstance(m.semantic, schema, candidate, path) != nil {
+				return false
+			}
+
+			result = candidate
+			return true
+		})
+
+		return false, nil
+	})
+
+	return result
 }
 
 // searchObject visits subsets by distance from the requested property preference.

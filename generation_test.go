@@ -131,6 +131,89 @@ func TestNestedArrayCompositionPreservesPropertySearch(t *testing.T) {
 	}
 }
 
+func TestArrayCompositionExamples(t *testing.T) {
+	tests := []struct {
+		name, constraint string
+		want             int
+	}{
+		{"branches", `"maxItems":2,"uniqueItems":true`, 2},
+		{"maximum_one", `"maxItems":1`, 1},
+		{"incompatible_branch", `"maxItems":2,"not":{"contains":{"required":["second"]}}`, 1},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := []byte(`{"$schema":"https://json-schema.org/draft/2020-12/schema",` +
+				`"type":"object","required":["entries"],"properties":{"entries":{` +
+				`"type":"array",` + tc.constraint + `,"items":{"$ref":"#/$defs/entry"}}},` +
+				`"$defs":{"entry":{"type":"object","properties":{` +
+				`"first":{"type":"boolean"},"second":{"type":"boolean"}},` +
+				`"oneOf":[{"required":["first"]},{"required":["second"]}]}}}`)
+			for _, mode := range []ExampleMode{ExampleModeRequired, ExampleModeAll} {
+				first, err := GenerateExampleJSON(schema, mode)
+				if err != nil {
+					t.Fatalf("%s: %v", mode, err)
+				}
+				if err := validateGeneratedJSON(schema, first); err != nil {
+					t.Fatal(err)
+				}
+
+				second, err := GenerateExampleJSON(schema, mode)
+				if err != nil || !bytes.Equal(first, second) {
+					t.Fatalf("%s: nondeterministic: %s / %s: %v", mode, first, second, err)
+				}
+
+				var result struct {
+					Entries []map[string]any `json:"entries"`
+				}
+				if err := json.Unmarshal(first, &result); err != nil {
+					t.Fatal(err)
+				}
+
+				want := tc.want
+				if mode == ExampleModeRequired {
+					want = 1
+				}
+				if len(result.Entries) != want {
+					t.Fatalf("%s: got %s, want %d entries", mode, first, want)
+				}
+
+				if want == 2 {
+					_, firstBranch := result.Entries[0]["first"]
+					_, secondBranch := result.Entries[1]["second"]
+					if !firstBranch || !secondBranch {
+						t.Fatalf("%s: missing distinct branches: %s", mode, first)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestArrayCompositionExamplesRespectParentConstraints(t *testing.T) {
+	schema := []byte(`{"$schema":"https://json-schema.org/draft/2020-12/schema",` +
+		`"type":"object","required":["entries"],` +
+		`"not":{"properties":{"entries":{"minItems":2}},"required":["entries"]},` +
+		`"properties":{"entries":{"type":"array","items":{"type":"object",` +
+		`"properties":{"first":{"type":"boolean"},"second":{"type":"boolean"}},` +
+		`"oneOf":[{"required":["first"]},{"required":["second"]}]}}}}`)
+	generated, err := GenerateExampleJSON(schema, ExampleModeAll)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := validateGeneratedJSON(schema, generated); err != nil {
+		t.Fatal(err)
+	}
+	var result struct {
+		Entries []any `json:"entries"`
+	}
+	if err := json.Unmarshal(generated, &result); err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Entries) != 1 {
+		t.Fatalf("expected fallback to one entry: %s", generated)
+	}
+}
+
 func TestGenerationChildValueBacktracking(t *testing.T) {
 	tests := []struct {
 		name, schema, property string
