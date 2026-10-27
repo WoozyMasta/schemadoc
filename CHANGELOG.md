@@ -27,11 +27,11 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixed
 
-* Respect common constraints when generating examples
-  from `oneOf`/`anyOf` branches.
+* Combine common constraints with `oneOf`/`anyOf` branches
+  and retry child values when parent constraints reject them.
 * Apply complete dependency schemas and transitive property dependencies,
-  including legacy `dependencies`, and resolve required values
-  through `patternProperties` and `additionalProperties`.
+  including legacy `dependencies`, and resolve required values through
+  `patternProperties`, `additionalProperties`, and `unevaluatedProperties`.
 
 ## [0.11.0][] - 2026-10-21
 

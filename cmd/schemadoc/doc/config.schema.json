@@ -334,7 +334,7 @@
         },
         "mode": {
           "default": "all",
-          "description": "Mode prefers a complete (`all`) or minimal (`required`) valid embedded example.",
+          "description": "Mode prefers more (`all`) or fewer (`required`) optional properties.",
           "enum": [
             "all",
             "required"
@@ -553,7 +553,7 @@
         },
         "mode": {
           "default": "all",
-          "description": "Mode prefers a complete (`all`) or minimal (`required`) valid embedded example.",
+          "description": "Mode prefers more (`all`) or fewer (`required`) optional properties.",
           "enum": [
             "all",
             "required"
@@ -642,7 +642,7 @@
         },
         "mode": {
           "default": "all",
-          "description": "Mode prefers a complete (`all`) or minimal (`required`) valid example.",
+          "description": "Mode prefers more (`all`) or fewer (`required`) optional properties.",
           "enum": [
             "all",
             "required"
@@ -664,7 +664,7 @@
       "properties": {
         "mode": {
           "default": "all",
-          "description": "Mode prefers a complete (`all`) or minimal (`required`) valid example.",
+          "description": "Mode prefers more (`all`) or fewer (`required`) optional properties.",
           "enum": [
             "all",
             "required"

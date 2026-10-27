@@ -489,7 +489,7 @@ Key: `mode`
 
 Path: [`mod2doc`](#configmod2docstage).`mode`
 
-Mode prefers a complete (`all`) or minimal (`required`) valid embedded example.
+Mode prefers more (`all`) or fewer (`required`) optional properties.
 
 Attributes:
 
@@ -1196,7 +1196,7 @@ Key: `mode`
 
 Path: [`schema2json`](#configschema2jsonstage).`mode`
 
-Mode prefers a complete (`all`) or minimal (`required`) valid example.
+Mode prefers more (`all`) or fewer (`required`) optional properties.
 
 Attributes:
 
@@ -1325,7 +1325,7 @@ Key: `mode`
 
 Path: [`schema2doc`](#configschema2docstage).`mode`
 
-Mode prefers a complete (`all`) or minimal (`required`) valid embedded example.
+Mode prefers more (`all`) or fewer (`required`) optional properties.
 
 Attributes:
 
@@ -1505,7 +1505,7 @@ Key: `mode`
 
 Path: [`schema2yaml`](#configschema2yamlstage).`mode`
 
-Mode prefers a complete (`all`) or minimal (`required`) valid example.
+Mode prefers more (`all`) or fewer (`required`) optional properties.
 
 Attributes:
 
@@ -1623,7 +1623,7 @@ mod2doc:
   # Default: *
   # Allowed values: -, *
   list_marker: '*'
-  # Mode prefers a complete (`all`) or minimal (`required`) valid embedded example.
+  # Mode prefers more (`all`) or fewer (`required`) optional properties.
   # Default: all
   # Allowed values: all, required
   mode: all
@@ -1784,7 +1784,7 @@ schema2json:
   # When empty, build derives output from `schema` path:
   #   - schema2json -> `<schema-base>.json`
   output: <string>
-  # Mode prefers a complete (`all`) or minimal (`required`) valid example.
+  # Mode prefers more (`all`) or fewer (`required`) optional properties.
   # Default: all
   # Allowed values: all, required
   mode: all
@@ -1827,7 +1827,7 @@ schema2doc:
   # Default: *
   # Allowed values: -, *
   list_marker: '*'
-  # Mode prefers a complete (`all`) or minimal (`required`) valid embedded example.
+  # Mode prefers more (`all`) or fewer (`required`) optional properties.
   # Default: all
   # Allowed values: all, required
   mode: all
@@ -1907,7 +1907,7 @@ schema2yaml:
   # When empty, build derives output from `schema` path:
   #   - schema2yaml -> `<schema-base>.yaml`
   output: <string>
-  # Mode prefers a complete (`all`) or minimal (`required`) valid example.
+  # Mode prefers more (`all`) or fewer (`required`) optional properties.
   # Default: all
   # Allowed values: all, required
   mode: all

@@ -294,7 +294,7 @@ type Schema2DocStage struct {
 	// ListMarker controls unordered list marker normalization in rendered documents.
 	ListMarker string `json:"list_marker,omitempty" yaml:"list_marker,omitempty" jsonschema_extras:"x-order=6" jsonschema:"enum=-,enum=*,default=*"`
 
-	// Mode prefers a complete (`all`) or minimal (`required`) valid embedded example.
+	// Mode prefers more (`all`) or fewer (`required`) optional properties.
 	Mode string `json:"mode,omitempty" yaml:"mode,omitempty" jsonschema_extras:"x-order=7" jsonschema:"enum=all,enum=required,default=all"`
 
 	// Format selects embedded example format for doc template.
@@ -338,7 +338,7 @@ type Schema2JSONStage struct {
 	//   - schema2json -> `<schema-base>.json`
 	Output string `json:"output,omitempty" yaml:"output,omitempty" jsonschema_extras:"x-order=1"`
 
-	// Mode prefers a complete (`all`) or minimal (`required`) valid example.
+	// Mode prefers more (`all`) or fewer (`required`) optional properties.
 	Mode string `json:"mode,omitempty" yaml:"mode,omitempty" jsonschema_extras:"x-order=2" jsonschema:"enum=all,enum=required,default=all"`
 }
 
@@ -353,6 +353,6 @@ type Schema2YAMLStage struct {
 	//   - schema2yaml -> `<schema-base>.yaml`
 	Output string `json:"output,omitempty" yaml:"output,omitempty" jsonschema_extras:"x-order=1"`
 
-	// Mode prefers a complete (`all`) or minimal (`required`) valid example.
+	// Mode prefers more (`all`) or fewer (`required`) optional properties.
 	Mode string `json:"mode,omitempty" yaml:"mode,omitempty" jsonschema_extras:"x-order=2" jsonschema:"enum=all,enum=required,default=all"`
 }

@@ -623,7 +623,7 @@
         <h3 id="mod2docstagemode">Mod2DocStage.mode</h3>
         <p><strong>Key:</strong> <code>mode</code></p>
 <p><strong>Path:</strong> <a href="#configmod2docstage"><code>mod2doc</code></a>.<code>mode</code></p>
-<p>Mode prefers a complete (<code>all</code>) or minimal (<code>required</code>) valid embedded example.</p>
+<p>Mode prefers more (<code>all</code>) or fewer (<code>required</code>) optional properties.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
@@ -1231,7 +1231,7 @@
         <h3 id="schema2jsonstagemode">Schema2JSONStage.mode</h3>
         <p><strong>Key:</strong> <code>mode</code></p>
 <p><strong>Path:</strong> <a href="#configschema2jsonstage"><code>schema2json</code></a>.<code>mode</code></p>
-<p>Mode prefers a complete (<code>all</code>) or minimal (<code>required</code>) valid example.</p>
+<p>Mode prefers more (<code>all</code>) or fewer (<code>required</code>) optional properties.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
@@ -1337,7 +1337,7 @@
         <h3 id="schema2docstagemode">Schema2DocStage.mode</h3>
         <p><strong>Key:</strong> <code>mode</code></p>
 <p><strong>Path:</strong> <a href="#configschema2docstage"><code>schema2doc</code></a>.<code>mode</code></p>
-<p>Mode prefers a complete (<code>all</code>) or minimal (<code>required</code>) valid embedded example.</p>
+<p>Mode prefers more (<code>all</code>) or fewer (<code>required</code>) optional properties.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
@@ -1479,7 +1479,7 @@
         <h3 id="schema2yamlstagemode">Schema2YAMLStage.mode</h3>
         <p><strong>Key:</strong> <code>mode</code></p>
 <p><strong>Path:</strong> <a href="#configschema2yamlstage"><code>schema2yaml</code></a>.<code>mode</code></p>
-<p>Mode prefers a complete (<code>all</code>) or minimal (<code>required</code>) valid example.</p>
+<p>Mode prefers more (<code>all</code>) or fewer (<code>required</code>) optional properties.</p>
 <ul class="attr-list">
 <li><strong>Type:</strong> <code>string</code></li>
 <li><strong>Required:</strong> no</li>
@@ -1593,7 +1593,7 @@ mod2doc:
   # Default: *
   # Allowed values: -, *
   list_marker: &#39;*&#39;
-  # Mode prefers a complete (`all`) or minimal (`required`) valid embedded example.
+  # Mode prefers more (`all`) or fewer (`required`) optional properties.
   # Default: all
   # Allowed values: all, required
   mode: all
@@ -1754,7 +1754,7 @@ schema2json:
   # When empty, build derives output from `schema` path:
   #   - schema2json -&gt; `&lt;schema-base&gt;.json`
   output: &lt;string&gt;
-  # Mode prefers a complete (`all`) or minimal (`required`) valid example.
+  # Mode prefers more (`all`) or fewer (`required`) optional properties.
   # Default: all
   # Allowed values: all, required
   mode: all
@@ -1797,7 +1797,7 @@ schema2doc:
   # Default: *
   # Allowed values: -, *
   list_marker: &#39;*&#39;
-  # Mode prefers a complete (`all`) or minimal (`required`) valid embedded example.
+  # Mode prefers more (`all`) or fewer (`required`) optional properties.
   # Default: all
   # Allowed values: all, required
   mode: all
@@ -1877,7 +1877,7 @@ schema2yaml:
   # When empty, build derives output from `schema` path:
   #   - schema2yaml -&gt; `&lt;schema-base&gt;.yaml`
   output: &lt;string&gt;
-  # Mode prefers a complete (`all`) or minimal (`required`) valid example.
+  # Mode prefers more (`all`) or fewer (`required`) optional properties.
   # Default: all
   # Allowed values: all, required
   mode: all

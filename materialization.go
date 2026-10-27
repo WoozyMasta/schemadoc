@@ -192,19 +192,20 @@ func newExampleMaterializer(doc schemaDocument, mode ExampleMode) *exampleMateri
 
 // materialize builds one valid value or returns a structured failure.
 func (materializer *exampleMaterializer) materialize(node schemaValue) (any, error) {
-	value, err := materializer.materializeAt(node, schemaPath{})
-	if materializer.validatorError != nil && !isMaterializationReferenceError(err) {
+	effective, err := materializer.semantic.effective(node)
+	if err != nil {
+		return nil, materializationReferenceError(err, schemaPath{})
+	}
+
+	if materializer.validatorError != nil {
 		return nil, newMaterializationError(
 			MaterializationCodeUnsupported,
 			MaterializationCategoryUnsupportedMaterialization,
 			"#", materializer.validatorError,
 		)
 	}
-	if err != nil {
-		return nil, err
-	}
 
-	return value, nil
+	return materializer.materializeEffective(effective, schemaPath{})
 }
 
 // compileMaterializationValidator compiles one in-memory root schema

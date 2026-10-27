@@ -223,19 +223,25 @@ func TestGenerationDeepDeterministicSchemas(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		generated, err := GenerateExampleJSON(bytes, ExampleModeRequired)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := validateGeneratedJSON(bytes, generated); err != nil {
-			t.Fatal(err)
+		for _, mode := range []ExampleMode{ExampleModeRequired, ExampleModeAll} {
+			generated, err := GenerateExampleJSON(bytes, mode)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := validateGeneratedJSON(bytes, generated); err != nil {
+				t.Fatal(err)
+			}
+			repeated, err := GenerateExampleJSON(bytes, mode)
+			if err != nil || !slices.Equal(generated, repeated) {
+				t.Fatalf("nondeterministic %s output: %v", mode, err)
+			}
 		}
 	}
 }
 
 func TestGenerationValidatorSetupError(t *testing.T) {
 	t.Parallel()
-	doc, err := parseDocument([]byte(`{"type":"string","pattern":"["}`))
+	doc, err := parseDocument([]byte(`{"type":"string","pattern":"[","anyOf":[{"const":"a"},{"const":"b"}]}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -243,9 +249,13 @@ func TestGenerationValidatorSetupError(t *testing.T) {
 	if m.validatorError == nil {
 		t.Fatal("expected validator compilation error")
 	}
+	budget := m.budget
 	_, err = m.materialize(doc.Root)
 	if !errors.Is(err, m.validatorError) {
 		t.Fatalf("validator error lost: %v", err)
+	}
+	if m.budget != budget || m.depth != 0 {
+		t.Fatal("search ran after validator setup failed")
 	}
 }
 
