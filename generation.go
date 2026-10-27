@@ -564,7 +564,7 @@ func (m *exampleMaterializer) searchObjectValues(
 			return false, materializationReferenceError(err, path.appendProperty(name))
 		}
 
-		if !found && !slices.Contains(schema.required(), name) {
+		if !found {
 			property = dynamic
 		}
 

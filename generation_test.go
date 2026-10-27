@@ -177,6 +177,23 @@ func TestGenerationSearchBudget(t *testing.T) {
 	}
 }
 
+func TestRequiredPropertyWithUnevaluatedProperties(t *testing.T) {
+	t.Parallel()
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object", "required": []any{"x"},
+		"unevaluatedProperties": map[string]any{"type": "string"},
+	})
+	for _, mode := range []ExampleMode{ExampleModeRequired, ExampleModeAll} {
+		generated, err := GenerateExampleJSON(schema, mode)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := validateGeneratedJSON(schema, generated); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestGenerationPlansOrderAndBound(t *testing.T) {
 	t.Parallel()
 	doc, err := parseDocument([]byte(`{
