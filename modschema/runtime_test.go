@@ -155,7 +155,7 @@ func TestInitSchemaGeneratorWorkspace_LocalMajorVersion(t *testing.T) {
 	modulePath := "github.com/acme/project/v2"
 	if err := os.WriteFile(
 		filepath.Join(moduleDir, "go.mod"),
-		[]byte("module "+modulePath+"\n\ngo 1.25.5\n"),
+		[]byte("module "+modulePath+"\n\ngo 1.25.0\n"),
 		0o600,
 	); err != nil {
 		t.Fatalf("write target go.mod: %v", err)
@@ -252,7 +252,7 @@ func TestResolveTarget_Local(t *testing.T) {
 	moduleDir := t.TempDir()
 	if err := os.WriteFile(
 		filepath.Join(moduleDir, "go.mod"),
-		[]byte("module github.com/acme/local\n\ngo 1.25.5\n"),
+		[]byte("module github.com/acme/local\n\ngo 1.25.0\n"),
 		0o600,
 	); err != nil {
 		t.Fatalf("write go.mod: %v", err)
@@ -381,7 +381,7 @@ type Config struct {
 `
 	if err := os.WriteFile(
 		filepath.Join(moduleDir, "go.mod"),
-		[]byte("module github.com/acme/mainapp\n\ngo 1.25.5\n"),
+		[]byte("module github.com/acme/mainapp\n\ngo 1.25.0\n"),
 		0o600,
 	); err != nil {
 		t.Fatalf("write go.mod: %v", err)
