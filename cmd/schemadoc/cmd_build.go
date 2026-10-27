@@ -132,6 +132,56 @@ func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Co
 		runner.logf("build: doc=%d stage=mod2doc output=%s status=ok", docNumber, request.OutputPath)
 	}
 
+	if loadedConfig.Mod2JSON != nil {
+		stage := loadedConfig.Mod2JSON
+		output := resolveBuildExampleOutputPath(schemaPath, stage.Output, "json")
+		options := moduleOptionsFromBuild(loadedConfig.Mod2Schema)
+		if err := runner.runModuleToExampleForBuild(
+			generator,
+			options,
+			stage.Mode,
+			schemadoc.ExampleFormatJSON,
+			output,
+			loadedConfig.Check,
+			exampleOutputOptions{JSON: jsonOutputFromBuild(stage.JSON)}); err != nil {
+			return fmt.Errorf("config doc %d stage mod2json: %w", docNumber, err)
+		}
+
+		runner.logf("build: doc=%d stage=mod2json output=%s status=ok", docNumber, output)
+	}
+
+	if loadedConfig.Mod2YAML != nil {
+		stage := loadedConfig.Mod2YAML
+		output := resolveBuildExampleOutputPath(schemaPath, stage.Output, "yaml")
+		options := moduleOptionsFromBuild(loadedConfig.Mod2Schema)
+		options.Comments = modschema.CommentMode(stage.Comments)
+		yamlOptions := yamlOutputFromBuild(stage.YAML)
+		if yamlOptions.Comments == nil {
+			yamlOptions.Comments = &yamlCommentOptions{
+				Titles:       true,
+				Descriptions: true,
+				Defaults:     true,
+				Enums:        true,
+			}
+		}
+		if yamlOptions.Comments.Spacing == "" {
+			yamlOptions.Comments.Spacing = "full"
+		}
+
+		if err := runner.runModuleToExampleForBuild(
+			generator,
+			options,
+			stage.Mode,
+			schemadoc.ExampleFormatYAML,
+			output,
+			loadedConfig.Check,
+			exampleOutputOptions{YAML: yamlOptions}); err != nil {
+			return fmt.Errorf("config doc %d stage mod2yaml: %w", docNumber, err)
+		}
+
+		runner.logf("build: doc=%d stage=mod2yaml output=%s status=ok", docNumber, output)
+	}
+
 	if loadedConfig.Merge != nil {
 		if err := runner.RunSchemaMerge(
 			schemaPath,
@@ -207,6 +257,27 @@ func (runner *cliRunner) runLoadedConfig(docNumber int, loadedConfig buildcfg.Co
 	}
 
 	return nil
+}
+
+// runModuleToExampleForBuild reflects a transient schema and checks or writes an example.
+func (runner *cliRunner) runModuleToExampleForBuild(
+	generator *modschema.Generator, options modschema.Options, mode string, format schemadoc.ExampleFormat,
+	output string, check bool, formatting exampleOutputOptions,
+) error {
+	schema, _, err := generator.Generate(options)
+	if err != nil {
+		return fmt.Errorf("generate schema: %w", err)
+	}
+
+	content, err := generateModuleExample(schema, firstNonEmpty(mode, "all"), format, formatting)
+	if err != nil {
+		return err
+	}
+	if check {
+		return checkFileContent(output, content, "example")
+	}
+
+	return writeBytes(runner.stdout, output, content, "example")
 }
 
 // resolveBuildExampleOutputPath returns explicit output or schema-derived default.

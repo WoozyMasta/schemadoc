@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* `mod2json` and `mod2yaml` commands and build stages
+  generate examples directly from Go types;
+  `mod2yaml` selects raw or plain Go comments independently.
+
 ## [0.12.0][] - 2026-10-27
 
 ### Changed

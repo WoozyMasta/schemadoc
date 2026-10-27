@@ -61,6 +61,15 @@
       "indent": 2
     }
   },
+  "mod2json": {
+    "json": {
+      "indent": 2,
+      "indent_type": "space",
+      "minify": false
+    },
+    "mode": "all",
+    "output": "<string>"
+  },
   "mod2schema": {
     "comments": "raw",
     "json": {
@@ -75,6 +84,23 @@
     "root_id": "https://example.com/schema.json",
     "type": "Config",
     "type_namer": "package"
+  },
+  "mod2yaml": {
+    "comments": "raw",
+    "mode": "all",
+    "output": "<string>",
+    "yaml": {
+      "comments": {
+        "defaults": true,
+        "descriptions": true,
+        "enums": true,
+        "example_format": "block",
+        "examples": "scalar",
+        "spacing": "compact",
+        "titles": true
+      },
+      "indent": 2
+    }
   },
   "schema": "schema.json",
   "schema2doc": {

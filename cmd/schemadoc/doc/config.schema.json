@@ -2,7 +2,7 @@
   "$defs": {
     "Config": {
       "additionalProperties": false,
-      "description": "Config describes one build document with stage order mod2schema -> mod2doc -> merge -> schema2json -> schema2doc -> schema2yaml.",
+      "description": "Config describes one build document with stage order mod2schema -> mod2doc -> mod2json -> mod2yaml -> merge -> schema2json -> schema2doc -> schema2yaml.",
       "properties": {
         "check": {
           "description": "Check enables validation mode for all stages in the document.\nWhen true, build compares generated outputs with existing files and fails on first mismatch instead of rewriting files. This is intended for CI to ensure generated files are up to date.",
@@ -19,10 +19,20 @@
           "description": "Mod2Doc renders documentation directly from the sibling mod2schema Go target.\nRequires mod2schema in the same document and runs immediately after it. Uses raw Go comments by default and does not read the working schema or merge results.",
           "x-order": "15"
         },
+        "mod2json": {
+          "$ref": "#/$defs/Schema2JSONStage",
+          "description": "Mod2JSON generates a JSON example directly from the sibling mod2schema Go target before merge.",
+          "x-order": "16"
+        },
         "mod2schema": {
           "$ref": "#/$defs/Mod2SchemaStage",
           "description": "Mod2Schema reflects one Go type into JSON Schema and writes result to `schema`.\nWhen declared, this stage always runs first. Use it when schema must be generated from source code before merge/export stages.",
           "x-order": "10"
+        },
+        "mod2yaml": {
+          "$ref": "#/$defs/Mod2YAMLStage",
+          "description": "Mod2YAML generates a YAML example directly from the sibling mod2schema Go target before merge.",
+          "x-order": "17"
         },
         "schema": {
           "description": "Schema is working schema path for the whole document pipeline.\n`build` writes mod2schema output to this file, `merge` mutates this file in place, and schema2* stages read from this file as input. Use relative path for repository-local workflows, or absolute path for CI/temp directories.",
@@ -502,6 +512,42 @@
       "required": [
         "type"
       ],
+      "type": "object"
+    },
+    "Mod2YAMLStage": {
+      "additionalProperties": false,
+      "description": "Mod2YAMLStage configures YAML generation from the sibling Go target.",
+      "properties": {
+        "comments": {
+          "default": "raw",
+          "description": "Comments selects raw or plain Go comments independently of mod2schema.",
+          "enum": [
+            "raw",
+            "plain"
+          ],
+          "type": "string"
+        },
+        "mode": {
+          "default": "all",
+          "description": "Mode prefers more (`all`) or fewer (`required`) optional properties.",
+          "enum": [
+            "all",
+            "required"
+          ],
+          "type": "string",
+          "x-order": "2"
+        },
+        "output": {
+          "description": "Output is output file path.\nWhen empty, build derives output from `schema` path:\n- schema2yaml -> `<schema-base>.yaml`",
+          "type": "string",
+          "x-order": "1"
+        },
+        "yaml": {
+          "$ref": "#/$defs/YAMLOutputOptions",
+          "description": "YAML configures output formatting/comments for schema2yaml.",
+          "x-order": "3"
+        }
+      },
       "type": "object"
     },
     "Schema2DocStage": {

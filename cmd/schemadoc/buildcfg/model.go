@@ -11,7 +11,7 @@ package buildcfg
  */
 
 // Config describes one build document with stage order
-// mod2schema -> mod2doc -> merge -> schema2json -> schema2doc -> schema2yaml.
+// mod2schema -> mod2doc -> mod2json -> mod2yaml -> merge -> schema2json -> schema2doc -> schema2yaml.
 //
 // Each stage is optional. Build executes declared stages in this fixed order.
 // Stage order does not depend on key order in YAML.
@@ -27,6 +27,12 @@ type Config struct {
 	// Requires mod2schema in the same document and runs immediately after it.
 	// Uses raw Go comments by default and does not read the working schema or merge results.
 	Mod2Doc *Mod2DocStage `json:"mod2doc,omitempty" yaml:"mod2doc,omitempty" jsonschema_extras:"x-order=15"`
+
+	// Mod2JSON generates a JSON example directly from the sibling mod2schema Go target before merge.
+	Mod2JSON *Schema2JSONStage `json:"mod2json,omitempty" yaml:"mod2json,omitempty" jsonschema_extras:"x-order=16"`
+
+	// Mod2YAML generates a YAML example directly from the sibling mod2schema Go target before merge.
+	Mod2YAML *Mod2YAMLStage `json:"mod2yaml,omitempty" yaml:"mod2yaml,omitempty" jsonschema_extras:"x-order=17"`
 
 	// Merge applies import/patch actions over current `schema` file.
 	//
@@ -162,6 +168,16 @@ type Mod2DocStage struct {
 
 	// Schema2DocStage shares document rendering options without changing YAML shape.
 	Schema2DocStage `yaml:",inline"`
+}
+
+// Mod2YAMLStage configures YAML generation from the sibling Go target.
+// YAML comment spacing defaults to full.
+type Mod2YAMLStage struct {
+	// Comments selects raw or plain Go comments independently of mod2schema.
+	Comments string `json:"comments,omitempty" yaml:"comments,omitempty" jsonschema:"enum=raw,enum=plain,default=raw"`
+
+	// Schema2YAMLStage shares YAML output options.
+	Schema2YAMLStage `yaml:",inline"`
 }
 
 // MergeStage describes merge execution over working schema.

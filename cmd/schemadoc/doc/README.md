@@ -52,7 +52,8 @@ Relative paths resolve from the current working directory.
 Each YAML document is one job; separate jobs with `---`. Jobs run in file order.
 Within a job, declared stages run in fixed order, regardless of YAML key order:
 
-`mod2schema -> mod2doc -> merge -> schema2json -> schema2doc -> schema2yaml`.
+`mod2schema -> mod2doc -> mod2json -> mod2yaml -> merge`,
+then `schema2json -> schema2doc -> schema2yaml`.
 
 `schema` is the job's working file:
 `mod2schema` writes it, `merge` modifies it, and `schema2*` stages consume it.
@@ -65,6 +66,23 @@ Use it to preserve Go documentation independently of the persisted schema.
 including patches and imported definitions.
 Go comments remain raw by default;
 `comments: plain` normalizes them for portable schema descriptions.
+
+`mod2json` and `mod2yaml`
+also use the sibling `mod2schema` Go target and run before merge.
+`mod2yaml` independently selects `comments: raw` (default) or `comments: plain`;
+its YAML comments preserve paragraph breaks by default.
+Use `schema2yaml` when the example must reflect merge changes.
+
+```yaml
+schema: schemas/config.schema.json
+mod2schema:
+  module: .
+  type: Config
+  comments: plain
+mod2yaml:
+  comments: raw
+  output: config.example.yaml
+```
 
 One standalone `defaults:` document
 can supply shared settings anywhere in the stream.

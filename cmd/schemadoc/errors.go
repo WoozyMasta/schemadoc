@@ -9,6 +9,9 @@ import "errors"
 // errMod2DocRequiresMod2Schema reports a missing source for build documentation.
 var errMod2DocRequiresMod2Schema = errors.New("mod2doc requires mod2schema in the same build document")
 
+// errModuleExampleRequiresMod2Schema rejects example stages without a source target.
+var errModuleExampleRequiresMod2Schema = errors.New("mod2json and mod2yaml require mod2schema in the same build document")
+
 // errDuplicateBuildDefaults rejects ambiguous global settings before execution.
 var errDuplicateBuildDefaults = errors.New("config contains more than one defaults document")
 

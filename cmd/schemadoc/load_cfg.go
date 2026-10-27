@@ -302,6 +302,9 @@ func validateBuildConfigStages(config buildcfg.Config) error {
 	if config.Mod2Doc != nil && config.Mod2Schema == nil {
 		return errMod2DocRequiresMod2Schema
 	}
+	if config.Mod2Schema == nil && (config.Mod2JSON != nil || config.Mod2YAML != nil) {
+		return errModuleExampleRequiresMod2Schema
+	}
 
 	return nil
 }

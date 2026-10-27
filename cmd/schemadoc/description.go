@@ -106,6 +106,38 @@ Remote @latest references are non-deterministic and are rejected in build check 
 			Raw(">").
 			Arg("schema.snake.json"))
 
+	setCommandDescription(parser, &options.ModuleToJSON,
+		"Generate example JSON from Go",
+		`Generate an example JSON payload directly from a Go type using the same target selection as mod2schema.
+Reflect only trusted modules: target initialization executes with your permissions.`,
+		flags.Example().
+			Option(&options.ModuleToJSON.ModuleFlags.TypeName, "Config").
+			Arg(".").
+			Raw(">").
+			Arg("config.example.json"),
+		flags.Example().
+			Option(&options.ModuleToJSON.ModuleFlags.TypeName, "Config").
+			Option(&options.ModuleToJSON.ExampleFlags.Mode, "required").
+			Arg("github.com/acme/project@v1.2.3").
+			Arg("config.required.json"))
+
+	setCommandDescription(parser, &options.ModuleToYAML,
+		"Generate example YAML from Go",
+		`Generate an example YAML payload directly from a Go type using the same target selection as mod2schema.
+Go comments retain their source lines by default; use --comments plain to normalize them.
+Reflect only trusted modules: target initialization executes with your permissions.`,
+		flags.Example().
+			Option(&options.ModuleToYAML.ModuleFlags.TypeName, "Config").
+			Arg(".").
+			Raw(">").
+			Arg("config.example.yaml"),
+		flags.Example().
+			Option(&options.ModuleToYAML.ModuleFlags.TypeName, "Config").
+			Option(&options.ModuleToYAML.ModuleFlags.Comments, "plain").
+			Option(&options.ModuleToYAML.ExampleFlags.Mode, "required").
+			Arg(".").
+			Arg("config.required.yaml"))
+
 	setCommandDescription(parser, &options.ModuleToMarkdown,
 		"Generate docs from Go",
 		`Generate documentation directly from a Go type using the same module,

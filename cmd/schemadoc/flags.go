@@ -11,6 +11,8 @@ type cliOptions struct {
 	SchemaMerge      schemaMergeCommand      `command:"merge"       description:"Merge JSON Schema documents"`
 	Build            buildCommand            `command:"build"       description:"Run jobs from config file"`
 	ModuleToSchema   moduleToSchemaCommand   `command:"mod2schema"  description:"Generate JSON Schema from Go type"`
+	ModuleToJSON     moduleToJSONCommand     `command:"mod2json"    description:"Generate example JSON from Go type"`
+	ModuleToYAML     moduleToYAMLCommand     `command:"mod2yaml"    description:"Generate example YAML from Go type"`
 	SchemaToJSON     schemaToJSONCommand     `command:"schema2json" description:"Generate example JSON payload from schema"`
 	SchemaToYAML     schemaToYAMLCommand     `command:"schema2yaml" description:"Generate example YAML payload from schema"`
 	ModuleToMarkdown moduleToMarkdownCommand `command:"mod2doc"     description:"Generate docs from Go type"`
@@ -71,6 +73,18 @@ type yamlExampleFlags struct {
 	NoEnums         bool   `long:"no-enums"                description:"Disable schema enum comments"`
 }
 
+// moduleYAMLExampleFlags preserves paragraph breaks by default for Go comments.
+type moduleYAMLExampleFlags struct {
+	CommentExamples string `long:"comments-examples"       description:"Examples in comments" default:"scalar" choices:"none;scalar;all"`
+	CommentFormat   string `long:"comments-example-format" description:"Annotation value format" default:"block" choices:"inline;block"`
+	CommentSpacing  string `long:"comments-spacing"        description:"Annotation comment spacing" default:"full" choices:"compact;full"`
+	Indent          int    `long:"indent"                  description:"YAML indentation width" default:"2" validate-min:"1"`
+	NoTitles        bool   `long:"no-titles"               description:"Disable schema title comments"`
+	NoDescriptions  bool   `long:"no-descriptions"         description:"Disable schema description comments"`
+	NoDefaults      bool   `long:"no-defaults"             description:"Disable schema default comments"`
+	NoEnums         bool   `long:"no-enums"                description:"Disable schema enum comments"`
+}
+
 // markdownExampleFlags groups embedded example mode and format flags.
 type markdownExampleFlags struct {
 	Mode   string `short:"m" long:"mode"   choices:"all;required" description:"More (all) or fewer (required) optional fields" default:"all"`
@@ -104,6 +118,32 @@ type moduleToSchemaCommand struct {
 
 	ModuleFlags moduleReflectFlags `group:"Module Reflection"`
 	JSONFlags   jsonFormatFlags    `group:"JSON Format" namespace:"json"`
+}
+
+// moduleToJSONCommand generates a JSON example directly from a Go type.
+type moduleToJSONCommand struct {
+	runner *cliRunner
+	Args   struct {
+		Module string `positional-arg-name:"module" description:"Local module directory or remote module@version" default:"."`
+		Output string `positional-arg-name:"output" description:"Output JSON file path (optional; stdout when omitted)"`
+	} `positional-args:"yes"`
+
+	ModuleFlags  moduleReflectFlags `group:"Module Reflection"`
+	ExampleFlags exampleModeFlags   `group:"Example Generate"`
+	JSONFlags    jsonFormatFlags    `group:"JSON Format" namespace:"json"`
+}
+
+// moduleToYAMLCommand generates a YAML example directly from a Go type.
+type moduleToYAMLCommand struct {
+	runner *cliRunner
+	Args   struct {
+		Module string `positional-arg-name:"module" description:"Local module directory or remote module@version" default:"."`
+		Output string `positional-arg-name:"output" description:"Output YAML file path (optional; stdout when omitted)"`
+	} `positional-args:"yes"`
+
+	ModuleFlags  moduleReflectFlags     `group:"Module Reflection"`
+	ExampleFlags exampleModeFlags       `group:"Example Generate"`
+	YAMLFlags    moduleYAMLExampleFlags `group:"YAML Output" namespace:"yaml"`
 }
 
 // schemaToDocCommand converts schema JSON to docs.

@@ -18,12 +18,13 @@
   * [Mod2DocStage](#mod2docstage)
     * [YAMLOutputOptions](#yamloutputoptions)
       * [YAMLCommentOptions](#yamlcommentoptions)
+  * [Schema2JSONStage](#schema2jsonstage)
+  * [Mod2YAMLStage](#mod2yamlstage)
   * [MergeStage](#mergestage)
     * [MergePatch](#mergepatch)
       * [MergeOp](#mergeop)
     * [MergeImport](#mergeimport)
       * [MergeImportRename](#mergeimportrename)
-  * [Schema2JSONStage](#schema2jsonstage)
   * [Schema2DocStage](#schema2docstage)
   * [Schema2YAMLStage](#schema2yamlstage)
 * [Example yaml document](#example-yaml-document)
@@ -31,12 +32,12 @@
 ## Config
 
 Config describes one build document with stage order mod2schema -> mod2doc ->
-merge -> schema2json -> schema2doc -> schema2yaml.
+mod2json -> mod2yaml -> merge -> schema2json -> schema2doc -> schema2yaml.
 
 | Attribute | Value |
 | --- | --- |
 | Type | `object` |
-| Properties | 8 |
+| Properties | 10 |
 | Additional properties | boolean schema=false |
 
 ### Config.schema
@@ -98,6 +99,30 @@ Go comments by default and does not read the working schema or merge results.
 | --- | --- |
 | Required | no |
 | Reference | [`Mod2DocStage`](#mod2docstage) (`#/$defs/Mod2DocStage`) |
+
+### Config.Schema2JSONStage
+
+Key: `mod2json`
+
+Mod2JSON generates a JSON example directly from the sibling mod2schema Go target
+before merge.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`Schema2JSONStage`](#schema2jsonstage) (`#/$defs/Schema2JSONStage`) |
+
+### Config.Mod2YAMLStage
+
+Key: `mod2yaml`
+
+Mod2YAML generates a YAML example directly from the sibling mod2schema Go target
+before merge.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`Mod2YAMLStage`](#mod2yamlstage) (`#/$defs/Mod2YAMLStage`) |
 
 ### Config.MergeStage
 
@@ -327,6 +352,7 @@ Key: `indent`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`json`](#mod2docstagejsonoutputoptions).`indent`
+* [`mod2json`](#configschema2jsonstage).[`json`](#schema2jsonstagejsonoutputoptions).`indent`
 * [`mod2schema`](#configmod2schemastage).[`json`](#mod2schemastagejsonoutputoptions).`indent`
 * [`schema2doc`](#configschema2docstage).[`json`](#schema2docstagejsonoutputoptions).`indent`
 * [`schema2json`](#configschema2jsonstage).[`json`](#schema2jsonstagejsonoutputoptions).`indent`
@@ -349,6 +375,7 @@ Key: `indent_type`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`json`](#mod2docstagejsonoutputoptions).`indent_type`
+* [`mod2json`](#configschema2jsonstage).[`json`](#schema2jsonstagejsonoutputoptions).`indent_type`
 * [`mod2schema`](#configmod2schemastage).[`json`](#mod2schemastagejsonoutputoptions).`indent_type`
 * [`schema2doc`](#configschema2docstage).[`json`](#schema2docstagejsonoutputoptions).`indent_type`
 * [`schema2json`](#configschema2jsonstage).[`json`](#schema2jsonstagejsonoutputoptions).`indent_type`
@@ -371,6 +398,7 @@ Key: `minify`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`json`](#mod2docstagejsonoutputoptions).`minify`
+* [`mod2json`](#configschema2jsonstage).[`json`](#schema2jsonstagejsonoutputoptions).`minify`
 * [`mod2schema`](#configmod2schemastage).[`json`](#mod2schemastagejsonoutputoptions).`minify`
 * [`schema2doc`](#configschema2docstage).[`json`](#schema2docstagejsonoutputoptions).`minify`
 * [`schema2json`](#configschema2jsonstage).[`json`](#schema2jsonstagejsonoutputoptions).`minify`
@@ -669,6 +697,7 @@ Key: `indent`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).`indent`
+* [`mod2yaml`](#configmod2yamlstage).[`yaml`](#mod2yamlstageyamloutputoptions).`indent`
 * [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).`indent`
 * [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).`indent`
 
@@ -688,6 +717,7 @@ Key: `comments`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).`comments`
+* [`mod2yaml`](#configmod2yamlstage).[`yaml`](#mod2yamlstageyamloutputoptions).`comments`
 * [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).`comments`
 * [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).`comments`
 
@@ -715,6 +745,7 @@ Key: `titles`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`titles`
+* [`mod2yaml`](#configmod2yamlstage).[`yaml`](#mod2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`titles`
 * [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`titles`
 * [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`titles`
 
@@ -733,6 +764,7 @@ Key: `descriptions`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`descriptions`
+* [`mod2yaml`](#configmod2yamlstage).[`yaml`](#mod2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`descriptions`
 * [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`descriptions`
 * [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`descriptions`
 
@@ -751,6 +783,7 @@ Key: `defaults`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`defaults`
+* [`mod2yaml`](#configmod2yamlstage).[`yaml`](#mod2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`defaults`
 * [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`defaults`
 * [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`defaults`
 
@@ -769,6 +802,7 @@ Key: `enums`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`enums`
+* [`mod2yaml`](#configmod2yamlstage).[`yaml`](#mod2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`enums`
 * [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`enums`
 * [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`enums`
 
@@ -787,6 +821,7 @@ Key: `examples`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`examples`
+* [`mod2yaml`](#configmod2yamlstage).[`yaml`](#mod2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`examples`
 * [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`examples`
 * [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`examples`
 
@@ -806,6 +841,7 @@ Key: `example_format`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`example_format`
+* [`mod2yaml`](#configmod2yamlstage).[`yaml`](#mod2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`example_format`
 * [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`example_format`
 * [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`example_format`
 
@@ -825,6 +861,7 @@ Key: `spacing`
 Paths:
 
 * [`mod2doc`](#configmod2docstage).[`yaml`](#mod2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`spacing`
+* [`mod2yaml`](#configmod2yamlstage).[`yaml`](#mod2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`spacing`
 * [`schema2doc`](#configschema2docstage).[`yaml`](#schema2docstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`spacing`
 * [`schema2yaml`](#configschema2yamlstage).[`yaml`](#schema2yamlstageyamloutputoptions).[`comments`](#yamloutputoptionsyamlcommentoptions).`spacing`
 
@@ -836,6 +873,140 @@ Spacing selects compact or paragraph-preserving annotation comments.
 | Required | no |
 | Default | `compact` |
 | Enum | `compact`, `full` |
+
+## Schema2JSONStage
+
+Schema2JSONStage describes schema2json stage.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `object` |
+| Properties | 3 |
+| Additional properties | boolean schema=false |
+
+### Schema2JSONStage.output
+
+Key: `output`
+
+Paths:
+
+* [`mod2json`](#configschema2jsonstage).`output`
+* [`schema2json`](#configschema2jsonstage).`output`
+
+Output is output file path.
+
+When empty, build derives output from `schema` path:
+
+* schema2json -> `<schema-base>.json`
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+
+### Schema2JSONStage.mode
+
+Key: `mode`
+
+Paths:
+
+* [`mod2json`](#configschema2jsonstage).`mode`
+* [`schema2json`](#configschema2jsonstage).`mode`
+
+Mode prefers more (`all`) or fewer (`required`) optional properties.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `all` |
+| Enum | `all`, `required` |
+
+### Schema2JSONStage.JSONOutputOptions
+
+Key: `json`
+
+Paths:
+
+* [`mod2json`](#configschema2jsonstage).`json`
+* [`schema2json`](#configschema2jsonstage).`json`
+
+JSON configures output formatting for schema2json.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`JSONOutputOptions`](#jsonoutputoptions) (`#/$defs/JSONOutputOptions`) |
+
+## Mod2YAMLStage
+
+Mod2YAMLStage configures YAML generation from the sibling Go target.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `object` |
+| Properties | 4 |
+| Additional properties | boolean schema=false |
+
+### Mod2YAMLStage.output
+
+Key: `output`
+
+Path: [`mod2yaml`](#configmod2yamlstage).`output`
+
+Output is output file path.
+
+When empty, build derives output from `schema` path:
+
+* schema2yaml -> `<schema-base>.yaml`
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+
+### Mod2YAMLStage.mode
+
+Key: `mode`
+
+Path: [`mod2yaml`](#configmod2yamlstage).`mode`
+
+Mode prefers more (`all`) or fewer (`required`) optional properties.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `all` |
+| Enum | `all`, `required` |
+
+### Mod2YAMLStage.YAMLOutputOptions
+
+Key: `yaml`
+
+Path: [`mod2yaml`](#configmod2yamlstage).`yaml`
+
+YAML configures output formatting/comments for schema2yaml.
+
+| Attribute | Value |
+| --- | --- |
+| Required | no |
+| Reference | [`YAMLOutputOptions`](#yamloutputoptions) (`#/$defs/YAMLOutputOptions`) |
+
+### Mod2YAMLStage.comments
+
+Key: `comments`
+
+Path: [`mod2yaml`](#configmod2yamlstage).`comments`
+
+Comments selects raw or plain Go comments independently of mod2schema.
+
+| Attribute | Value |
+| --- | --- |
+| Type | `string` |
+| Required | no |
+| Default | `raw` |
+| Enum | `raw`, `plain` |
 
 ## MergeStage
 
@@ -1162,61 +1333,6 @@ Value is prefix or suffix text used by selected rename mode.
 | Type | `string` |
 | Required | no |
 | Examples | `model_`, `_shared` |
-
-## Schema2JSONStage
-
-Schema2JSONStage describes schema2json stage.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `object` |
-| Properties | 3 |
-| Additional properties | boolean schema=false |
-
-### Schema2JSONStage.output
-
-Key: `output`
-
-Path: [`schema2json`](#configschema2jsonstage).`output`
-
-Output is output file path.
-
-When empty, build derives output from `schema` path:
-
-* schema2json -> `<schema-base>.json`
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-
-### Schema2JSONStage.mode
-
-Key: `mode`
-
-Path: [`schema2json`](#configschema2jsonstage).`mode`
-
-Mode prefers more (`all`) or fewer (`required`) optional properties.
-
-| Attribute | Value |
-| --- | --- |
-| Type | `string` |
-| Required | no |
-| Default | `all` |
-| Enum | `all`, `required` |
-
-### Schema2JSONStage.JSONOutputOptions
-
-Key: `json`
-
-Path: [`schema2json`](#configschema2jsonstage).`json`
-
-JSON configures output formatting for schema2json.
-
-| Attribute | Value |
-| --- | --- |
-| Required | no |
-| Reference | [`JSONOutputOptions`](#jsonoutputoptions) (`#/$defs/JSONOutputOptions`) |
 
 ## Schema2DocStage
 
@@ -1698,6 +1814,74 @@ mod2doc:
   source_raw_path: https://raw.githubusercontent.com/acme/project/HEAD/schema.json
   # Comments selects Go comment normalization independently of mod2schema.comments.
   # Empty means raw; source and other reflection settings come from mod2schema.
+  # Default: raw
+  # Allowed values: raw, plain
+  comments: raw
+# Mod2JSON generates a JSON example directly from the sibling mod2schema Go target before merge.
+mod2json:
+  # Output is output file path.
+  # When empty, build derives output from `schema` path:
+  #   - schema2json -> `<schema-base>.json`
+  output: <string>
+  # Mode prefers more (`all`) or fewer (`required`) optional properties.
+  # Default: all
+  # Allowed values: all, required
+  mode: all
+  # JSON configures output formatting for schema2json.
+  json:
+    # Indent sets indentation width for one nesting level.
+    # For `space`, this is number of spaces. For `tab`, this is number of tabs.
+    # Default: 2
+    indent: 2
+    # IndentType sets indentation character for pretty JSON.
+    # `space` uses spaces. `tab` uses tabs.
+    # Default: space
+    # Allowed values: space, tab
+    indent_type: space
+    # Minify enables compact one-line JSON output without indentation.
+    minify: false
+# Mod2YAML generates a YAML example directly from the sibling mod2schema Go target before merge.
+mod2yaml:
+  # Output is output file path.
+  # When empty, build derives output from `schema` path:
+  #   - schema2yaml -> `<schema-base>.yaml`
+  output: <string>
+  # Mode prefers more (`all`) or fewer (`required`) optional properties.
+  # Default: all
+  # Allowed values: all, required
+  mode: all
+  # YAML configures output formatting/comments for schema2yaml.
+  yaml:
+    # Indent sets YAML indentation width for one nesting level.
+    # Default: 2
+    indent: 2
+    # Comments configures schema-driven comments above YAML keys.
+    comments:
+      # Titles enables comments sourced from schema titles.
+      # Default: true
+      titles: true
+      # Descriptions enables comments sourced from schema descriptions.
+      # Default: true
+      descriptions: true
+      # Defaults enables comments sourced from schema defaults.
+      # Default: true
+      defaults: true
+      # Enums enables comments listing schema enum values.
+      # Default: true
+      enums: true
+      # Examples selects scalar, all, or no schema examples.
+      # Default: scalar
+      # Allowed values: none, scalar, all
+      examples: scalar
+      # ExampleFormat selects inline or block annotation value formatting.
+      # Default: block
+      # Allowed values: inline, block
+      example_format: block
+      # Spacing selects compact or paragraph-preserving annotation comments.
+      # Default: compact
+      # Allowed values: compact, full
+      spacing: compact
+  # Comments selects raw or plain Go comments independently of mod2schema.
   # Default: raw
   # Allowed values: raw, plain
   comments: raw

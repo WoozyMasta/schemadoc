@@ -66,6 +66,62 @@ type exampleOutputOptions struct {
 	JSON jsonOutputOptions
 }
 
+// runModuleToExample reflects a Go type and renders an example without a schema file.
+func (runner *cliRunner) runModuleToExample(
+	options modschema.Options,
+	mode string,
+	format schemadoc.ExampleFormat,
+	output string,
+	formatting exampleOutputOptions,
+) error {
+	schema, _, err := modschema.Generate(options)
+	if err != nil {
+		return fmt.Errorf("generate schema: %w", err)
+	}
+
+	content, err := generateModuleExample(schema, mode, format, formatting)
+	if err != nil {
+		return err
+	}
+	if err := writeBytes(runner.stdout, output, content, "example"); err != nil {
+		return err
+	}
+
+	runner.logf("mod2%s: module=%s package=%s type=%s output=%s status=ok",
+		format,
+		firstNonEmpty(options.Module, "."),
+		firstNonEmpty(options.Package, "-"),
+		options.Type,
+		firstNonEmpty(output, "-"))
+
+	return nil
+}
+
+// generateModuleExample renders a reflected schema without inventing a schema file URL.
+func generateModuleExample(
+	schema []byte,
+	mode string,
+	format schemadoc.ExampleFormat,
+	formatting exampleOutputOptions,
+) ([]byte, error) {
+	selectedMode, err := parseExampleMode(mode)
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := schemadoc.GenerateExampleWithOptions(
+		schema,
+		selectedMode,
+		format,
+		toExampleOptions(formatting),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("generate %s %s example: %w", selectedMode, format, err)
+	}
+
+	return content, nil
+}
+
 // runModuleToMarkdown executes module-to-markdown flow without temporary schema files.
 func (runner *cliRunner) runModuleToMarkdown(
 	moduleOptions modschema.Options,

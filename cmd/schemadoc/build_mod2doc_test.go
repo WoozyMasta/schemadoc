@@ -19,6 +19,85 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
+func TestCLI_ModuleExamples(t *testing.T) {
+	dir := t.TempDir()
+	module := filepath.Join(findModuleRoot(t), "modschema", "testdata", "comments")
+	schemaPath := filepath.Join(dir, "schema.json")
+	jsonPath := filepath.Join(dir, "example.json")
+	yamlPath := filepath.Join(dir, "example.yaml")
+	configPath := filepath.Join(dir, "build.yaml")
+	config := buildcfg.Config{
+		Schema:     schemaPath,
+		Mod2Schema: &buildcfg.Mod2SchemaStage{Module: module, Type: "Config", Comments: "plain"},
+		Mod2JSON:   &buildcfg.Schema2JSONStage{Output: jsonPath},
+		Mod2YAML:   &buildcfg.Mod2YAMLStage{Schema2YAMLStage: buildcfg.Schema2YAMLStage{Output: yamlPath}},
+	}
+	writeBuildTestConfig(t, configPath, config)
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"build", configPath}, &stdout, &stderr); code != 0 {
+		t.Fatalf("build exit=%d: %s", code, stderr.String())
+	}
+
+	schema, err := os.ReadFile(schemaPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	checkContainsAll(t, string(schema), []string{"Text spans physically wrapped source lines"})
+	for _, test := range []struct{ command, path string }{{"mod2json", jsonPath}, {"mod2yaml", yamlPath}} {
+		stdout.Reset()
+		stderr.Reset()
+		if code := run([]string{test.command, "--type", "Config", module}, &stdout, &stderr); code != 0 {
+			t.Fatalf("%s exit=%d: %s", test.command, code, stderr.String())
+		}
+
+		built, err := os.ReadFile(test.path)
+		if err != nil || !bytes.Equal(built, stdout.Bytes()) {
+			t.Fatalf("%s build and direct output differ: %v", test.command, err)
+		}
+		if test.command == "mod2yaml" {
+			checkContainsAll(t, string(built), []string{"Text spans physically wrapped\n", "# source lines", "#\n"})
+		}
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	if code := run([]string{"mod2yaml", "--comments", "plain", "--type", "Config", module}, &stdout, &stderr); code != 0 {
+		t.Fatalf("plain mod2yaml exit=%d: %s", code, stderr.String())
+	}
+
+	checkContainsAll(t, stdout.String(), []string{"Text spans physically wrapped source lines"})
+	plainYAML := bytes.Clone(stdout.Bytes())
+	stdout.Reset()
+	stderr.Reset()
+	if code := run([]string{"build", "--check", configPath}, &stdout, &stderr); code != 0 {
+		t.Fatalf("check exit=%d: %s", code, stderr.String())
+	}
+
+	config.Mod2YAML.Comments = "plain"
+	writeBuildTestConfig(t, configPath, config)
+	stdout.Reset()
+	stderr.Reset()
+	if code := run([]string{"build", configPath}, &stdout, &stderr); code != 0 {
+		t.Fatalf("plain build exit=%d: %s", code, stderr.String())
+	}
+
+	builtPlain, err := os.ReadFile(yamlPath)
+	if err != nil || !bytes.Equal(builtPlain, plainYAML) {
+		t.Fatalf("plain build and direct output differ: %v", err)
+	}
+	if err := os.WriteFile(yamlPath, []byte("stale\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	if code := run([]string{"build", "--check", configPath}, &stdout, &stderr); code != 1 ||
+		!strings.Contains(stderr.String(), "stage mod2yaml") {
+		t.Fatalf("stale check exit=%d: %s", code, stderr.String())
+	}
+}
+
 func TestCLI_BuildModuleDocs(t *testing.T) {
 	t.Parallel()
 
@@ -164,6 +243,10 @@ func TestCLI_BuildModuleDocsBeforeMerge(t *testing.T) {
 			Schema2DocStage: buildcfg.Schema2DocStage{Output: filepath.Join(dir, "source.md")},
 			Comments:        "raw",
 		},
+		Mod2JSON: &buildcfg.Schema2JSONStage{Output: filepath.Join(dir, "source.json")},
+		Mod2YAML: &buildcfg.Mod2YAMLStage{
+			Schema2YAMLStage: buildcfg.Schema2YAMLStage{Output: filepath.Join(dir, "source.yaml")},
+		},
 		Merge: &buildcfg.MergeStage{Patches: []buildcfg.MergePatch{{
 			File: patchPath, Target: "/$defs/Config/properties/text/description", Op: buildcfg.MergeOp{Node: "replace"},
 		}}},
@@ -181,7 +264,9 @@ func TestCLI_BuildModuleDocsBeforeMerge(t *testing.T) {
 
 	last := -1
 
-	for _, stage := range []string{"mod2schema", "mod2doc", "merge", "schema2json", "schema2doc", "schema2yaml"} {
+	for _, stage := range []string{
+		"mod2schema", "mod2doc", "mod2json", "mod2yaml", "merge", "schema2json", "schema2doc", "schema2yaml",
+	} {
 		position := strings.Index(stderr.String(), "stage="+stage+" ")
 		if position <= last {
 			t.Fatalf("stage %s is missing or out of order: %s", stage, stderr.String())
@@ -202,6 +287,16 @@ func TestCLI_BuildModuleDocsBeforeMerge(t *testing.T) {
 
 	checkNotContainsAny(t, string(sourceDoc), []string{"Merged description."})
 	checkContainsAll(t, string(mergedDoc), []string{"Merged description."})
+	sourceYAML, err := os.ReadFile(config.Mod2YAML.Output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mergedYAML, err := os.ReadFile(config.Schema2YAML.Output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkNotContainsAny(t, string(sourceYAML), []string{"Merged description."})
+	checkContainsAll(t, string(mergedYAML), []string{"Merged description."})
 }
 
 func TestBuildModuleDocsValidation(t *testing.T) {
@@ -213,6 +308,9 @@ func TestBuildModuleDocsValidation(t *testing.T) {
 		want string
 	}{
 		{"missing source", "mod2doc: {}", errMod2DocRequiresMod2Schema.Error()},
+		{"missing yaml source", "mod2yaml: {}", errModuleExampleRequiresMod2Schema.Error()},
+		{"missing json source", "mod2json: {}", errModuleExampleRequiresMod2Schema.Error()},
+		{"invalid yaml comments", "mod2schema: {type: Config}\nmod2yaml: {comments: invalid}", "comments"},
 		{"invalid schema comments", "mod2schema: {type: Config, comments: invalid}", "comments"},
 		{"invalid doc comments", "mod2schema: {type: Config}\nmod2doc: {comments: invalid}", "comments"},
 		{"duplicated source", "mod2schema: {type: Config}\nmod2doc: {module: .}", "module"},

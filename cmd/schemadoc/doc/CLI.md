@@ -22,7 +22,9 @@
   - [config](#config)
   - [merge](#merge)
   - [mod2doc](#mod2doc)
+  - [mod2json](#mod2json)
   - [mod2schema](#mod2schema)
+  - [mod2yaml](#mod2yaml)
   - [schema2doc](#schema2doc)
   - [schema2json](#schema2json)
   - [schema2yaml](#schema2yaml)
@@ -300,6 +302,58 @@ schemadoc mod2doc --type Config --key-namer snake . > model.snake.md
 |`module`|Local module directory or remote module@version (optional; default: .)|no|
 |`output`|Output document file path (optional; stdout when omitted)|no|
 
+### mod2json
+
+Generate example JSON from Go
+
+Generate an example JSON payload directly from a Go type using the same target selection as mod2schema.
+Reflect only trusted modules: target initialization executes with your permissions.
+
+**Usage:** `schemadoc [OPTIONS] mod2json [mod2json-OPTIONS]`
+
+#### Examples
+
+```shell
+schemadoc mod2json --type Config . > config.example.json
+```
+
+```shell
+schemadoc mod2json --type Config --mode required github.com/acme/project@v1.2.3 config.required.json
+```
+
+#### Module Reflection
+
+|Option|Description|Default|Required|
+|---|---|---|---|
+|`-C`, `--comments`|Go comment descriptions: preserve raw text or normalize to plain text; choices: `raw, plain`|`raw`|no|
+|`-p`, `--package`|Go package import path where type is declared (optional; default: module path)||no|
+|`-y`, `--type`|Go type name (for example: Config)||yes|
+|`--key-namer`|Field name style for fields without explicit json tags; choices: `none, snake, kebab, lower`|`none`|no|
+|`--type-namer`|External definition names: package base or full import path with stable hash; choices: `package, full`|`package`|no|
+|`--root-id`|Override generated root JSON Schema $id (absolute URI without fragment)||no|
+|`--jsonschema-version`|Override github.com/invopop/jsonschema version for helper module (for example: v0.14.0)||no|
+
+#### Example Generate
+
+|Option|Description|Default|Required|
+|---|---|---|---|
+|`-m`, `--mode`|More (all) or fewer (required) optional fields; choices: `all, required`|`all`|no|
+
+#### JSON Format
+
+|Option|Description|Default|Required|
+|---|---|---|---|
+|`--json-indent-type`|JSON indentation type; choices: `space, tab`|`space`|no|
+|`--json-indent`|JSON indentation width|`2`|no|
+|`--json-minify`|Write compact minified JSON output||no|
+
+#### Arguments
+
+|Name|Description|Required|
+|---|---|---|
+|`module`|Local module directory or remote module@version|no|
+|`output`|Output JSON file path (optional; stdout when omitted)|no|
+
 ### mod2schema
 
 Generate JSON Schema from Go
@@ -351,6 +405,64 @@ schemadoc mod2schema --type Config --key-namer snake github.com/acme/project@lat
 |---|---|---|
 |`module`|Local module directory or remote module@version (optional; default: .)|no|
 |`output`|Output schema file path (optional; stdout when omitted)|no|
+
+### mod2yaml
+
+Generate example YAML from Go
+
+Generate an example YAML payload directly from a Go type using the same target selection as mod2schema.
+Go comments retain their source lines by default; use --comments plain to normalize them.
+Reflect only trusted modules: target initialization executes with your permissions.
+
+**Usage:** `schemadoc [OPTIONS] mod2yaml [mod2yaml-OPTIONS]`
+
+#### Examples
+
+```shell
+schemadoc mod2yaml --type Config . > config.example.yaml
+```
+
+```shell
+schemadoc mod2yaml --type Config --comments plain --mode required . config.required.yaml
+```
+
+#### Module Reflection
+
+|Option|Description|Default|Required|
+|---|---|---|---|
+|`-C`, `--comments`|Go comment descriptions: preserve raw text or normalize to plain text; choices: `raw, plain`|`raw`|no|
+|`-p`, `--package`|Go package import path where type is declared (optional; default: module path)||no|
+|`-y`, `--type`|Go type name (for example: Config)||yes|
+|`--key-namer`|Field name style for fields without explicit json tags; choices: `none, snake, kebab, lower`|`none`|no|
+|`--type-namer`|External definition names: package base or full import path with stable hash; choices: `package, full`|`package`|no|
+|`--root-id`|Override generated root JSON Schema $id (absolute URI without fragment)||no|
+|`--jsonschema-version`|Override github.com/invopop/jsonschema version for helper module (for example: v0.14.0)||no|
+
+#### Example Generate
+
+|Option|Description|Default|Required|
+|---|---|---|---|
+|`-m`, `--mode`|More (all) or fewer (required) optional fields; choices: `all, required`|`all`|no|
+
+#### YAML Output
+
+|Option|Description|Default|Required|
+|---|---|---|---|
+|`--yaml-comments-examples`|Examples in comments; choices: `none, scalar, all`|`scalar`|no|
+|`--yaml-comments-example-format`|Annotation value format; choices: `inline, block`|`block`|no|
+|`--yaml-comments-spacing`|Annotation comment spacing; choices: `compact, full`|`full`|no|
+|`--yaml-indent`|YAML indentation width|`2`|no|
+|`--yaml-no-titles`|Disable schema title comments||no|
+|`--yaml-no-descriptions`|Disable schema description comments||no|
+|`--yaml-no-defaults`|Disable schema default comments||no|
+|`--yaml-no-enums`|Disable schema enum comments||no|
+
+#### Arguments
+
+|Name|Description|Required|
+|---|---|---|
+|`module`|Local module directory or remote module@version|no|
+|`output`|Output YAML file path (optional; stdout when omitted)|no|
 
 ### schema2doc
 

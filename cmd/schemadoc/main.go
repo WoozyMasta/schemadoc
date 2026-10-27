@@ -65,6 +65,8 @@ func runWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 	options := &cliOptions{
 		ModuleToSchema:   moduleToSchemaCommand{runner: &runner},
+		ModuleToJSON:     moduleToJSONCommand{runner: &runner},
+		ModuleToYAML:     moduleToYAMLCommand{runner: &runner},
 		SchemaToJSON:     schemaToJSONCommand{runner: &runner},
 		SchemaToYAML:     schemaToYAMLCommand{runner: &runner},
 		Config:           configCommand{runner: &runner},
