@@ -14,13 +14,15 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.13.0][] - 2026-10-28
 
 ### Added
 
 * `mod2json` and `mod2yaml` commands and build stages
   generate examples directly from Go types;
   `mod2yaml` selects raw or plain Go comments independently.
+
+[0.13.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.12.0...v0.13.0
 
 ## [0.12.0][] - 2026-10-27
 
