@@ -5,8 +5,11 @@
 package schemadoc
 
 import (
+	"errors"
+	"fmt"
 	"maps"
 	"slices"
+	"strings"
 )
 
 // generationContext separates constructive constraints from full acceptance semantics.
@@ -521,6 +524,13 @@ func (m *exampleMaterializer) searchObjectKeys(
 	accept func(any) bool,
 ) (bool, error) {
 	var lastErr error
+	var requiredErr *MaterializationError
+	offered := false
+	acceptShape := func(value any) bool {
+		offered = true
+		return accept(value)
+	}
+
 	for distance := 0; distance <= len(optional); distance++ {
 		if m.valueSearch != nil && m.valueSearch.stopped {
 			break
@@ -546,9 +556,19 @@ func (m *exampleMaterializer) searchObjectKeys(
 				}
 			}
 
-			found, err := m.searchObjectShape(ctx, keys, path, active, accept)
+			found, err := m.searchObjectShape(ctx, keys, path, active, acceptShape)
 			if err != nil {
 				lastErr = err
+				var detail *MaterializationError
+				if requiredErr == nil && errors.As(err, &detail) {
+					for _, name := range required {
+						prefix := pathPointer(path.appendProperty(name))
+						if detail.Path == prefix || strings.HasPrefix(detail.Path, prefix+"/") {
+							requiredErr = detail
+							break
+						}
+					}
+				}
 			}
 
 			return found, nil
@@ -564,6 +584,19 @@ func (m *exampleMaterializer) searchObjectKeys(
 
 	if len(optional) == 0 && lastErr != nil {
 		return false, lastErr
+	}
+
+	if !offered && requiredErr != nil {
+		if requiredErr.Code == MaterializationCodeUnsupported || isMaterializationReferenceError(requiredErr) {
+			return false, requiredErr
+		}
+
+		return false, newMaterializationError(
+			MaterializationCodeUnsupported,
+			MaterializationCategoryUnsupportedMaterialization,
+			requiredErr.Path,
+			fmt.Errorf("%w: %v", ErrUnsupportedMaterialization, requiredErr),
+		)
 	}
 
 	return false, generationSearchError(ctx.constraints, path)

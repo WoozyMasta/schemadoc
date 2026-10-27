@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning][].
 * Combine common constraints with `oneOf`/`anyOf` branches
   and retry child values when parent constraints reject them;
   nested object property searches use independent retry budgets.
+* Preserve nested error paths for required properties when example search fails.
 * Apply complete dependency schemas and transitive property dependencies,
   including legacy `dependencies`, and resolve required values through
   `patternProperties`, `additionalProperties`, and `unevaluatedProperties`.

@@ -475,6 +475,27 @@ func TestMaterializationErrorPathIsLogical(t *testing.T) {
 			},
 			want: "#/items/pattern",
 		},
+		{
+			name: "required array item with optional siblings",
+			schema: map[string]any{
+				"type": "object", "required": []any{"entries"},
+				"properties": map[string]any{
+					"optional": map[string]any{"type": "boolean"},
+					"entries": map[string]any{
+						"type": "array", "minItems": 1, "items": map[string]any{
+							"type": "object", "required": []any{"value"},
+							"properties": map[string]any{
+								"extra": map[string]any{"type": "boolean"},
+								"value": map[string]any{
+									"type": "string", "pattern": "^(?:[A-Z]{3}-){2}[0-9]{4}$",
+								},
+							},
+						},
+					},
+				},
+			},
+			want: "#/entries/items/value/pattern",
+		},
 	}
 
 	for _, test := range tests {
@@ -492,7 +513,42 @@ func TestMaterializationErrorPathIsLogical(t *testing.T) {
 			if materialization.Path != test.want {
 				t.Fatalf("path = %q, want logical path %q", materialization.Path, test.want)
 			}
+			if materialization.Code != MaterializationCodeUnsupported || !errors.Is(err, ErrUnsupportedMaterialization) {
+				t.Fatalf("error = %v, want unsupported materialization", err)
+			}
 		})
+	}
+}
+
+func TestMaterializationErrorDoesNotBlameOptionalProperty(t *testing.T) {
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object", "not": map[string]any{},
+		"properties": map[string]any{
+			"optional": map[string]any{"type": "string", "pattern": "^(?:[A-Z]{3}-){2}[0-9]{4}$"},
+		},
+	})
+	_, err := GenerateExampleJSON(schema, ExampleModeAll)
+	var materialization *MaterializationError
+	if !errors.As(err, &materialization) || materialization.Path != "#" {
+		t.Fatalf("error = %v, want failure at root", err)
+	}
+}
+
+func TestNestedContradictionKeepsParentErrorClassification(t *testing.T) {
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object", "required": []any{"child"},
+		"properties": map[string]any{
+			"child": false, "optional": map[string]any{"type": "boolean"},
+		},
+	})
+	_, err := GenerateExampleJSON(schema, ExampleModeAll)
+	var materialization *MaterializationError
+	if !errors.As(err, &materialization) || materialization.Code != MaterializationCodeUnsupported ||
+		materialization.Path != "#/child" || !errors.Is(err, ErrUnsupportedMaterialization) {
+		t.Fatalf("error = %v, want unsupported materialization at #/child", err)
+	}
+	if errors.Is(err, ErrMaterializationUnsatisfiable) {
+		t.Fatalf("error = %v, nested contradiction must not change parent classification", err)
 	}
 }
 
