@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["rule"],
+  "properties": {
+    "rule": {
+      "type": "object",
+      "properties": {
+        "match": { "type": "string" },
+        "remove": { "type": "array" },
+        "encrypt": { "type": "array" }
+      },
+      "required": ["match"],
+      "oneOf": [
+        { "required": ["remove"] },
+        { "required": ["encrypt"] }
+      ],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -14,6 +14,25 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Changed
+
+* Breaking:
+  `required` may include optional properties to produce a valid example;
+  `all` may omit conflicting properties.
+  Regenerate JSON/YAML and embedded examples when upgrading.
+* Failed example search now reports `unsupported_materialization`;
+  `unsatisfiable` is reserved for proven contradictions.
+
+### Fixed
+
+* Respect common constraints when generating examples
+  from `oneOf`/`anyOf` branches.
+* Apply complete dependency schemas and transitive property dependencies,
+  including legacy `dependencies`, and resolve required values
+  through `patternProperties` and `additionalProperties`.
+
 ## [0.11.0][] - 2026-10-21
 
 ### Added

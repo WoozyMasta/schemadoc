@@ -321,5 +321,169 @@
     "dialect": "2020-12",
     "status": "characterization",
     "description": "Hostile names and annotation text."
+  },
+{
+    "name": "composition/common-object-one-of",
+    "group": "positive",
+    "schema": "positive/composition/common-object-one-of.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "3. Core regression: common object + `oneOf`"
+  },
+  {
+    "name": "composition/optional-discriminator-one-of",
+    "group": "positive",
+    "schema": "positive/composition/optional-discriminator-one-of.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "4. Optional discriminator required for valid `oneOf`"
+  },
+  {
+    "name": "composition/common-scalar-one-of",
+    "group": "positive",
+    "schema": "positive/composition/common-scalar-one-of.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "5. Common scalar constraints + `oneOf`"
+  },
+  {
+    "name": "composition/common-array-one-of",
+    "group": "positive",
+    "schema": "positive/composition/common-array-one-of.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "6. Common array constraints + `oneOf`"
+  },
+  {
+    "name": "composition/multiple-one-of-groups",
+    "group": "positive",
+    "schema": "positive/composition/multiple-one-of-groups.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "7. Multiple independent `oneOf` groups"
+  },
+  {
+    "name": "composition/mixed-alternatives",
+    "group": "positive",
+    "schema": "positive/composition/mixed-alternatives.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "8. Mixed `oneOf` and `anyOf`"
+  },
+  {
+    "name": "composition/nested-object-alternatives",
+    "group": "positive",
+    "schema": "positive/composition/nested-object-alternatives.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "9. Nested object composition"
+  },
+  {
+    "name": "composition/ref-sibling-alternatives",
+    "group": "positive",
+    "schema": "positive/composition/ref-sibling-alternatives.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "10. Modern `$ref` siblings + composition"
+  },
+  {
+    "name": "objects/transitive-dependent-required",
+    "group": "positive",
+    "schema": "positive/objects/transitive-dependent-required.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "11. Transitive `dependentRequired`"
+  },
+  {
+    "name": "objects/dependent-schema-constraint",
+    "group": "positive",
+    "schema": "positive/objects/dependent-schema-constraint.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "12. `dependentSchemas` constrains an existing property"
+  },
+  {
+    "name": "objects/transitive-dependent-schemas",
+    "group": "positive",
+    "schema": "positive/objects/transitive-dependent-schemas.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "13. Transitive `dependentSchemas`"
+  },
+  {
+    "name": "objects/draft7-dependencies",
+    "group": "positive",
+    "schema": "positive/objects/draft7-dependencies.json",
+    "dialect": "draft7",
+    "status": "characterization",
+    "description": "14. Legacy Draft 7 `dependencies`"
+  },
+  {
+    "name": "objects/conditional-constraints",
+    "group": "positive",
+    "schema": "positive/objects/conditional-constraints.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "15. Conditional schema constrains existing and required properties"
+  },
+  {
+    "name": "objects/required-unconstrained",
+    "group": "positive",
+    "schema": "positive/objects/required-unconstrained.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "16. Required property not declared in `properties`"
+  },
+  {
+    "name": "objects/required-via-additional-properties",
+    "group": "positive",
+    "schema": "positive/objects/required-via-additional-properties.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "16. Required property not declared in `properties`"
+  },
+  {
+    "name": "objects/required-via-pattern-properties",
+    "group": "positive",
+    "schema": "positive/objects/required-via-pattern-properties.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "16. Required property not declared in `properties`"
+  },
+  {
+    "name": "objects/forbidden-undeclared-required",
+    "group": "negative",
+    "schema": "negative/objects/forbidden-undeclared-required.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "16. Required property not declared in `properties`",
+    "error": {
+      "category": "unsatisfiable_schema",
+      "code": "unsatisfiable"
+    }
+  },
+  {
+    "name": "objects/one-of-unevaluated-properties",
+    "group": "positive",
+    "schema": "positive/objects/one-of-unevaluated-properties.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "17. `unevaluatedProperties` with selected `oneOf` branch"
+  },
+  {
+    "name": "arrays/one-of-unevaluated-items",
+    "group": "positive",
+    "schema": "positive/arrays/one-of-unevaluated-items.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "18. `unevaluatedItems` with selected `oneOf` branch"
+  },
+  {
+    "name": "objects/minimal-required",
+    "group": "positive",
+    "schema": "positive/objects/minimal-required.json",
+    "dialect": "2020-12",
+    "status": "characterization",
+    "description": "20. Minimal mode must not add unnecessary fields"
   }
 ]

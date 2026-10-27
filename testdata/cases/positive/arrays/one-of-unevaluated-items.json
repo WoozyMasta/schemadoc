@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "array",
+  "oneOf": [
+    {
+      "prefixItems": [
+        { "type": "string" }
+      ],
+      "minItems": 1,
+      "maxItems": 1
+    },
+    {
+      "prefixItems": [
+        { "type": "integer" },
+        { "type": "integer" }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    }
+  ],
+  "unevaluatedItems": false
+}

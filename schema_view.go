@@ -11,9 +11,10 @@ import (
 
 // schemaSemanticView expands schema structure while retaining simultaneous constraints.
 type schemaSemanticView struct {
-	resolver           localSchemaResolver
-	dialect            schemaDialect
-	deferRecursiveRefs bool
+	resolver                localSchemaResolver
+	dialect                 schemaDialect
+	deferRecursiveRefs      bool
+	conservativeUnevaluated bool // Generation leaves annotation scope to the root validator.
 }
 
 // effectiveSchema is the semantic view of one schema location.
@@ -745,31 +746,6 @@ func (schema effectiveSchema) unevaluatedProperties(view *schemaSemanticView) ([
 	}
 
 	return schema.expandKeywordSchemas(view, "unevaluatedProperties")
-}
-
-// patternProperties returns deterministic pattern-property schema maps.
-func (schema effectiveSchema) patternProperties(view *schemaSemanticView) ([]map[string]effectiveSchema, error) {
-	result := make([]map[string]effectiveSchema, 0)
-	for _, term := range schema.terms {
-		patterns := make(map[string]effectiveSchema)
-		if term.Object == nil {
-			continue
-		}
-
-		for pattern, raw := range mapSchemaValues(term.Object["patternProperties"]) {
-			expanded, err := view.expand(raw, make(map[string]struct{}))
-			if err == nil {
-				patterns[pattern] = expanded
-			} else {
-				return nil, err
-			}
-		}
-		if len(patterns) > 0 {
-			result = append(result, patterns)
-		}
-	}
-
-	return result, nil
 }
 
 // compositions returns preserved anyOf/oneOf groups in source order.

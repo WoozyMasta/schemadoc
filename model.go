@@ -56,7 +56,7 @@ type Options struct {
 	// ListMarker defines unordered markdown list marker used during description normalization.
 	ListMarker string `json:"list_marker,omitempty" jsonschema:"default=*,enum=-,enum=*,example=*,example=-"`
 
-	// ExampleMode controls property coverage for optional embedded example payload in markdown templates.
+	// ExampleMode prefers complete (all) or minimal (required) valid embedded examples.
 	ExampleMode ExampleMode `json:"example_mode,omitempty" jsonschema:"enum=all,enum=required,example=all,example=required"`
 
 	// ExampleFormat enables optional embedded example payload in markdown templates and selects encoding.

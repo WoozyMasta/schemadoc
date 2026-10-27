@@ -435,9 +435,9 @@ func TestEffectiveSchemaExposesObjectKeywords(t *testing.T) {
 	if err != nil || len(propertyNames) != 1 {
 		t.Fatalf("propertyNames = %v, err=%v, want one schema", propertyNames, err)
 	}
-	patternProperties, err := effective.patternProperties(&view)
-	if err != nil || len(patternProperties) != 1 || len(patternProperties[0]) != 1 {
-		t.Fatalf("patternProperties = %v, err=%v, want one pattern", patternProperties, err)
+	property, found, err := effective.property(&view, "x-value")
+	if err != nil || !found || effectiveSchemaType(property) != "string" {
+		t.Fatalf("pattern property = %v, found=%t, err=%v, want string schema", property, found, err)
 	}
 }
 

@@ -49,7 +49,7 @@ type templateSelectFlags struct {
 
 // exampleModeFlags groups example mode flags.
 type exampleModeFlags struct {
-	Mode string `short:"m" long:"mode" default:"all" choices:"all;required" description:"Example generation mode"`
+	Mode string `short:"m" long:"mode" default:"all" choices:"all;required" description:"Prefer a complete (all) or minimal (required) valid example"`
 }
 
 // jsonFormatFlags groups JSON output formatting flags.
@@ -73,7 +73,7 @@ type yamlExampleFlags struct {
 
 // markdownExampleFlags groups embedded example mode and format flags.
 type markdownExampleFlags struct {
-	Mode   string `short:"m" long:"mode"   choices:"all;required" description:"Embedded example mode" default:"all"`
+	Mode   string `short:"m" long:"mode"   choices:"all;required" description:"Prefer a complete (all) or minimal (required) valid embedded example" default:"all"`
 	Format string `short:"F" long:"format" choices:"json;yaml"    description:"Embedded example format (omit to disable embedding)"`
 }
 
@@ -152,7 +152,7 @@ type configCommand struct {
 		Output string `description:"Output file path (optional; stdout when omitted)" positional-arg-name:"output"`
 	} `positional-args:"yes"`
 
-	Mode string `description:"Example generation mode" short:"m" long:"mode" default:"all" choices:"all;required"`
+	Mode string `description:"Prefer a complete (all) or minimal (required) valid example" short:"m" long:"mode" default:"all" choices:"all;required"`
 }
 
 // templateCommand exports built-in template.

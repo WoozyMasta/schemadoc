@@ -17,13 +17,13 @@ import (
 )
 
 const (
-	// ExampleModeAll builds example with all declared properties.
+	// ExampleModeAll prefers a complete valid example, including optional properties when possible.
 	ExampleModeAll ExampleMode = "all"
-	// ExampleModeRequired builds example with required properties only.
+	// ExampleModeRequired prefers a minimal valid example, adding optional properties when needed.
 	ExampleModeRequired ExampleMode = "required"
 )
 
-// ExampleMode configures example generation property coverage.
+// ExampleMode controls the preference for optional properties in valid examples.
 type ExampleMode string
 
 const (
@@ -308,6 +308,7 @@ func normalizeExampleMode(mode ExampleMode) (ExampleMode, error) {
 	switch normalized {
 	case ExampleModeAll, ExampleModeRequired:
 		return normalized, nil
+
 	default:
 		return "", fmt.Errorf("%w %q", ErrUnknownExampleMode, mode)
 	}
@@ -319,33 +320,10 @@ func normalizeExampleFormat(format ExampleFormat) (ExampleFormat, error) {
 	switch normalized {
 	case ExampleFormatJSON, ExampleFormatYAML:
 		return normalized, nil
+
 	default:
 		return "", fmt.Errorf("%w %q", ErrUnknownExampleFormat, format)
 	}
-}
-
-// requiredPropertyOrder returns deterministic order for required properties only.
-func requiredPropertyOrder(required []string, properties map[string]schemaValue) []string {
-	if len(required) == 0 || len(properties) == 0 {
-		return nil
-	}
-
-	out := make([]string, 0, len(required))
-	seen := make(map[string]struct{}, len(required))
-	for _, key := range required {
-		if _, exists := properties[key]; !exists {
-			continue
-		}
-
-		if _, exists := seen[key]; exists {
-			continue
-		}
-
-		seen[key] = struct{}{}
-		out = append(out, key)
-	}
-
-	return out
 }
 
 // cloneJSONValue deep-copies maps and slices used as generated payload values.
@@ -356,15 +334,15 @@ func cloneJSONValue(value any) any {
 		for key, item := range typed {
 			out[key] = cloneJSONValue(item)
 		}
-
 		return out
+
 	case []any:
 		out := make([]any, 0, len(typed))
 		for _, item := range typed {
 			out = append(out, cloneJSONValue(item))
 		}
-
 		return out
+
 	default:
 		return typed
 	}

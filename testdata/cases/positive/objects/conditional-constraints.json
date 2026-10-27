@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "kind": { "enum": ["a", "b"] },
+    "value": { "type": "string" },
+    "extra": { "type": "integer" }
+  },
+  "required": ["kind", "value"],
+  "if": {
+    "properties": { "kind": { "const": "a" } },
+    "required": ["kind"]
+  },
+  "then": {
+    "properties": { "value": { "const": "then-value" } },
+    "required": ["extra"]
+  },
+  "else": {
+    "properties": { "value": { "const": "else-value" } }
+  },
+  "additionalProperties": false
+}

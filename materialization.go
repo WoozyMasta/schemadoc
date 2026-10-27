@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 	"math/big"
 	"regexp"
 	"slices"
@@ -22,8 +21,8 @@ import (
 const maxGeneratedStringLength = 4096
 
 const (
-	maxCompositionCandidates = 64
-	maxCompositionDepth      = 32
+	maxSearchCandidates = 64
+	maxSearchDepth      = 32
 )
 
 const materializationSchemaURL = "urn:schemadoc:materialization-schema"
@@ -32,7 +31,7 @@ const materializationSchemaURL = "urn:schemadoc:materialization-schema"
 type MaterializationErrorCode string
 
 const (
-	// MaterializationCodeUnsatisfiable means no valid instance was found.
+	// MaterializationCodeUnsatisfiable means constraints are proven contradictory.
 	MaterializationCodeUnsatisfiable MaterializationErrorCode = "unsatisfiable"
 	// MaterializationCodeUnresolvedReference means a local reference target is missing.
 	MaterializationCodeUnresolvedReference MaterializationErrorCode = "unresolved_reference"
@@ -88,12 +87,13 @@ type MaterializationError struct {
 
 // exampleMaterializer selects and validates one deterministic example value.
 type exampleMaterializer struct {
-	validatorError   error
-	semantic         *schemaSemanticView
-	activeRefs       map[string]int
-	rootValidator    *jsonschema.Schema
-	mode             ExampleMode
-	compositionDepth int
+	validatorError error
+	semantic       *schemaSemanticView
+	activeRefs     map[string]int
+	rootValidator  *jsonschema.Schema
+	mode           ExampleMode
+	budget         searchBudget
+	depth          int
 }
 
 // materializationCandidate records an explicit value and its source keyword.
@@ -170,10 +170,17 @@ func (err *MaterializationError) Is(target error) bool {
 // newExampleMaterializer creates a materializer for one parsed document.
 func newExampleMaterializer(doc schemaDocument, mode ExampleMode) *exampleMaterializer {
 	validator, err := compileMaterializationValidator(doc.Raw)
+	view := newSchemaSemanticViewPointer(doc)
+	view.conservativeUnevaluated = true
 	return &exampleMaterializer{
-		semantic:       newSchemaSemanticViewPointer(doc),
-		mode:           mode,
-		activeRefs:     make(map[string]int),
+		semantic:   view,
+		mode:       mode,
+		activeRefs: make(map[string]int),
+		budget: searchBudget{
+			plans:      maxSearchCandidates,
+			repairs:    maxSearchCandidates,
+			candidates: maxSearchCandidates,
+		},
 		rootValidator:  validator,
 		validatorError: err,
 	}
@@ -242,93 +249,21 @@ func (materializer *exampleMaterializer) materializeAt(node schemaValue, path sc
 	return materializer.materializeEffective(effective, path)
 }
 
-// materializeEffective builds a value while retaining expanded reference keys.
+// materializeEffective selects the first accepted candidate from bounded search.
 func (materializer *exampleMaterializer) materializeEffective(effective effectiveSchema, path schemaPath) (any, error) {
-	if len(effective.deferredRefs) > 0 {
-		return materializer.materializeDeferredReference(effective, path)
-	}
-
-	for _, ref := range effective.referenceKeys {
-		if materializer.activeRefs[ref] > 0 {
-			return nil, newMaterializationError(
-				MaterializationCodeReferenceRecursion,
-				MaterializationCategoryReferenceCycle,
-				materializationKeywordPath(path, "$ref"),
-				ErrSchemaReferenceCycle,
-			)
-		}
-
-		materializer.activeRefs[ref]++
-		defer func(ref string) {
-			materializer.activeRefs[ref]--
-			if materializer.activeRefs[ref] <= 0 {
-				delete(materializer.activeRefs, ref)
-			}
-		}(ref)
-	}
-
-	for _, term := range effective.terms {
-		if term.Bool != nil && !*term.Bool {
-			return nil, newMaterializationError(
-				MaterializationCodeUnsatisfiable,
-				MaterializationCategoryUnsatisfiableSchema,
-				pathPointer(path),
-				ErrMaterializationUnsatisfiable,
-			)
-		}
-	}
-
-	for _, candidate := range materializer.explicitCandidates(effective) {
-		if err := validateEffectiveInstance(
-			materializer.semantic,
-			effective,
-			candidate.value,
-			path,
-		); err == nil {
-			return cloneJSONValue(candidate.value), nil
-		} else if isMaterializationReferenceError(err) {
-			return nil, err
-		}
-	}
-
-	value, err := materializer.synthesize(effective, path)
+	var result any
+	found, err := materializer.searchEffective(effective, path, func(value any) bool {
+		result = cloneJSONValue(value)
+		return true
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	if err := validateEffectiveInstance(materializer.semantic, effective, value, path); err != nil {
-		if isMaterializationReferenceError(err) {
-			return nil, err
-		}
-
-		if validation, ok := err.(*candidateValidationError); ok &&
-			validation.keyword == "pattern" {
-			return nil, newMaterializationError(
-				MaterializationCodeUnsupported,
-				MaterializationCategoryUnsupportedMaterialization,
-				validation.path,
-				err,
-			)
-		}
-
-		if isDefinitelyUnsatisfiable(effective) {
-			return nil, newMaterializationError(
-				MaterializationCodeUnsatisfiable,
-				MaterializationCategoryUnsatisfiableSchema,
-				validationPath(err, path),
-				err,
-			)
-		}
-
-		return nil, newMaterializationError(
-			MaterializationCodeGeneratedValueInvalid,
-			MaterializationCategoryGeneratedValueInvalid,
-			validationPath(err, path),
-			err,
-		)
+	if !found {
+		return nil, generationSearchError(effective, path)
 	}
 
-	return value, nil
+	return result, nil
 }
 
 // materializeDeferredReference follows a recursive edge only when it is not already active;
@@ -416,102 +351,6 @@ func (materializer *exampleMaterializer) explicitCandidates(schema effectiveSche
 	return candidates
 }
 
-// synthesize creates a deterministic fallback after explicit candidates fail.
-func (materializer *exampleMaterializer) synthesize(schema effectiveSchema, path schemaPath) (any, error) {
-	if len(schema.compositionGroups) > 0 {
-		return materializer.synthesizeComposition(schema, path)
-	}
-
-	properties, err := schema.properties(materializer.semantic)
-	if err != nil {
-		return nil, materializationReferenceError(err, path)
-	}
-
-	required := schema.required()
-	typeName := effectiveSchemaType(schema)
-	additionalProperties, err := schema.additionalProperties(materializer.semantic)
-	if err != nil {
-		return nil, materializationReferenceError(err, path)
-	}
-	propertyNames, err := schema.propertyNames(materializer.semantic)
-	if err != nil {
-		return nil, materializationReferenceError(err, path)
-	}
-	patterns, err := schema.patternProperties(materializer.semantic)
-	if err != nil {
-		return nil, materializationReferenceError(err, path)
-	}
-
-	if typeName == "object" || len(properties) > 0 || len(required) > 0 ||
-		len(additionalProperties) > 0 || len(propertyNames) > 0 || len(patterns) > 0 {
-		return materializer.synthesizeObject(
-			schema,
-			properties,
-			required,
-			additionalProperties,
-			propertyNames,
-			path,
-		)
-	}
-
-	if typeName == "array" || materializer.hasArrayItems(schema) {
-		return materializer.synthesizeArray(schema, path)
-	}
-
-	if typeName == "string" {
-		return materializer.synthesizeString(schema, path)
-	}
-
-	if typeName == "number" || typeName == "integer" {
-		return materializer.synthesizeNumber(schema, path)
-	}
-
-	if value, ok := scalarPlaceholder(typeName); ok {
-		return value, nil
-	}
-
-	return nil, nil
-}
-
-// synthesizeString tries readable format and conservative pattern candidates
-// before adjusting the generic placeholder to the declared Unicode length.
-func (materializer *exampleMaterializer) synthesizeString(schema effectiveSchema, path schemaPath) (string, error) {
-	candidates := stringCandidates(schema)
-
-	seen := make(map[string]struct{}, len(candidates))
-	for _, candidate := range candidates {
-		if _, exists := seen[candidate]; exists {
-			continue
-		}
-		seen[candidate] = struct{}{}
-		if err := validateEffectiveInstance(materializer.semantic, schema, candidate, path); err == nil {
-			return candidate, nil
-		} else if isMaterializationReferenceError(err) {
-			return "", err
-		}
-	}
-
-	if isDefinitelyUnsatisfiable(schema) {
-		return "", newMaterializationError(
-			MaterializationCodeUnsatisfiable,
-			MaterializationCategoryUnsatisfiableSchema,
-			unsatisfiableConstraintPath(schema, path),
-			ErrMaterializationUnsatisfiable,
-		)
-	}
-
-	keyword := "minLength"
-	if hasSchemaKeyword(schema, "pattern") {
-		keyword = "pattern"
-	}
-	return "", newMaterializationError(
-		MaterializationCodeUnsupported,
-		MaterializationCategoryUnsupportedMaterialization,
-		materializationKeywordPath(path, keyword),
-		ErrUnsupportedMaterialization,
-	)
-}
-
 // stringCandidates returns the finite fallback
 // set shared by scalar synthesis and composition search.
 func stringCandidates(schema effectiveSchema) []string {
@@ -536,462 +375,6 @@ func stringCandidates(schema effectiveSchema) []string {
 	}
 
 	return candidates
-}
-
-// synthesizeNumber tries boundary and multipleOf-derived values in stable order.
-func (materializer *exampleMaterializer) synthesizeNumber(schema effectiveSchema, path schemaPath) (any, error) {
-	candidates := numberCandidates(schema)
-	for _, candidate := range candidates {
-		if effectiveSchemaType(schema) == "integer" {
-			number, ok := asExactNumber(candidate)
-			if !ok || !number.IsInt() {
-				continue
-			}
-		}
-		if err := validateEffectiveInstance(materializer.semantic, schema, candidate, path); err == nil {
-			return candidate, nil
-		} else if isMaterializationReferenceError(err) {
-			return nil, err
-		}
-	}
-
-	if isDefinitelyUnsatisfiable(schema) {
-		return nil, newMaterializationError(
-			MaterializationCodeUnsatisfiable,
-			MaterializationCategoryUnsatisfiableSchema,
-			unsatisfiableConstraintPath(schema, path),
-			ErrMaterializationUnsatisfiable,
-		)
-	}
-
-	return nil, newMaterializationError(
-		MaterializationCodeUnsupported,
-		MaterializationCategoryUnsupportedMaterialization,
-		pathPointer(path),
-		ErrUnsupportedMaterialization,
-	)
-}
-
-// synthesizeComposition evaluates branch-generated candidates against the whole schema.
-func (materializer *exampleMaterializer) synthesizeComposition(schema effectiveSchema, path schemaPath) (any, error) {
-	if materializer.compositionDepth >= maxCompositionDepth {
-		return nil, materializationCompositionSearchError(schema, path)
-	}
-
-	materializer.compositionDepth++
-	defer func() { materializer.compositionDepth-- }()
-
-	candidates := make([]any, 0, maxCompositionCandidates)
-	for _, group := range schema.compositionGroups {
-		for _, branch := range group.branches {
-			materializer.appendCompositionCandidates(&candidates, branch, path)
-		}
-	}
-
-	for _, candidate := range candidates {
-		if err := validateEffectiveInstance(materializer.semantic, schema, candidate, path); err == nil {
-			return candidate, nil
-		} else if isMaterializationReferenceError(err) {
-			return nil, err
-		}
-	}
-
-	if isDefinitelyUnsatisfiable(schema) {
-		return nil, newMaterializationError(
-			MaterializationCodeUnsatisfiable,
-			MaterializationCategoryUnsatisfiableSchema,
-			pathPointer(path),
-			ErrMaterializationUnsatisfiable,
-		)
-	}
-
-	return nil, materializationCompositionSearchError(schema, path)
-}
-
-// appendCompositionCandidates gathers a bounded set of branch-local values.
-// The whole composition is checked again by the caller.
-func (materializer *exampleMaterializer) appendCompositionCandidates(
-	candidates *[]any,
-	branch effectiveSchema,
-	path schemaPath,
-) {
-	appendCandidate := func(value any) {
-		if len(*candidates) >= maxCompositionCandidates {
-			return
-		}
-		if err := validateEffectiveInstance(materializer.semantic, branch, value, path); err != nil {
-			return
-		}
-		for _, existing := range *candidates {
-			if equalJSONValue(existing, value) {
-				return
-			}
-		}
-		*candidates = append(*candidates, value)
-	}
-
-	for _, candidate := range materializer.explicitCandidates(branch) {
-		appendCandidate(candidate.value)
-	}
-
-	switch effectiveSchemaType(branch) {
-	case "number", "integer":
-		for _, candidate := range numberCandidates(branch) {
-			appendCandidate(candidate)
-		}
-	case "string":
-		for _, candidate := range stringCandidates(branch) {
-			appendCandidate(candidate)
-		}
-	default:
-		if candidate, ok := scalarPlaceholder(effectiveSchemaType(branch)); ok {
-			appendCandidate(candidate)
-		}
-	}
-
-	// Object and array branches need nested schemas materialized;
-	// an error here does not invalidate other composition branches.
-	if value, err := materializer.materializeEffective(branch, path); err == nil {
-		appendCandidate(value)
-	}
-}
-
-// materializationCompositionSearchError distinguishes bounded search failure
-// from a proof that the composition has no valid instance.
-func materializationCompositionSearchError(schema effectiveSchema, path schemaPath) error {
-	keyword := "anyOf"
-	for _, group := range schema.compositionGroups {
-		if group.kind == schemaCompositionOneOf {
-			keyword = "oneOf"
-			break
-		}
-	}
-
-	return newMaterializationError(
-		MaterializationCodeUnsupported,
-		MaterializationCategoryUnsupportedMaterialization,
-		materializationKeywordPath(path, keyword),
-		ErrUnsupportedMaterialization,
-	)
-}
-
-// synthesizeObject builds an object in two phases: declared fields first,
-// then at most one dynamic field when all-mode needs a representative map entry.
-// Declared fields remain authoritative;
-// a field is removed only when another conjunctive object term makes its presence invalid.
-func (materializer *exampleMaterializer) synthesizeObject(
-	schema effectiveSchema,
-	properties map[string]effectiveSchema,
-	required []string,
-	additionalProperties []effectiveSchema,
-	propertyNames []effectiveSchema,
-	path schemaPath,
-) (map[string]any, error) {
-	required = materializer.objectDependentRequired(schema, properties, required)
-	required = materializer.objectDependentSchemaRequired(schema, properties, required)
-	requiredSet := make(map[string]struct{}, len(required))
-	for _, name := range required {
-		// A required field cannot be skipped, including when its schema is false.
-		requiredSet[name] = struct{}{}
-		property, ok := properties[name]
-		if !ok {
-			return nil, newMaterializationError(
-				MaterializationCodeUnsupportedRequired,
-				MaterializationCategoryUnsupportedRequired,
-				materializationKeywordPath(path, "required"),
-				ErrUnsupportedRequiredSemantics,
-			)
-		}
-
-		if isFalseEffectiveSchema(property) {
-			return nil, newMaterializationError(
-				MaterializationCodeUnsatisfiable,
-				MaterializationCategoryUnsatisfiableSchema,
-				pathPointer(path.appendProperty(name)),
-				ErrMaterializationUnsatisfiable,
-			)
-		}
-	}
-
-	values := make(map[string]schemaValue, len(properties))
-	for name, property := range properties {
-		// False optional properties describe forbidden names, not values to emit.
-		if isFalseEffectiveSchema(property) {
-			continue
-		}
-
-		values[name] = property.asSchemaValue()
-	}
-
-	keys := propertyOrder(required, values)
-	if materializer.mode == ExampleModeRequired {
-		keys = requiredPropertyOrder(required, values)
-	}
-
-	minimum, hasMinimum, maximum, hasMaximum := objectBounds(schema)
-	if hasMinimum && hasMaximum && minimum > maximum {
-		return nil, newMaterializationError(
-			MaterializationCodeUnsatisfiable,
-			MaterializationCategoryUnsatisfiableSchema,
-			materializationKeywordPath(path, "minProperties"),
-			ErrMaterializationUnsatisfiable,
-		)
-	}
-
-	if hasMaximum && len(required) > maximum {
-		return nil, newMaterializationError(
-			MaterializationCodeUnsatisfiable,
-			MaterializationCategoryUnsatisfiableSchema,
-			materializationKeywordPath(path, "maxProperties"),
-			ErrMaterializationUnsatisfiable,
-		)
-	}
-
-	if hasMaximum && len(keys) > maximum {
-		// Keep every required field and fill the remaining budget in schema order.
-		selected := make([]string, 0, maximum)
-		for _, name := range keys {
-			if _, ok := requiredSet[name]; ok {
-				selected = append(selected, name)
-			}
-		}
-
-		for _, name := range keys {
-			if _, ok := requiredSet[name]; ok || len(selected) >= maximum {
-				continue
-			}
-
-			selected = append(selected, name)
-		}
-		keys = selected
-	}
-
-	result := make(map[string]any, len(keys))
-	for _, name := range keys {
-		value, err := materializer.materializeEffective(properties[name], path.appendProperty(name))
-		if err != nil {
-			return nil, err
-		}
-
-		result[name] = value
-	}
-	result = pruneInvalidOptionalProperties(
-		materializer.semantic,
-		schema,
-		result,
-		keys,
-		requiredSet,
-		path,
-	)
-
-	additional, hasAdditional := combinedEffectiveSchema(additionalProperties)
-	if !hasAdditional {
-		unevaluated, err := schema.unevaluatedProperties(materializer.semantic)
-		if err != nil {
-			return nil, err
-		}
-		additional, hasAdditional = combinedEffectiveSchema(unevaluated)
-	}
-	if materializer.mode == ExampleModeAll && hasAdditional &&
-		!isFalseEffectiveSchema(additional) && (len(result) == 0 || len(result) < minimum) {
-		// A dynamic key is illustrative only.
-		// Candidate validation must satisfy propertyNames, patternProperties, and additionalProperties together.
-		for _, name := range dynamicPropertyNames(propertyNames, materializer.semantic, path) {
-			if _, declared := properties[name]; declared {
-				continue
-			}
-			if _, exists := result[name]; exists {
-				continue
-			}
-
-			if hasMaximum && len(result) >= maximum {
-				break
-			}
-
-			if err := validatePropertyName(materializer.semantic, propertyNames, name, path); err != nil {
-				if isMaterializationReferenceError(err) {
-					return nil, err
-				}
-				continue
-			}
-
-			value, err := materializer.materializeEffective(additional, path.appendProperty(name))
-			if err != nil {
-				if isMaterializationReferenceError(err) {
-					return nil, err
-				}
-				continue
-			}
-
-			result[name] = value
-			if err := validateEffectiveInstance(materializer.semantic, schema, result, path); err != nil {
-				delete(result, name)
-				continue
-			}
-			break
-		}
-	}
-
-	if hasMinimum && len(result) < minimum {
-		// No safe key/value pair was available to meet the lower bound.
-		return nil, newMaterializationError(
-			MaterializationCodeUnsupported,
-			MaterializationCategoryUnsupportedMaterialization,
-			materializationKeywordPath(path, "minProperties"),
-			ErrUnsupportedMaterialization,
-		)
-	}
-
-	return result, nil
-}
-
-// objectDependentRequired expands dependencies for properties selected by the mode.
-func (materializer *exampleMaterializer) objectDependentRequired(
-	schema effectiveSchema,
-	properties map[string]effectiveSchema,
-	required []string,
-) []string {
-	result := append([]string(nil), required...)
-	seen := make(map[string]struct{}, len(result))
-	for _, name := range result {
-		seen[name] = struct{}{}
-	}
-
-	for _, term := range schema.terms {
-		if term.Object == nil {
-			continue
-		}
-		dependencies, ok := term.Object["dependentRequired"].(map[string]any)
-		if !ok {
-			continue
-		}
-
-		for _, trigger := range sortedKeys(dependencies) {
-			property, exists := properties[trigger]
-			if !exists || isFalseEffectiveSchema(property) {
-				continue
-			}
-			if materializer.mode == ExampleModeRequired && !slices.Contains(result, trigger) {
-				continue
-			}
-
-			for _, dependency := range asStringSlice(dependencies[trigger]) {
-				if _, exists := seen[dependency]; exists {
-					continue
-				}
-				result = append(result, dependency)
-				seen[dependency] = struct{}{}
-			}
-		}
-	}
-
-	return result
-}
-
-// objectDependentSchemaRequired adds direct required properties from active dependent schemas.
-func (materializer *exampleMaterializer) objectDependentSchemaRequired(
-	schema effectiveSchema,
-	properties map[string]effectiveSchema,
-	required []string,
-) []string {
-	result := append([]string(nil), required...)
-	seen := make(map[string]struct{}, len(result))
-	for _, name := range result {
-		seen[name] = struct{}{}
-	}
-
-	for _, term := range schema.terms {
-		if term.Object == nil {
-			continue
-		}
-		dependencies, ok := term.Object["dependentSchemas"].(map[string]any)
-		if !ok {
-			continue
-		}
-
-		for _, trigger := range sortedKeys(dependencies) {
-			property, exists := properties[trigger]
-			if !exists || isFalseEffectiveSchema(property) {
-				continue
-			}
-			if materializer.mode == ExampleModeRequired && !slices.Contains(result, trigger) {
-				continue
-			}
-
-			node, valid := toSchemaValue(dependencies[trigger])
-			if !valid {
-				continue
-			}
-
-			nested, err := materializer.semantic.effective(node)
-			if err != nil {
-				continue
-			}
-
-			for _, dependency := range nested.required() {
-				if _, exists := seen[dependency]; exists {
-					continue
-				}
-				result = append(result, dependency)
-				seen[dependency] = struct{}{}
-			}
-		}
-	}
-
-	return result
-}
-
-// pruneInvalidOptionalProperties repairs an initially invalid object
-// by trying to remove optional fields from the end of the deterministic order.
-// A minProperties failure is deferred because a dynamic field may still satisfy it;
-// required fields are never removed.
-func pruneInvalidOptionalProperties(
-	view *schemaSemanticView,
-	schema effectiveSchema,
-	result map[string]any,
-	keys []string,
-	required map[string]struct{},
-	path schemaPath,
-) map[string]any {
-	for {
-		err := validateEffectiveInstance(view, schema, result, path)
-		if err == nil || isMaterializationReferenceError(err) {
-			return result
-		}
-
-		if candidateValidationKeyword(err) == "minProperties" {
-			return result
-		}
-
-		removed := false
-		for _, name := range slices.Backward(keys) {
-			if _, isRequired := required[name]; isRequired {
-				continue
-			}
-			if _, exists := result[name]; !exists {
-				continue
-			}
-
-			candidate := make(map[string]any, len(result)-1)
-			maps.Copy(candidate, result)
-			delete(candidate, name)
-
-			candidateErr := validateEffectiveInstance(view, schema, candidate, path)
-			if isMaterializationReferenceError(candidateErr) {
-				return result
-			}
-
-			if candidateErr == nil || candidateValidationKeyword(candidateErr) != "required" {
-				result = candidate
-				removed = true
-				break
-			}
-		}
-
-		if !removed {
-			return result
-		}
-	}
 }
 
 // combinedEffectiveSchema joins all declared schemas for one object keyword.
@@ -1909,7 +1292,9 @@ func validateEffectiveInstance(
 
 	for _, group := range schema.compositionGroups {
 		valid := 0
+		uncertain := false
 		for _, branch := range group.branches {
+			uncertain = uncertain || (view.conservativeUnevaluated && annotationSensitiveSchema(branch))
 			if err := validateEffectiveInstance(view, branch, value, path); err == nil {
 				valid++
 			}
@@ -1921,7 +1306,8 @@ func validateEffectiveInstance(
 				materializationKeywordPath(path, "anyOf"),
 				"anyOf",
 				"no branch applies")
-		case group.kind == schemaCompositionOneOf && valid != 1:
+
+		case group.kind == schemaCompositionOneOf && (valid == 0 || (valid > 1 && !uncertain)):
 			return newCandidateValidationError(
 				materializationKeywordPath(path, "oneOf"),
 				"oneOf",
@@ -1995,6 +1381,9 @@ func validateNotTerm(view *schemaSemanticView, object map[string]any, value any,
 	if err != nil {
 		return materializationReferenceError(err, path)
 	}
+	if view.conservativeUnevaluated && annotationSensitiveSchema(nested) {
+		return nil
+	}
 	if err := validateEffectiveInstance(view, nested, value, path); err == nil {
 		return newCandidateValidationError(
 			materializationKeywordPath(path, "not"),
@@ -2009,6 +1398,9 @@ func validateNotTerm(view *schemaSemanticView, object map[string]any, value any,
 
 // validateConditionalTerm applies then or else according to the if condition.
 func validateConditionalTerm(view *schemaSemanticView, object map[string]any, value any, path schemaPath) error {
+	if view.dialect == schemaDialectDraft4Compatible || view.dialect == schemaDialectDraft6 {
+		return nil
+	}
 	rawCondition, exists := object["if"]
 	if !exists {
 		return nil
@@ -2021,6 +1413,9 @@ func validateConditionalTerm(view *schemaSemanticView, object map[string]any, va
 	condition, err := view.effective(conditionNode)
 	if err != nil {
 		return materializationReferenceError(err, path)
+	}
+	if view.conservativeUnevaluated && annotationSensitiveSchema(condition) {
+		return nil
 	}
 	conditionErr := validateEffectiveInstance(view, condition, value, path)
 	if isMaterializationReferenceError(conditionErr) {
@@ -2188,10 +1583,7 @@ func validateObjectTerm(view *schemaSemanticView, object map[string]any, value a
 		}
 	}
 
-	if err := validateDependentRequired(object, properties, path); err != nil {
-		return err
-	}
-	if err := validateDependentSchemas(view, object, properties, path); err != nil {
+	if err := validateObjectDependencies(view, object, properties, path); err != nil {
 		return err
 	}
 
@@ -2300,64 +1692,36 @@ func validateObjectTerm(view *schemaSemanticView, object map[string]any, value a
 	return nil
 }
 
-// validateDependentRequired enforces property dependencies on object instances.
-func validateDependentRequired(
-	object map[string]any,
-	properties map[string]any,
-	path schemaPath,
-) error {
-	dependencies, ok := object["dependentRequired"].(map[string]any)
-	if !ok {
-		return nil
-	}
-
-	for trigger, raw := range dependencies {
-		if _, exists := properties[trigger]; !exists {
-			continue
-		}
-
-		for _, dependency := range asStringSlice(raw) {
-			if _, exists := properties[dependency]; exists {
-				continue
-			}
-
-			return newCandidateValidationError(
-				materializationKeywordPath(path, "dependentRequired"),
-				"dependentRequired",
-				"dependent property is missing")
-		}
-	}
-
-	return nil
-}
-
-// validateDependentSchemas applies the schema selected by each present trigger property.
-func validateDependentSchemas(
+// validateObjectDependencies checks only the dependency vocabulary of the dialect.
+func validateObjectDependencies(
 	view *schemaSemanticView,
 	object map[string]any,
 	properties map[string]any,
 	path schemaPath,
 ) error {
-	dependencies, ok := object["dependentSchemas"].(map[string]any)
-	if !ok {
-		return nil
-	}
+	for _, keyword := range view.dependencyKeywords() {
+		dependencies, _ := object[keyword].(map[string]any)
+		for _, trigger := range sortedKeys(dependencies) {
+			if _, exists := properties[trigger]; !exists {
+				continue
+			}
 
-	for trigger, raw := range dependencies {
-		if _, exists := properties[trigger]; !exists {
-			continue
-		}
+			raw := dependencies[trigger]
+			if _, array := raw.([]any); array {
+				raw = map[string]any{"required": raw}
+			}
+			node, valid := toSchemaValue(raw)
+			if !valid {
+				continue
+			}
 
-		node, valid := toSchemaValue(raw)
-		if !valid {
-			continue
-		}
-		nested, err := view.effective(node)
-		if err != nil {
-			return materializationReferenceError(err, path)
-		}
-		if err := validateEffectiveInstance(view, nested, properties, path); err != nil {
-			return err
+			nested, err := view.effective(node)
+			if err != nil {
+				return materializationReferenceError(err, path)
+			}
+			if err := validateEffectiveInstance(view, nested, properties, path); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -2373,6 +1737,9 @@ func validateUnevaluatedProperties(
 	patterns map[string]*regexp.Regexp,
 	path schemaPath,
 ) error {
+	if view.conservativeUnevaluated {
+		return nil
+	}
 	if view.dialect != schemaDialect201909 && view.dialect != schemaDialect202012 {
 		return nil
 	}
@@ -2515,6 +1882,10 @@ func validateEffectiveUnevaluatedItems(
 	value any,
 	path schemaPath,
 ) error {
+	if view.conservativeUnevaluated {
+		return nil
+	}
+
 	items, ok := value.([]any)
 	if !ok || !view.arrayCapabilities().UnevaluatedItems {
 		return nil
@@ -2602,23 +1973,41 @@ func objectPatterns(object map[string]any) map[string]*regexp.Regexp {
 	return patterns
 }
 
-// effectiveSchemaType returns the first declared non-null type for synthesis.
+// effectiveSchemaType prefers a declared non-null type allowed by every conjunct.
 func effectiveSchemaType(schema effectiveSchema) string {
 	for _, value := range schema.types() {
 		for _, name := range schemaTypeNames(value) {
-			if name != "null" {
+			if name != "null" && schemaAllowsType(schema, name) {
 				return name
+			}
+
+			if name == "number" && schemaAllowsType(schema, "integer") {
+				return "integer"
 			}
 		}
 	}
 
 	for _, value := range schema.types() {
-		if names := schemaTypeNames(value); len(names) > 0 {
-			return names[0]
+		if slices.Contains(schemaTypeNames(value), "null") && schemaAllowsType(schema, "null") {
+			return "null"
 		}
 	}
 
 	return ""
+}
+
+// schemaAllowsType intersects type assertions while retaining integer's number subtype.
+func schemaAllowsType(schema effectiveSchema, name string) bool {
+	for _, declaration := range schema.types() {
+		names := schemaTypeNames(declaration)
+		allowed := slices.Contains(names, name) ||
+			(name == "integer" && slices.Contains(names, "number"))
+		if !allowed {
+			return false
+		}
+	}
+
+	return true
 }
 
 // schemaTypeNames normalizes one JSON Schema type declaration.
@@ -2772,16 +2161,6 @@ func isFalseEffectiveSchema(schema effectiveSchema) bool {
 	}
 
 	return false
-}
-
-// candidateValidationKeyword extracts the failed validation keyword when available.
-func candidateValidationKeyword(err error) string {
-	var validation *candidateValidationError
-	if errors.As(err, &validation) {
-		return validation.keyword
-	}
-
-	return ""
 }
 
 // Error implements error.
@@ -3066,25 +2445,10 @@ func unsatisfiableConstraintPath(schema effectiveSchema, path schemaPath) string
 
 // schemaTypesContradict reports an empty intersection of simultaneous types.
 func schemaTypesContradict(schema effectiveSchema) bool {
-	var intersection map[string]struct{}
-	for _, declaration := range schema.types() {
-		current := make(map[string]struct{})
-		for _, name := range schemaTypeNames(declaration) {
-			current[name] = struct{}{}
-		}
-		if intersection == nil {
-			intersection = current
-			continue
-		}
-
-		for name := range intersection {
-			if _, ok := current[name]; !ok {
-				delete(intersection, name)
-			}
-		}
-	}
-
-	return intersection != nil && len(intersection) == 0
+	return !slices.ContainsFunc(
+		[]string{"object", "array", "string", "integer", "number", "boolean", "null"},
+		func(name string) bool { return schemaAllowsType(schema, name) },
+	)
 }
 
 // pathPointer renders a logical instance path in JSON Pointer-like notation.

@@ -309,7 +309,7 @@ $defs:
         x-order: "6"
       mode:
         default: all
-        description: Mode selects embedded example generation mode for doc template.
+        description: Mode prefers a complete (`all`) or minimal (`required`) valid embedded example.
         enum:
           - all
           - required
@@ -503,7 +503,7 @@ $defs:
         x-order: "6"
       mode:
         default: all
-        description: Mode selects embedded example generation mode for doc template.
+        description: Mode prefers a complete (`all`) or minimal (`required`) valid embedded example.
         enum:
           - all
           - required
@@ -583,7 +583,7 @@ $defs:
         x-order: "3"
       mode:
         default: all
-        description: Mode sets example generation mode (`all` or `required`).
+        description: Mode prefers a complete (`all`) or minimal (`required`) valid example.
         enum:
           - all
           - required
@@ -603,7 +603,7 @@ $defs:
     properties:
       mode:
         default: all
-        description: Mode sets example generation mode (`all` or `required`).
+        description: Mode prefers a complete (`all`) or minimal (`required`) valid example.
         enum:
           - all
           - required

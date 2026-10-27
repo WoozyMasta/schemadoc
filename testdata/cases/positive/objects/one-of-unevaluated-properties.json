@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "oneOf": [
+    {
+      "properties": {
+        "a": { "type": "string" }
+      },
+      "required": ["a"]
+    },
+    {
+      "properties": {
+        "b": { "type": "string" }
+      },
+      "required": ["b"]
+    }
+  ],
+  "unevaluatedProperties": false
+}

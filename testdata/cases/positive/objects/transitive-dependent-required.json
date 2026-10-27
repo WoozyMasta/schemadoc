@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "z": { "type": "string" },
+    "a": { "type": "string" },
+    "b": { "type": "string" }
+  },
+  "required": ["z"],
+  "dependentRequired": {
+    "a": ["b"],
+    "z": ["a"]
+  },
+  "additionalProperties": false
+}

@@ -146,7 +146,7 @@ schemadoc config --mode required > schemadoc.build.min.yaml
 
 |Option|Description|Default|Required|
 |---|---|---|---|
-|`-m`, `--mode`|Example generation mode; choices: `all, required`|`all`|no|
+|`-m`, `--mode`|Prefer a complete (all) or minimal (required) valid example; choices: `all, required`|`all`|no|
 
 #### Arguments
 
@@ -248,7 +248,7 @@ schemadoc mod2doc --type Config --key-namer snake . > model.snake.md
 
 |Option|Description|Default|Required|
 |---|---|---|---|
-|`-m`, `--mode`|Embedded example mode; choices: `all, required`|`all`|no|
+|`-m`, `--mode`|Prefer a complete (all) or minimal (required) valid embedded example; choices: `all, required`|`all`|no|
 |`-F`, `--format`|Embedded example format (omit to disable embedding); choices: `json, yaml`||no|
 
 #### Template Select
@@ -384,7 +384,7 @@ schemadoc schema2doc --mode required --format yaml schema.json > schema.with-exa
 
 |Option|Description|Default|Required|
 |---|---|---|---|
-|`-m`, `--mode`|Embedded example mode; choices: `all, required`|`all`|no|
+|`-m`, `--mode`|Prefer a complete (all) or minimal (required) valid embedded example; choices: `all, required`|`all`|no|
 |`-F`, `--format`|Embedded example format (omit to disable embedding); choices: `json, yaml`||no|
 
 #### Template Select
@@ -459,7 +459,7 @@ schemadoc schema2json --mode required schema.json example.required.json
 
 |Option|Description|Default|Required|
 |---|---|---|---|
-|`-m`, `--mode`|Example generation mode; choices: `all, required`|`all`|no|
+|`-m`, `--mode`|Prefer a complete (all) or minimal (required) valid example; choices: `all, required`|`all`|no|
 
 #### JSON Format
 
@@ -499,7 +499,7 @@ schemadoc schema2yaml --mode all schema.json example.all.yaml
 
 |Option|Description|Default|Required|
 |---|---|---|---|
-|`-m`, `--mode`|Example generation mode; choices: `all, required`|`all`|no|
+|`-m`, `--mode`|Prefer a complete (all) or minimal (required) valid example; choices: `all, required`|`all`|no|
 
 #### YAML Output
 

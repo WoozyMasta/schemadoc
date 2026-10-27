@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "requiredValue": { "type": "string" },
+    "optionalA": { "type": "string" },
+    "optionalB": { "type": "string" }
+  },
+  "required": ["requiredValue"],
+  "additionalProperties": false
+}

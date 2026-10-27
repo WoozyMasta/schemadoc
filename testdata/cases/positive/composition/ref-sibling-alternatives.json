@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "base": {
+      "type": "object",
+      "properties": {
+        "common": { "type": "string" },
+        "left": { "type": "integer" },
+        "right": { "type": "integer" }
+      },
+      "required": ["common"],
+      "additionalProperties": false
+    }
+  },
+  "$ref": "#/$defs/base",
+  "oneOf": [
+    { "required": ["left"] },
+    { "required": ["right"] }
+  ]
+}
