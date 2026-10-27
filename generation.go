@@ -312,8 +312,7 @@ func (m *exampleMaterializer) searchPlan(ctx generationContext, path schemaPath,
 		return m.searchObject(ctx, path, try)
 
 	case typeName == "array" || (typeName == "" && m.hasArrayItems(schema)):
-		value, err := m.synthesizeArray(schema, path)
-		return err == nil && try(value), err
+		return m.searchArray(schema, path, try)
 
 	case typeName == "string":
 		for _, value := range stringCandidates(schema) {
@@ -341,6 +340,146 @@ func (m *exampleMaterializer) searchPlan(ctx generationContext, path schemaPath,
 	}
 
 	return false, generationSearchError(schema, path)
+}
+
+// searchArray retains the preferred constructed value and searches alternative lengths lazily.
+func (m *exampleMaterializer) searchArray(
+	schema effectiveSchema,
+	path schemaPath,
+	accept func(any) bool,
+) (bool, error) {
+	seed, seedErr := m.synthesizeArray(schema, path)
+	if seedErr == nil && accept(seed) {
+		return true, nil
+	}
+	if isMaterializationReferenceError(seedErr) {
+		return false, seedErr
+	}
+
+	items, err := schema.arrayItems(m.semantic)
+	if err != nil {
+		return false, materializationReferenceError(err, path)
+	}
+	unevaluated, err := schema.unevaluatedItems(m.semantic)
+	if err != nil {
+		return false, materializationReferenceError(err, path)
+	}
+	minimum, maximum := arrayBounds(schema)
+	if minimum > maximum {
+		return false, seedErr
+	}
+
+	preferred := min(max(minimum, arrayPrefixLength(items)), maximum)
+	if seedErr == nil {
+		preferred = len(seed)
+	}
+	if maximum == int(^uint(0)>>1) {
+		// Avoid exploring an unbounded sequence of otherwise unconstrained lengths.
+		maximum = max(minimum, preferred+1)
+	}
+
+	outer := m.valueSearch
+	for attempt := 0; attempt <= maxSearchCandidates; attempt++ {
+		length := preferred
+		if attempt > 0 {
+			length = minimum + attempt - 1
+			if length >= preferred {
+				length++
+			}
+		}
+
+		if length > maximum || length < minimum {
+			break
+		}
+		if outer != nil && outer.stopped {
+			break
+		}
+
+		local := &valueSearch{remaining: m.budget.childValues}
+		m.valueSearch = local
+		result := make([]any, length)
+		var fill func(int) (bool, error)
+
+		fill = func(index int) (bool, error) {
+			if index == length {
+				m.valueSearch = outer
+				accepted := accept(result)
+				m.valueSearch = local
+				if outer != nil && outer.stopped {
+					local.stopped = true
+				}
+
+				return accepted, nil
+			}
+
+			item, hasItem, itemErr := arrayItemSchemaAt(items, index)
+			if itemErr != nil {
+				return false, itemErr
+			}
+
+			if !hasItem {
+				item, hasItem, itemErr = combinedOptionalArraySchemas(unevaluated)
+				if itemErr != nil {
+					return false, itemErr
+				}
+			}
+
+			first := true
+			var seen []any
+			var nextErr error
+			visit := func(value any) bool {
+				if !hasUniqueArrayItem(schema, result[:index], value) {
+					return false
+				}
+
+				for _, previous := range seen {
+					if equalJSONValue(previous, value) {
+						return false
+					}
+				}
+
+				seen = append(seen, cloneJSONValue(value))
+				if !first {
+					if local.remaining == 0 {
+						local.stopped = true
+						return false
+					}
+					local.remaining--
+				}
+
+				first = false
+				result[index] = cloneJSONValue(value)
+				found, childErr := fill(index + 1)
+				result[index] = nil
+				if childErr != nil {
+					nextErr = childErr
+				}
+				return found
+			}
+
+			if !hasItem {
+				return visit(nil), nextErr
+			}
+
+			found, itemErr := m.searchEffective(item, path.appendArrayItem(), visit)
+			if !found && nextErr != nil {
+				return false, nextErr
+			}
+
+			return found, itemErr
+		}
+
+		found, searchErr := fill(0)
+		m.valueSearch = outer
+		if found {
+			return true, nil
+		}
+		if isMaterializationReferenceError(searchErr) {
+			return false, searchErr
+		}
+	}
+
+	return false, seedErr
 }
 
 // searchObject visits subsets by distance from the requested property preference.

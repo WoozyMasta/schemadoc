@@ -14,6 +14,77 @@ import (
 	"testing"
 )
 
+func TestGenerationArrayItemValueBacktracking(t *testing.T) {
+	tests := []struct {
+		name, schema string
+		length       int
+	}{
+		{"prefix", `{"prefixItems":[{"enum":[0,1]}],"minItems":1,"maxItems":1}`, 1},
+		{"prefix_multiple", `{"prefixItems":[{"enum":[0,1]},{"enum":[0,1]}],"minItems":2,"maxItems":2}`, 2},
+		{"items", `{"items":{"enum":[0,1]},"minItems":2,"maxItems":2}`, 2},
+		{"length", `{"items":{"enum":[0,1]},"minItems":1,"maxItems":2,"not":{"maxItems":1}}`, 2},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			schema := []byte(`{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"array",` +
+				`"allOf":[` + tc.schema + `,{"not":{"contains":{"const":0}}}]}`)
+			for _, mode := range []ExampleMode{ExampleModeRequired, ExampleModeAll} {
+				first, err := GenerateExampleJSON(schema, mode)
+				if err != nil {
+					t.Fatalf("%s: %v", mode, err)
+				}
+				if err := validateGeneratedJSON(schema, first); err != nil {
+					t.Fatal(err)
+				}
+				second, err := GenerateExampleJSON(schema, mode)
+				if err != nil || !bytes.Equal(first, second) {
+					t.Fatalf("%s: nondeterministic: %s / %s: %v", mode, first, second, err)
+				}
+				var result []any
+				if err := json.Unmarshal(first, &result); err != nil {
+					t.Fatal(err)
+				}
+				if len(result) != tc.length {
+					t.Fatalf("%s: %s", mode, first)
+				}
+				for _, item := range result {
+					if item != float64(1) {
+						t.Fatalf("%s: %s", mode, first)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestArrayItemRetriesDoNotExhaustLengthSearch(t *testing.T) {
+	values := make([]int, maxSearchCandidates+10)
+	for i := range values {
+		values[i] = i
+	}
+	enum, err := json.Marshal(values)
+	if err != nil {
+		t.Fatal(err)
+	}
+	schema := []byte(`{"$schema":"https://json-schema.org/draft/2020-12/schema",` +
+		`"type":"array","items":{"enum":` + string(enum) + `},"minItems":1,"maxItems":2,` +
+		`"allOf":[{"not":{"maxItems":1}},{"not":{"items":{"const":0}}}]}`)
+	for _, mode := range []ExampleMode{ExampleModeRequired, ExampleModeAll} {
+		first, err := GenerateExampleJSON(schema, mode)
+		if err != nil {
+			t.Fatalf("%s: %v", mode, err)
+		}
+		if err := validateGeneratedJSON(schema, first); err != nil {
+			t.Fatal(err)
+		}
+		second, err := GenerateExampleJSON(schema, mode)
+		if err != nil || !bytes.Equal(first, second) {
+			t.Fatalf("%s: nondeterministic: %s / %s: %v", mode, first, second, err)
+		}
+	}
+}
+
 func TestGenerationChildValueBacktracking(t *testing.T) {
 	tests := []struct {
 		name, schema, property string
