@@ -18,9 +18,16 @@ type generationContext struct {
 // searchBudget bounds speculative work across all nested generation locations.
 // Ordinary accepted fields do not spend retries; rejected candidates and repairs do.
 type searchBudget struct {
-	plans      int
-	repairs    int
-	candidates int
+	plans        int
+	propertySets int
+	childValues  int
+	repairs      int
+}
+
+// valueSearch bounds retries within a property-set search.
+type valueSearch struct {
+	remaining int
+	stopped   bool
 }
 
 // dependencyActivation identifies a dependency in an append-only plan term list.
@@ -65,15 +72,22 @@ func (m *exampleMaterializer) searchEffective(
 	path schemaPath,
 	accept func(any) bool,
 ) (bool, error) {
-	if m.depth >= maxSearchDepth || m.budget.candidates <= 0 {
+	if m.depth >= maxStructuralDepth || (m.valueSearch != nil && m.valueSearch.stopped) {
 		return false, generationSearchError(effectiveSchema{}, path)
 	}
 
 	m.depth++
 	defer func() { m.depth-- }()
+	if len(path.segments) == 0 {
+		m.rootDepth++
+		defer func() { m.rootDepth-- }()
+	}
 
 	if len(whole.deferredRefs) > 0 {
 		value, err := m.materializeDeferredReference(whole, path)
+		if err == nil && m.rootDepth == 1 && len(path.segments) == 0 && m.validateRoot(value) != nil {
+			return false, generationSearchError(whole, path)
+		}
 		return err == nil && accept(value), err
 	}
 
@@ -96,11 +110,27 @@ func (m *exampleMaterializer) searchEffective(
 	}
 
 	acceptWhole := func(value any) bool {
-		if len(path.segments) == 0 && m.validateRoot(value) != nil {
-			m.budget.candidates--
+		if len(path.segments) == 0 && m.rootDepth == 1 && m.validateRoot(value) != nil {
 			return false
 		}
-		return accept(value)
+
+		for i, ref := range whole.referenceKeys {
+			if !slices.Contains(whole.referenceKeys[:i], ref) {
+				m.activeRefs[ref]--
+			}
+		}
+
+		m.depth--
+		accepted := accept(value)
+		m.depth++
+
+		for i, ref := range whole.referenceKeys {
+			if !slices.Contains(whole.referenceKeys[:i], ref) {
+				m.activeRefs[ref]++
+			}
+		}
+
+		return accepted
 	}
 
 	var lastErr error
@@ -132,7 +162,7 @@ func (m *exampleMaterializer) generationPlans(
 	var lastErr error
 	var walk func(effectiveSchema, int) (bool, error)
 	walk = func(current effectiveSchema, depth int) (bool, error) {
-		if depth >= maxSearchDepth {
+		if depth >= maxSearchDepth || (m.valueSearch != nil && m.valueSearch.stopped) {
 			return false, nil
 		}
 
@@ -140,13 +170,22 @@ func (m *exampleMaterializer) generationPlans(
 			group := current.compositionGroups[0]
 			base := current
 			base.compositionGroups = slices.Clone(current.compositionGroups[1:])
-			for _, branch := range group.branches {
-				if m.budget.plans <= 0 {
+			for i, branch := range group.branches {
+				if m.valueSearch != nil && m.valueSearch.stopped {
+					break
+				}
+				if i > 0 && m.budget.plans <= 0 {
 					break
 				}
 
-				m.budget.plans--
-				found, err := walk(combineEffectiveSchemas(base, branch), depth+1)
+				if i > 0 {
+					m.budget.plans--
+				}
+				nextDepth := depth
+				if len(group.branches) > 1 {
+					nextDepth++
+				}
+				found, err := walk(combineEffectiveSchemas(base, branch), nextDepth)
 				if found || err != nil {
 					return found, err
 				}
@@ -165,12 +204,17 @@ func (m *exampleMaterializer) generationPlans(
 				base := current
 				base.terms = slices.Clone(current.terms)
 				base.terms[i] = schemaValue{Object: withoutSchemaKeywords(term.Object, "if", "then", "else")}
-				for _, keyword := range []string{"then", "else"} {
-					if m.budget.plans <= 0 {
+				for i, keyword := range []string{"then", "else"} {
+					if m.valueSearch != nil && m.valueSearch.stopped {
+						break
+					}
+					if i > 0 && m.budget.plans <= 0 {
 						break
 					}
 
-					m.budget.plans--
+					if i > 0 {
+						m.budget.plans--
+					}
 					raw := condition
 					if keyword == "else" {
 						raw = map[string]any{"not": condition}
@@ -224,13 +268,12 @@ func (m *exampleMaterializer) hasGenerationChoices(schema effectiveSchema) bool 
 func (m *exampleMaterializer) searchPlan(ctx generationContext, path schemaPath, accept func(any) bool) (bool, error) {
 	schema := ctx.constraints
 	try := func(value any) bool {
-		if m.budget.candidates <= 0 {
+		if m.valueSearch != nil && m.valueSearch.stopped {
 			return false
 		}
 
 		if validateEffectiveInstance(m.semantic, schema, value, path) != nil ||
 			validateEffectiveInstance(m.semantic, ctx.validation, value, path) != nil {
-			m.budget.candidates--
 			return false
 		}
 
@@ -238,7 +281,7 @@ func (m *exampleMaterializer) searchPlan(ctx generationContext, path schemaPath,
 	}
 
 	for _, candidate := range m.explicitCandidates(schema) {
-		if m.budget.candidates <= 0 {
+		if m.valueSearch != nil && m.valueSearch.stopped {
 			break
 		}
 
@@ -340,13 +383,17 @@ func (m *exampleMaterializer) searchObjectKeys(
 ) (bool, error) {
 	var lastErr error
 	for distance := 0; distance <= len(optional); distance++ {
+		if m.valueSearch != nil && m.valueSearch.stopped {
+			break
+		}
+
 		found, err := m.visitSubsets(len(optional), distance, func(changed []int) (bool, error) {
 			if distance > 0 {
-				if m.budget.repairs <= 0 {
+				if m.budget.propertySets <= 0 {
 					return false, nil
 				}
 
-				m.budget.repairs--
+				m.budget.propertySets--
 			}
 
 			keys := slices.Clone(required)
@@ -371,7 +418,7 @@ func (m *exampleMaterializer) searchObjectKeys(
 		if found || err != nil {
 			return found, err
 		}
-		if m.budget.repairs <= 0 || m.budget.candidates <= 0 {
+		if m.budget.propertySets <= 0 {
 			break
 		}
 	}
@@ -387,7 +434,7 @@ func (m *exampleMaterializer) searchObjectKeys(
 func (m *exampleMaterializer) visitSubsets(size, count int, yield func([]int) (bool, error)) (bool, error) {
 	var walk func(int, []int) (bool, error)
 	walk = func(start int, selected []int) (bool, error) {
-		if m.budget.repairs <= 0 || m.budget.candidates <= 0 {
+		if (count > 0 && m.budget.propertySets <= 0) || (m.valueSearch != nil && m.valueSearch.stopped) {
 			return false, nil
 		}
 		if len(selected) == count {
@@ -416,6 +463,10 @@ func (m *exampleMaterializer) searchObjectShape(
 	accept func(any) bool,
 ) (bool, error) {
 	schema := ctx.constraints
+	if len(active) >= maxStructuralDepth {
+		return false, generationSearchError(effectiveSchema{}, path)
+	}
+
 	for _, name := range schema.required() {
 		if !slices.Contains(keys, name) {
 			keys = append(slices.Clone(keys), name)
@@ -432,11 +483,6 @@ func (m *exampleMaterializer) searchObjectShape(
 					continue
 				}
 
-				if m.budget.repairs <= 0 {
-					return false, generationSearchError(effectiveSchema{}, path)
-				}
-
-				m.budget.repairs--
 				nextActive := maps.Clone(active)
 				if nextActive == nil {
 					nextActive = make(map[dependencyActivation]bool)
@@ -513,14 +559,18 @@ func (m *exampleMaterializer) searchObjectShape(
 	if hasDynamic &&
 		!isFalseEffectiveSchema(dynamic) &&
 		(len(keys) < minimum || (m.mode == ExampleModeAll && len(keys) == 0)) {
+		attempted := false
 		for _, name := range dynamicPropertyNames(propertyNames, m.semantic, path) {
 			if !slices.Contains(keys, name) &&
 				validatePropertyName(m.semantic, propertyNames, name, path) == nil {
-				if m.budget.repairs <= 0 {
+				if attempted && m.budget.repairs <= 0 {
 					break
 				}
 
-				m.budget.repairs--
+				if attempted {
+					m.budget.repairs--
+				}
+				attempted = true
 				found, err := m.searchObjectShape(ctx, append(slices.Clone(keys), name), path, active, accept)
 				if found || isMaterializationReferenceError(err) {
 					return found, err
@@ -535,8 +585,7 @@ func (m *exampleMaterializer) searchObjectShape(
 	return m.searchObjectValues(schema, keys, dynamic, path, accept)
 }
 
-// searchObjectValues materializes one preferred value per selected property.
-// Property shapes are repaired here; deep value backtracking remains unsupported.
+// searchObjectValues tries child values lazily for the selected property set.
 func (m *exampleMaterializer) searchObjectValues(
 	schema effectiveSchema,
 	keys []string,
@@ -550,7 +599,17 @@ func (m *exampleMaterializer) searchObjectValues(
 	}
 
 	result := make(map[string]any, len(keys))
-	for _, name := range keys {
+	if m.valueSearch == nil {
+		m.valueSearch = &valueSearch{remaining: m.budget.childValues}
+		defer func() { m.valueSearch = nil }()
+	}
+
+	var fill func(int) (bool, error)
+	fill = func(index int) (bool, error) {
+		if index == len(keys) {
+			return accept(result), nil
+		}
+		name := keys[index]
 		if err := validatePropertyName(m.semantic, propertyNames, name, path); err != nil {
 			if isMaterializationReferenceError(err) {
 				return false, err
@@ -568,15 +627,43 @@ func (m *exampleMaterializer) searchObjectValues(
 			property = dynamic
 		}
 
-		value, err := m.materializeEffective(property, path.appendProperty(name))
-		if err != nil {
-			return false, err
+		first := true
+		var seen []any
+		var nextErr error
+		found, err = m.searchEffective(property, path.appendProperty(name), func(value any) bool {
+			for _, previous := range seen {
+				if equalJSONValue(previous, value) {
+					return false
+				}
+			}
+
+			seen = append(seen, cloneJSONValue(value))
+			if !first {
+				if m.valueSearch.remaining == 0 {
+					m.valueSearch.stopped = true
+					return false
+				}
+				m.valueSearch.remaining--
+			}
+
+			first = false
+			result[name] = cloneJSONValue(value)
+			accepted, childErr := fill(index + 1)
+			if childErr != nil {
+				nextErr = childErr
+			}
+
+			delete(result, name)
+			return accepted
+		})
+		if !found && nextErr != nil {
+			return false, nextErr
 		}
 
-		result[name] = value
+		return found, err
 	}
 
-	return accept(result), nil
+	return fill(0)
 }
 
 // dependencyKeywords preserves the dialect's dependency vocabulary.

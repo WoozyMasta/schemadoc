@@ -14,6 +14,241 @@ import (
 	"testing"
 )
 
+func TestGenerationChildValueBacktracking(t *testing.T) {
+	tests := []struct {
+		name, schema, property string
+		want                   any
+	}{
+		{
+			"forced_else",
+			`{
+	"type": "object",
+	"properties": {
+		"kind": {
+			"enum": ["a", "b"]
+		}
+	},
+	"required": ["kind"],
+	"if": {
+		"properties": {
+			"kind": {
+				"const": "a"
+			}
+		},
+		"required": ["kind"]
+	},
+	"then": false,
+	"else": true,
+	"additionalProperties": false
+}`,
+			"kind",
+			"b",
+		},
+		{
+			"nested_oneof",
+			`{
+	"type": "object",
+	"properties": {
+		"x": {
+			"type": "integer"
+		}
+	},
+	"required": ["x"],
+	"oneOf": [{
+			"properties": {
+				"x": {
+					"minimum": 0
+				}
+			}
+		},
+		{
+			"properties": {
+				"x": {
+					"const": 0
+				}
+			}
+		}
+	]
+}`,
+			"x",
+			float64(1),
+		},
+		{
+			"property_subset",
+			`{
+	"type": "object",
+	"properties": {
+		"kind": {
+			"enum": ["a", "b"]
+		},
+		"flag": {
+			"type": "boolean"
+		}
+	},
+	"required": ["kind"],
+	"minProperties": 2,
+	"not": {
+		"properties": {
+			"kind": {
+				"const": "a"
+			}
+		}
+	}
+}`,
+			"kind",
+			"b",
+		},
+		{
+			"independent_budgets",
+			`{
+	"type": "object",
+	"properties": {
+		"kind": {
+			"enum": ["a", "b", "c"]
+		},
+		"f1": {
+			"type": "boolean"
+		},
+		"f2": {
+			"type": "boolean"
+		},
+		"f3": {
+			"type": "boolean"
+		}
+	},
+	"required": ["kind"],
+	"minProperties": 3,
+	"allOf": [{
+			"not": {
+				"properties": {
+					"kind": {
+						"enum": ["a", "b"]
+					}
+				}
+			}
+		},
+		{
+			"not": {
+				"required": ["f1"]
+			}
+		}
+	]
+}`,
+			"kind",
+			"c",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var object map[string]any
+			if err := json.Unmarshal([]byte(test.schema), &object); err != nil {
+				t.Fatal(err)
+			}
+			schema := minimalSchemaBytes(t, object)
+			for _, mode := range []ExampleMode{ExampleModeRequired, ExampleModeAll} {
+				first, err := GenerateExampleJSON(schema, mode)
+				if err != nil {
+					t.Fatalf("%s: %v", mode, err)
+				}
+				if err := validateGeneratedJSON(schema, first); err != nil {
+					t.Fatal(err)
+				}
+				second, err := GenerateExampleJSON(schema, mode)
+				if err != nil || !bytes.Equal(first, second) {
+					t.Fatalf("nondeterministic: %s / %s: %v", first, second, err)
+				}
+				var result map[string]any
+				if err := json.Unmarshal(first, &result); err != nil {
+					t.Fatal(err)
+				}
+				if result[test.property] != test.want {
+					t.Fatalf("%s: %s", mode, first)
+				}
+				if test.name == "property_subset" {
+					if _, ok := result["flag"]; !ok {
+						t.Fatalf("%s: missing flag: %s", mode, first)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestChildValueRetriesDoNotExhaustPropertySets(t *testing.T) {
+	t.Parallel()
+	schema := minimalSchemaBytes(t, map[string]any{
+		"type": "object", "required": []any{"kind"},
+		"properties": map[string]any{
+			"kind": map[string]any{"enum": []any{"a", "b"}},
+			"flag": map[string]any{"const": true},
+		},
+		"not": map[string]any{"anyOf": []any{
+			map[string]any{"properties": map[string]any{"kind": map[string]any{"const": "a"}}},
+			map[string]any{"not": map[string]any{"required": []any{"flag"}}},
+		}},
+	})
+	doc, err := parseDocument(schema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := newExampleMaterializer(doc, ExampleModeRequired)
+	m.budget.childValues = 1
+	m.budget.propertySets = 1
+	value, err := m.materialize(doc.Root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := validateDecodedInstance(schema, value); err != nil {
+		t.Fatal(err)
+	}
+	object := value.(map[string]any)
+	if object["kind"] != "b" || len(object) != 2 {
+		t.Fatalf("unexpected value: %v", value)
+	}
+}
+
+func TestGenerationDeepDeterministicSchemas(t *testing.T) {
+	t.Parallel()
+	var nested any = map[string]any{"type": "string"}
+	for range 50 {
+		nested = map[string]any{"type": "object", "required": []any{"x"},
+			"properties": map[string]any{"x": nested}}
+	}
+	allOf := make([]any, 70)
+	for i := range allOf {
+		allOf[i] = map[string]any{"anyOf": []any{map[string]any{}}}
+	}
+	for _, root := range []any{nested, map[string]any{"type": "string", "allOf": allOf}} {
+		bytes, err := json.Marshal(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		generated, err := GenerateExampleJSON(bytes, ExampleModeRequired)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := validateGeneratedJSON(bytes, generated); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestGenerationValidatorSetupError(t *testing.T) {
+	t.Parallel()
+	doc, err := parseDocument([]byte(`{"type":"string","pattern":"["}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := newExampleMaterializer(doc, ExampleModeRequired)
+	if m.validatorError == nil {
+		t.Fatal("expected validator compilation error")
+	}
+	_, err = m.materialize(doc.Root)
+	if !errors.Is(err, m.validatorError) {
+		t.Fatalf("validator error lost: %v", err)
+	}
+}
+
 func TestGenerationPlanRegressions(t *testing.T) {
 	t.Parallel()
 	names := []string{
@@ -261,17 +496,21 @@ func TestGenerationPlansOrderAndBound(t *testing.T) {
 		}
 	}
 
-	m.budget.plans = 1
-	_, err = m.materializeEffective(whole, schemaPath{})
-	if !errors.Is(err, ErrUnsupportedMaterialization) || errors.Is(err, ErrMaterializationUnsatisfiable) {
-		t.Fatalf("budget exhaustion: %v", err)
+	m.budget.plans = 0
+	planCount := 0
+	_, err = m.generationPlans(whole, schemaPath{}, func(effectiveSchema) (bool, error) {
+		planCount++
+		return false, nil
+	})
+	if !errors.Is(err, ErrUnsupportedMaterialization) || planCount != 1 {
+		t.Fatalf("budget exhaustion: %d plans, %v", planCount, err)
 	}
 
-	m.budget.repairs = 3
+	m.budget.propertySets = 3
 	visits := 0
 	_, err = m.visitSubsets(100, 50, func([]int) (bool, error) {
 		visits++
-		m.budget.repairs--
+		m.budget.propertySets--
 		return false, nil
 	})
 

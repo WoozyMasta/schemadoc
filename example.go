@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	// ExampleModeAll prefers a complete valid example, including optional properties when possible.
+	// ExampleModeAll prefers including optional properties while preserving validity.
 	ExampleModeAll ExampleMode = "all"
-	// ExampleModeRequired prefers a minimal valid example, adding optional properties when needed.
+	// ExampleModeRequired prefers fewer optional properties while preserving validity.
 	ExampleModeRequired ExampleMode = "required"
 )
 

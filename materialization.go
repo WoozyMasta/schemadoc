@@ -23,6 +23,7 @@ const maxGeneratedStringLength = 4096
 const (
 	maxSearchCandidates = 64
 	maxSearchDepth      = 32
+	maxStructuralDepth  = 512
 )
 
 const materializationSchemaURL = "urn:schemadoc:materialization-schema"
@@ -91,9 +92,11 @@ type exampleMaterializer struct {
 	semantic       *schemaSemanticView
 	activeRefs     map[string]int
 	rootValidator  *jsonschema.Schema
+	valueSearch    *valueSearch
 	mode           ExampleMode
 	budget         searchBudget
 	depth          int
+	rootDepth      int
 }
 
 // materializationCandidate records an explicit value and its source keyword.
@@ -177,9 +180,10 @@ func newExampleMaterializer(doc schemaDocument, mode ExampleMode) *exampleMateri
 		mode:       mode,
 		activeRefs: make(map[string]int),
 		budget: searchBudget{
-			plans:      maxSearchCandidates,
-			repairs:    maxSearchCandidates,
-			candidates: maxSearchCandidates,
+			plans:        maxSearchCandidates,
+			propertySets: maxSearchCandidates,
+			childValues:  maxSearchCandidates,
+			repairs:      maxSearchCandidates,
 		},
 		rootValidator:  validator,
 		validatorError: err,
@@ -189,11 +193,14 @@ func newExampleMaterializer(doc schemaDocument, mode ExampleMode) *exampleMateri
 // materialize builds one valid value or returns a structured failure.
 func (materializer *exampleMaterializer) materialize(node schemaValue) (any, error) {
 	value, err := materializer.materializeAt(node, schemaPath{})
-	if err != nil {
-		return nil, err
+	if materializer.validatorError != nil && !isMaterializationReferenceError(err) {
+		return nil, newMaterializationError(
+			MaterializationCodeUnsupported,
+			MaterializationCategoryUnsupportedMaterialization,
+			"#", materializer.validatorError,
+		)
 	}
-
-	if err := materializer.validateRoot(value); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
