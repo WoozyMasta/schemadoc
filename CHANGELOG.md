@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.12.0][] - 2026-10-27
 
 ### Changed
 
@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning][].
 * Apply complete dependency schemas and transitive property dependencies,
   including legacy `dependencies`, and resolve required values through
   `patternProperties`, `additionalProperties`, and `unevaluatedProperties`.
+
+[0.12.0]: https://github.com/WoozyMasta/schemadoc/compare/v0.11.0...v0.12.0
 
 ## [0.11.0][] - 2026-10-21
 
