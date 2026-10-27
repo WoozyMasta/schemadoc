@@ -85,6 +85,52 @@ func TestArrayItemRetriesDoNotExhaustLengthSearch(t *testing.T) {
 	}
 }
 
+func TestNestedArrayCompositionPreservesPropertySearch(t *testing.T) {
+	schema := []byte(`{
+		"$schema":"https://json-schema.org/draft/2020-12/schema",
+		"type":"object",
+		"properties":{"entries":{"type":"array","maxItems":512,"items":{"$ref":"#/$defs/entry"}}},
+		"required":["entries"],
+		"$defs":{"entry":{
+			"type":"object",
+			"properties":{
+				"first":{"type":"array","maxItems":128,"uniqueItems":true,
+					"items":{"type":"string","minLength":1,"examples":["first"]}},
+				"second":{"type":"array","maxItems":128,"uniqueItems":true,
+					"items":{"type":"string","minLength":1,"examples":["second"]}}
+			},
+			"oneOf":[{"required":["first"]},{"required":["second"]}]
+		}}
+	}`)
+	for _, mode := range []ExampleMode{ExampleModeRequired, ExampleModeAll} {
+		first, err := GenerateExampleJSON(schema, mode)
+		if err != nil {
+			t.Fatalf("%s: %v", mode, err)
+		}
+		if err := validateGeneratedJSON(schema, first); err != nil {
+			t.Fatalf("%s: %v", mode, err)
+		}
+		second, err := GenerateExampleJSON(schema, mode)
+		if err != nil || !bytes.Equal(first, second) {
+			t.Fatalf("%s: nondeterministic: %s / %s: %v", mode, first, second, err)
+		}
+		var result struct {
+			Entries []map[string]any `json:"entries"`
+		}
+		if err := json.Unmarshal(first, &result); err != nil {
+			t.Fatal(err)
+		}
+		if len(result.Entries) == 0 {
+			t.Fatalf("%s: missing array entry: %s", mode, first)
+		}
+		_, hasFirst := result.Entries[0]["first"]
+		_, hasSecond := result.Entries[0]["second"]
+		if hasFirst == hasSecond {
+			t.Fatalf("%s: expected one branch: %s", mode, first)
+		}
+	}
+}
+
 func TestGenerationChildValueBacktracking(t *testing.T) {
 	tests := []struct {
 		name, schema, property string
@@ -94,18 +140,10 @@ func TestGenerationChildValueBacktracking(t *testing.T) {
 			"forced_else",
 			`{
 	"type": "object",
-	"properties": {
-		"kind": {
-			"enum": ["a", "b"]
-		}
-	},
+	"properties": {"kind": {"enum": ["a", "b"]}},
 	"required": ["kind"],
 	"if": {
-		"properties": {
-			"kind": {
-				"const": "a"
-			}
-		},
+		"properties": {"kind": {"const": "a"}},
 		"required": ["kind"]
 	},
 	"then": false,
@@ -119,25 +157,13 @@ func TestGenerationChildValueBacktracking(t *testing.T) {
 			"nested_oneof",
 			`{
 	"type": "object",
-	"properties": {
-		"x": {
-			"type": "integer"
-		}
-	},
+	"properties": {"x": {"type": "integer"}},
 	"required": ["x"],
 	"oneOf": [{
-			"properties": {
-				"x": {
-					"minimum": 0
-				}
-			}
+			"properties": {"x": {"minimum": 0}}
 		},
 		{
-			"properties": {
-				"x": {
-					"const": 0
-				}
-			}
+			"properties": {"x": {"const": 0}}
 		}
 	]
 }`,
@@ -149,21 +175,13 @@ func TestGenerationChildValueBacktracking(t *testing.T) {
 			`{
 	"type": "object",
 	"properties": {
-		"kind": {
-			"enum": ["a", "b"]
-		},
-		"flag": {
-			"type": "boolean"
-		}
+		"kind": {"enum": ["a", "b"]},
+		"flag": {"type": "boolean"}
 	},
 	"required": ["kind"],
 	"minProperties": 2,
 	"not": {
-		"properties": {
-			"kind": {
-				"const": "a"
-			}
-		}
+		"properties": {"kind": {"const": "a"}}
 	}
 }`,
 			"kind",
@@ -174,35 +192,19 @@ func TestGenerationChildValueBacktracking(t *testing.T) {
 			`{
 	"type": "object",
 	"properties": {
-		"kind": {
-			"enum": ["a", "b", "c"]
-		},
-		"f1": {
-			"type": "boolean"
-		},
-		"f2": {
-			"type": "boolean"
-		},
-		"f3": {
-			"type": "boolean"
-		}
+		"kind": {"enum": ["a", "b", "c"]},
+		"f1": {"type": "boolean"},
+		"f2": {"type": "boolean"},
+		"f3": {"type": "boolean"}
 	},
 	"required": ["kind"],
 	"minProperties": 3,
 	"allOf": [{
 			"not": {
-				"properties": {
-					"kind": {
-						"enum": ["a", "b"]
-					}
-				}
+				"properties": {"kind": {"enum": ["a", "b"]}}
 			}
 		},
-		{
-			"not": {
-				"required": ["f1"]
-			}
-		}
+		{"not": {"required": ["f1"]}}
 	]
 }`,
 			"kind",
@@ -421,46 +423,26 @@ func TestGenerationRootRejectionContinuesSearch(t *testing.T) {
 		`{
 		  "type": "object",
 		  "properties": {
-		    "a": {
-		      "type": "string"
-		    },
-		    "b": {
-		      "type": "string"
-		    }
+		    "a": {"type": "string"},
+		    "b": {"type": "string"}
 		  },
 		  "allOf": [
 		    {
-		      "properties": {
-		        "a": {}
-		      },
+		      "properties": {"a": {}},
 		      "unevaluatedProperties": false
 		    },
-		    {
-		      "properties": {
-		        "b": {}
-		      }
-		    }
+		    {"properties": {"b": {}}}
 		  ]
 		}`,
 		`{
 		  "type": "object",
-		  "required": [
-		    "a",
-		    "b"
-		  ],
+		  "required": ["a", "b"],
 		  "oneOf": [
 		    {
-		      "properties": {
-		        "a": {}
-		      },
+		      "properties": {"a": {}},
 		      "unevaluatedProperties": false
 		    },
-		    {
-		      "properties": {
-		        "a": {},
-		        "b": {}
-		      }
-		    }
+		    {"properties": {"a": {},"b": {}}}
 		  ]
 		}`,
 	}
@@ -514,38 +496,10 @@ func TestGenerationPlansOrderAndBound(t *testing.T) {
 	t.Parallel()
 	doc, err := parseDocument([]byte(`{
 		  "type": "object",
-		  "required": [
-		    "base"
-		  ],
+		  "required": ["base"],
 		  "allOf": [
-		    {
-		      "oneOf": [
-		        {
-		          "required": [
-		            "a"
-		          ]
-		        },
-		        {
-		          "required": [
-		            "b"
-		          ]
-		        }
-		      ]
-		    },
-		    {
-		      "anyOf": [
-		        {
-		          "required": [
-		            "x"
-		          ]
-		        },
-		        {
-		          "required": [
-		            "y"
-		          ]
-		        }
-		      ]
-		    }
+		    {"oneOf": [{"required": ["a"]},{"required": ["b"]}]},
+		    {"anyOf": [{"required": ["x"]},{"required": ["y"]}]}
 		  ]
 		}`))
 	if err != nil {
@@ -605,89 +559,34 @@ func TestGenerationActivatedAlternatives(t *testing.T) {
 	schemas := []string{
 		`{
 		  "type": "object",
-		  "required": [
-		    "enabled"
-		  ],
-		  "properties": {
-		    "enabled": {
-		      "const": true
-		    }
-		  },
+		  "required": ["enabled"],
+		  "properties": {"enabled": {"const": true}},
 		  "dependentSchemas": {
 		    "enabled": {
 		      "oneOf": [
 		        false,
-		        {
-		          "properties": {
-		            "kind": {
-		              "const": "a"
-		            }
-		          }
-		        },
-		        {
-		          "properties": {
-		            "kind": {
-		              "const": "b"
-		            }
-		          }
-		        }
+		        {"properties": {"kind": {"const": "a"}}},
+		        {"properties": {"kind": {"const": "b"}}}
 		      ]
 		    }
 		  }
 		}`,
 		`{
 		  "type": "object",
-		  "required": [
-		    "enabled"
-		  ],
-		  "properties": {
-		    "enabled": {
-		      "const": true
-		    }
-		  },
+		  "required": ["enabled"],
+		  "properties": {"enabled": {"const": true}},
 		  "dependentSchemas": {
-		    "enabled": {
-		      "properties": {
-		        "extra": {
-		          "const": "optional"
-		        }
-		      }
-		    }
+		    "enabled": {"properties": {"extra": {"const": "optional"}}}
 		  }
 		}`,
 		`{
 		  "type": "object",
-		  "properties": {
-		    "kind": {
-		      "type": "string"
-		    },
-		    "extra": {
-		      "type": "integer"
-		    }
-		  },
+		  "properties": {"kind": {"type": "string"},"extra": {"type": "integer"}},
 		  "oneOf": [
 		    {
 		      "anyOf": [
-		        {
-		          "properties": {
-		            "kind": {
-		              "const": "a"
-		            }
-		          },
-		          "required": [
-		            "kind"
-		          ]
-		        },
-		        {
-		          "properties": {
-		            "kind": {
-		              "const": "b"
-		            }
-		          },
-		          "required": [
-		            "kind"
-		          ]
-		        }
+		        {"properties": {"kind": {"const": "a"}},"required": ["kind"]},
+		        {"properties": {"kind": {"const": "b"}},"required": ["kind"]}
 		      ]
 		    },
 		    false
@@ -764,17 +663,9 @@ func TestGenerationConjunctiveTypeSemantics(t *testing.T) {
 		`{
 		  "$schema": "http://json-schema.org/draft-07/schema#",
 		  "type": "object",
-		  "required": [
-		    "a"
-		  ],
-		  "dependentSchemas": {
-		    "a": false
-		  },
-		  "dependentRequired": {
-		    "a": [
-		      "ignored"
-		    ]
-		  }
+		  "required": ["a"],
+		  "dependentSchemas": {"a": false},
+		  "dependentRequired": {"a": ["ignored"]}
 		}`,
 	} {
 		var object map[string]any

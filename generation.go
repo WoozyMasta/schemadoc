@@ -738,16 +738,24 @@ func (m *exampleMaterializer) searchObjectValues(
 	}
 
 	result := make(map[string]any, len(keys))
-	if m.valueSearch == nil {
-		m.valueSearch = &valueSearch{remaining: m.budget.childValues}
-		defer func() { m.valueSearch = nil }()
-	}
+	outer := m.valueSearch
+	// Each property set needs its own retries; a failed child must not stop its siblings' search.
+	local := &valueSearch{remaining: m.budget.childValues}
+	m.valueSearch = local
+	defer func() { m.valueSearch = outer }()
 
 	var fill func(int) (bool, error)
 	fill = func(index int) (bool, error) {
 		if index == len(keys) {
-			return accept(result), nil
+			m.valueSearch = outer
+			accepted := accept(result)
+			m.valueSearch = local
+			if outer != nil && outer.stopped {
+				local.stopped = true
+			}
+			return accepted, nil
 		}
+
 		name := keys[index]
 		if err := validatePropertyName(m.semantic, propertyNames, name, path); err != nil {
 			if isMaterializationReferenceError(err) {
@@ -778,11 +786,12 @@ func (m *exampleMaterializer) searchObjectValues(
 
 			seen = append(seen, cloneJSONValue(value))
 			if !first {
-				if m.valueSearch.remaining == 0 {
-					m.valueSearch.stopped = true
+				if local.remaining == 0 {
+					local.stopped = true
 					return false
 				}
-				m.valueSearch.remaining--
+
+				local.remaining--
 			}
 
 			first = false
